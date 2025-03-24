@@ -20,6 +20,10 @@ public class UsuarioServicio {
         return usuarioRepositorio.findAll();
     }
 
+    public Usuario obtenerUsuarioPorId(Long id) {
+        return usuarioRepositorio.findById(id).orElse(null);
+    }
+
     public Usuario guardarUsuario(Usuario usuario) {
         return usuarioRepositorio.save(usuario);
     }

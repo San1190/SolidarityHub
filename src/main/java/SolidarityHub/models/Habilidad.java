@@ -1,6 +1,6 @@
 package SolidarityHub.models;
 
-public enum Habilidades {
+public enum Habilidad {
     LIMPIEZA("Limpieza"),
     COCINA("Cocina"),
     COMPRA_ALIMENTOS("Compra de Alimentos"),
@@ -14,7 +14,7 @@ public enum Habilidades {
 
     private final String nombre;
 
-    Habilidades(String nombre) {
+    Habilidad(String nombre) {
         this.nombre = nombre;
     }
 

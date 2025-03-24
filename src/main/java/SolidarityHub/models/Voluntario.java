@@ -13,13 +13,13 @@ import jakarta.persistence.Entity;
 @DiscriminatorValue("voluntario")
 public class Voluntario extends Usuario {
 
-    private Habilidades[] habilidades;
+    private Habilidad[] habilidades;
     private LocalTime horaInicioTrabajo;
     private LocalTime horaFinTrabajo;
 
     public Voluntario () {}
 
-    public Voluntario(String dni, String nombre, String apellidos, String email, String password, String telefono, String direccion, byte[] foto, Habilidades[] habilidades, LocalTime horaInicioTrabajo, LocalTime horaFinTrabajo) {
+    public Voluntario(String dni, String nombre, String apellidos, String email, String password, String telefono, String direccion, byte[] foto, Habilidad[] habilidades, LocalTime horaInicioTrabajo, LocalTime horaFinTrabajo) {
         super(dni, nombre, apellidos, email, password, telefono, direccion, foto);
         this.habilidades = habilidades;
         this.horaInicioTrabajo = horaInicioTrabajo;
@@ -32,10 +32,10 @@ public class Voluntario extends Usuario {
         return "voluntario";
     }
 
-    public Habilidades[] getHabilidades() {
+    public Habilidad[] getHabilidades() {
         return habilidades;
     }
-    public void setHabilidades(Habilidades[] habilidades) {
+    public void setHabilidades(Habilidad[] habilidades) {
         this.habilidades = habilidades;
     }
 
