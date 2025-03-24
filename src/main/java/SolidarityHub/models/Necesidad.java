@@ -17,6 +17,10 @@ public class Necesidad {
         BAJA, MEDIA, ALTA
     }
 
+    public enum EstadoNecesidad {
+        REGISTRADA, EN_PROCESO, FINALIZADA
+    }
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +28,7 @@ public class Necesidad {
 
     private TipoNecesidad tipoNecesidad;
     private String descripcion;
+    private EstadoNecesidad estadoNecesidad;
     private Urgencia urgencia;
     private String ubicacion;
     private LocalDateTime fechaCreacion;
@@ -34,9 +39,10 @@ public class Necesidad {
 
     public Necesidad() {}
 
-    public Necesidad(TipoNecesidad tipoNecesidad, String descripcion, Urgencia urgencia, String ubicacion, LocalDateTime fechaCreacion) {
+    public Necesidad(TipoNecesidad tipoNecesidad, String descripcion,EstadoNecesidad estadoNecesidad, Urgencia urgencia, String ubicacion, LocalDateTime fechaCreacion) {
         this.tipoNecesidad = tipoNecesidad;
         this.descripcion = descripcion;
+        this.estadoNecesidad = estadoNecesidad;
         this.urgencia = urgencia;
         this.ubicacion = ubicacion;
         this.fechaCreacion = fechaCreacion;
@@ -52,6 +58,9 @@ public class Necesidad {
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
+    public EstadoNecesidad getEstadoNecesidad() { return estadoNecesidad; }
+    public void setEstadoNecesidad(EstadoNecesidad estadoNecesidad) { this.estadoNecesidad = estadoNecesidad; }
+    
     public Urgencia getUrgencia() { return urgencia; }
     public void setUrgencia(Urgencia urgencia) { this.urgencia = urgencia; }
 

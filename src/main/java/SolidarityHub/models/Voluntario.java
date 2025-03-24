@@ -1,6 +1,7 @@
 package SolidarityHub.models;
 
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.cglib.core.Local;
@@ -13,13 +14,13 @@ import jakarta.persistence.Entity;
 @DiscriminatorValue("voluntario")
 public class Voluntario extends Usuario {
 
-    private Habilidad[] habilidades;
+    private List<Habilidad> habilidades;
     private LocalTime horaInicioTrabajo;
     private LocalTime horaFinTrabajo;
 
     public Voluntario () {}
 
-    public Voluntario(String dni, String nombre, String apellidos, String email, String password, String telefono, String direccion, byte[] foto, Habilidad[] habilidades, LocalTime horaInicioTrabajo, LocalTime horaFinTrabajo) {
+    public Voluntario(String dni, String nombre, String apellidos, String email, String password, String telefono, String direccion, byte[] foto, List<Habilidad> habilidades, LocalTime horaInicioTrabajo, LocalTime horaFinTrabajo) {
         super(dni, nombre, apellidos, email, password, telefono, direccion, foto);
         this.habilidades = habilidades;
         this.horaInicioTrabajo = horaInicioTrabajo;
@@ -32,10 +33,10 @@ public class Voluntario extends Usuario {
         return "voluntario";
     }
 
-    public Habilidad[] getHabilidades() {
+    public List<Habilidad> getHabilidades() {
         return habilidades;
     }
-    public void setHabilidades(Habilidad[] habilidades) {
+    public void setHabilidades(List<Habilidad> habilidades) {
         this.habilidades = habilidades;
     }
 
