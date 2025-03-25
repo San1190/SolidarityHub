@@ -2,15 +2,15 @@ package SolidarityHub.models;
 
 public enum Habilidad {
     LIMPIEZA("Limpieza"),
+    PRIMEROS_AUXILIOS("Primeros Auxilios"),
     COCINA("Cocina"),
-    COMPRA_ALIMENTOS("Compra de Alimentos"),
-    DISTRIBUCION_ALIMENTOS("Distribución de Alimentos"),
-    TRANSPORTE_ALIMENTOS("Transporte de Alimentos"),
+    ELECTICISTA("Electricista"),
+    FONTANERIA("Fontanería"),
+    CARPINTERIA("Carpintería"),
     LAVANDERIA("Lavandería"),
-    PSICOLOGIA("Psicología"),
-    TERAPIA("Terapia"),
-    CONSEJERIA("Consejería"),
-    TRANSPORTE("Transporte");
+    TRANSPORTE_ALIMENTOS("Transporte de Alimentos"),
+    AYUDA_PSICOLOGICA("Ayuda Psicológica"),
+    TRANSPORTE_PERSONAS("Transporte de Personas"),;
 
     private final String nombre;
 

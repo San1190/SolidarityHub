@@ -51,6 +51,17 @@ public abstract class Usuario {
         this.foto = foto;
     }
 
+    public Usuario(String dni,String nombre, String apellidos, String email, String password, String telefono, String direccion) {
+        this.dni = dni;
+        this.nombre = nombre;
+        this.apellidos = apellidos;
+        this.email = email;
+        this.password = password;
+        this.telefono = telefono;
+        this.direccion = direccion;
+        this.foto = null;
+    }
+
     @JsonGetter("tipo_usuario") // Getter para el tipo de usuario
     public abstract String getTipoUsuario(); // Método abstracto para obtener el tipo de usuario
 
