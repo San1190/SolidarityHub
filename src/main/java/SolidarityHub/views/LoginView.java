@@ -21,6 +21,21 @@ import aj.org.objectweb.asm.Label;
 @Route("login") // Define la ruta accesible en la URL
 public class LoginView extends VerticalLayout {
 
+    private VerticalLayout panelIzq;
+    private VerticalLayout panelDer;
+
+    private Image logo;
+
+    private RadioButtonGroup<String> tipoUsuario;
+
+    private EmailField emailField;
+    private PasswordField contraseñaField;
+
+    private Anchor contraseñaOlvidadaLink;
+
+    private Button iniciarSesionBtn;
+    private Button registrarBtn;
+
     public LoginView() {
         /*
          * // Campos del formulario
@@ -44,7 +59,7 @@ public class LoginView extends VerticalLayout {
         setPadding(false);
 
         // Panel izquierdo: Logo y nombre
-        VerticalLayout panelIzq = new VerticalLayout();
+        panelIzq = new VerticalLayout();
         panelIzq.setWidth("50%");
         panelIzq.setAlignItems(Alignment.CENTER);
         panelIzq.setJustifyContentMode(JustifyContentMode.CENTER);
@@ -53,7 +68,7 @@ public class LoginView extends VerticalLayout {
         panelIzq.add(crearLogo());
 
         // Panel derecho: Formulario de inicio de sesión
-        VerticalLayout panelDer = new VerticalLayout();
+        panelDer = new VerticalLayout();
         panelDer.setWidth("50%");
         panelDer.setAlignItems(Alignment.CENTER);
         panelDer.setJustifyContentMode(JustifyContentMode.CENTER);
@@ -68,7 +83,7 @@ public class LoginView extends VerticalLayout {
 
     private Component crearLogo() {
         // Cargar el logo
-        Image logo = new Image(
+        logo = new Image(
                 "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/be802ceb-49c7-493f-945a-078ed3b6bb4d.jpg/LogoSH.jpg",
                 "Solidarity Hub Logo");
         logo.setWidth("150px");
@@ -77,28 +92,26 @@ public class LoginView extends VerticalLayout {
 
     private Component crearTipoUsuario() {
         // Grupo de botones para seleccionar tipo de usuario
-        RadioButtonGroup<String> tipoUsuario = new RadioButtonGroup<>();
+        tipoUsuario = new RadioButtonGroup<>();
         tipoUsuario.setItems("Voluntario", "Afectado");
         tipoUsuario.setValue("Voluntario"); // Valor predeterminado
         return tipoUsuario;
     }
 
     private Component crearEmailField() {
-        // Email
-        EmailField emailField = new EmailField("Email");
+        emailField = new EmailField("Email");
         emailField.setPlaceholder("ejemplo@correo.com");
         return emailField;
     }
 
     private Component crearContraseñaField() {
-        // Contraseña
-        PasswordField contraseñaField = new PasswordField("Contraseña");
+        contraseñaField = new PasswordField("Contraseña");
         return contraseñaField;
     }
 
     private Component crearIniciarSesionBtn() {
         // Botón: Iniciar Sesión
-        Button iniciarSesionBtn = new Button("Iniciar Sesión", event -> {
+        iniciarSesionBtn = new Button("Iniciar Sesión", event -> {
             handlerIniciarSesionBtn.pulsarIniciarSesionBtn();
         });
         iniciarSesionBtn.getStyle().set("background-color", "black").set("color", "white");
@@ -107,7 +120,7 @@ public class LoginView extends VerticalLayout {
 
     private Component crearRegistrarBtn() {
         // Botón para registrarse si no tiene cuenta
-        Button registrarBtn = new Button("¿No tienes cuenta? Regístrate", event -> {
+        registrarBtn = new Button("¿No tienes cuenta? Regístrate", event -> {
             handlerRegistrarBtn.pulsarRegistrarBtn();
         });
         registrarBtn.getStyle().set("background-color", "white").set("color", "black");
@@ -116,7 +129,7 @@ public class LoginView extends VerticalLayout {
 
     private Component crearContraseñaOlvidadaLink() {
         // Link de contraseña olvidada
-        Anchor contraseñaOlvidadaLink = new Anchor("#", "¿Ha olvidado su contraseña?");
+        contraseñaOlvidadaLink = new Anchor("#", "¿Ha olvidado su contraseña?");
         contraseñaOlvidadaLink.getStyle().set("font-size", "12px").set("color", "#000");
         return contraseñaOlvidadaLink;
     }
