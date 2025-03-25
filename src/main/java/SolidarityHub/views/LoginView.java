@@ -6,13 +6,15 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
-
+import SolidarityHub.utils.handlerIniciarSesionBtn;
+import SolidarityHub.utils.handlerRegistrarBtn;
 
 import aj.org.objectweb.asm.Label;
 
@@ -21,19 +23,20 @@ public class LoginView extends VerticalLayout {
 
     public LoginView() {
         /*
-        // Campos del formulario
-        TextField email = new TextField("Email");
-        PasswordField contraseña = new PasswordField("Contraseña");
-
-        // Botón de envío
-        Button iniciarSesionBtn = new Button("Iniciar Sesión");
-
-        // Alinear los componentes verticalmente
-        add(email, contraseña, iniciarSesionBtn);
-
-        // Centrar el formulario en la vista
-        setHorizontalComponentAlignment(Alignment.CENTER, email, contraseña, iniciarSesionBtn);
-        */
+         * // Campos del formulario
+         * TextField email = new TextField("Email");
+         * PasswordField contraseña = new PasswordField("Contraseña");
+         * 
+         * // Botón de envío
+         * Button iniciarSesionBtn = new Button("Iniciar Sesión");
+         * 
+         * // Alinear los componentes verticalmente
+         * add(email, contraseña, iniciarSesionBtn);
+         * 
+         * // Centrar el formulario en la vista
+         * setHorizontalComponentAlignment(Alignment.CENTER, email, contraseña,
+         * iniciarSesionBtn);
+         */
 
         // Configuración del diseño principal
         setSizeFull();
@@ -46,8 +49,6 @@ public class LoginView extends VerticalLayout {
         panelIzq.setAlignItems(Alignment.CENTER);
         panelIzq.setJustifyContentMode(JustifyContentMode.CENTER);
 
-        
-
         // Agregar logo al panel izquierdo
         panelIzq.add(crearLogo());
 
@@ -57,11 +58,9 @@ public class LoginView extends VerticalLayout {
         panelDer.setAlignItems(Alignment.CENTER);
         panelDer.setJustifyContentMode(JustifyContentMode.CENTER);
 
-
-        
-
         // Agregar componentes al panel derecho
-        panelDer.add(crearTipoUsuario(), crearEmailField(), crearContraseñaField(), crearIniciarSesionBtn(), crearContraseñaOlvidadaLink(), crearRegistrarBtn());
+        panelDer.add(crearTipoUsuario(), crearEmailField(), crearContraseñaField(), crearIniciarSesionBtn(),
+                crearContraseñaOlvidadaLink(), crearRegistrarBtn());
 
         // Agregar paneles al diseño principal
         add(panelIzq, panelDer);
@@ -69,7 +68,9 @@ public class LoginView extends VerticalLayout {
 
     private Component crearLogo() {
         // Cargar el logo
-        Image logo = new Image("https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/be802ceb-49c7-493f-945a-078ed3b6bb4d.jpg/LogoSH.jpg", "Solidarity Hub Logo");
+        Image logo = new Image(
+                "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/be802ceb-49c7-493f-945a-078ed3b6bb4d.jpg/LogoSH.jpg",
+                "Solidarity Hub Logo");
         logo.setWidth("150px");
         return logo;
     }
@@ -98,7 +99,7 @@ public class LoginView extends VerticalLayout {
     private Component crearIniciarSesionBtn() {
         // Botón: Iniciar Sesión
         Button iniciarSesionBtn = new Button("Iniciar Sesión", event -> {
-            UI.getCurrent().navigate("MainView");
+            handlerIniciarSesionBtn.pulsarIniciarSesionBtn();
         });
         iniciarSesionBtn.getStyle().set("background-color", "black").set("color", "white");
         return iniciarSesionBtn;
@@ -107,7 +108,7 @@ public class LoginView extends VerticalLayout {
     private Component crearRegistrarBtn() {
         // Botón para registrarse si no tiene cuenta
         Button registrarBtn = new Button("¿No tienes cuenta? Regístrate", event -> {
-            UI.getCurrent().navigate("RegistroView");
+            handlerRegistrarBtn.pulsarRegistrarBtn();
         });
         registrarBtn.getStyle().set("background-color", "white").set("color", "black");
         return registrarBtn;
@@ -119,4 +120,5 @@ public class LoginView extends VerticalLayout {
         contraseñaOlvidadaLink.getStyle().set("font-size", "12px").set("color", "#000");
         return contraseñaOlvidadaLink;
     }
+
 }
