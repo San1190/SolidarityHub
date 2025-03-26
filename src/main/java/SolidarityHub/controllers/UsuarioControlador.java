@@ -12,33 +12,7 @@ import SolidarityHub.models.Usuario;
 import SolidarityHub.services.UsuarioServicio;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.List;
-import java.util.Optional;
-
-/*
- * import java.util.List;
- 
-@RestController
-@RequestMapping("/api/usuarios")
-public class UsuarioController {
-    private final UsuarioService usuarioService;
- 
-    public UsuarioController(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
-    }
- 
-    @GetMapping
-    public List<Usuario> obtenerUsuarios() {
-        return usuarioService.listarUsuarios();
-    }
- 
-    @PostMapping
-    public Usuario crearUsuario(@RequestBody Usuario usuario) {
-        return usuarioService.guardarUsuario(usuario);
-    }
-}
- */
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -51,62 +25,45 @@ public class UsuarioControlador {
 
     @GetMapping
     public List<Usuario> obtenerUsuarios() {
-        try {
-            return usuarioServicio.listarUsuarios();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error al obtener los usuarios", e);
-        }
+        return usuarioServicio.listarUsuarios();
     }
-
+    
     @PostMapping
-    public Usuario crearUsuario(@RequestBody Usuario usuario) {
-        return usuarioServicio.guardarUsuario(usuario);
+    public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
+        try {
+            Usuario nuevoUsuario = usuarioServicio.guardarUsuario(usuario);
+            return ResponseEntity.ok(nuevoUsuario);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
         usuarioServicio.eliminarUsuario(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ResponseEntity.noContent().build();
     }
-
-    
 
     @PostMapping("/{id}/foto")
     public ResponseEntity<String> subirFoto(@PathVariable Long id, @RequestParam("foto") MultipartFile foto) throws IOException {
         Usuario usuario = usuarioServicio.obtenerUsuarioPorId(id);
-        if (usuario != null) {
-            byte[] fotoBytes = foto.getBytes();
-            usuario.setFoto(fotoBytes);
-            usuarioServicio.guardarUsuario(usuario);
-            return ResponseEntity.ok("Foto subida correctamente.");
-        } else {
+        if (usuario == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado.");
         }
-    }
 
+        usuario.setFoto(foto.getBytes());
+        usuarioServicio.guardarUsuario(usuario);
+        return ResponseEntity.ok("Foto subida correctamente.");
+    }
 
     @GetMapping("/{id}/foto")
     public ResponseEntity<byte[]> obtenerFoto(@PathVariable Long id) throws IOException {
         Usuario usuario = usuarioServicio.obtenerUsuarioPorId(id);
-    
-        if (usuario != null && usuario.getFoto() != null) {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_JPEG) // Esto se debe ajustar según el formato de la imagen guardada
-                    .body(usuario.getFoto());
-        } else {
-            byte[] defaultImage = usuarioServicio.getDefaultProfileImage();
-            return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_PNG) // Ajusta el tipo de contenido a 'image/png' si la imagen por defecto es PNG
-                    .body(defaultImage);
-        }
+
+        byte[] foto = (usuario != null && usuario.getFoto() != null)
+                ? usuario.getFoto()
+                : usuarioServicio.getDefaultProfileImage();
+
+        return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(foto);
     }
-
-    
-
-
-
-
-
-
 }
