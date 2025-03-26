@@ -83,9 +83,9 @@ public class RegistroView extends VerticalLayout {
     private Upload upload;
 
     // Logo
-    private Image logo;
+    //private Image logo;
     // Layout del logo
-    private VerticalLayout panelLogo;
+    //private VerticalLayout panelLogo;
 
     public RegistroView(UsuarioControlador usuarioControlador) {
         this.usuarioControlador = usuarioControlador;
@@ -106,10 +106,10 @@ public class RegistroView extends VerticalLayout {
         configureBinders();
         configureVisibility();
 
-        panelLogo = new VerticalLayout();
-        panelLogo.setWidth("20%");
-        panelLogo.setAlignItems(Alignment.START);
-        panelLogo.setJustifyContentMode(JustifyContentMode.START);
+       // panelLogo = new VerticalLayout();
+       // panelLogo.setWidth("20%");
+       // panelLogo.setAlignItems(Alignment.START);
+       // panelLogo.setJustifyContentMode(JustifyContentMode.START);
     }
 
     private Component createTitle() {
@@ -470,12 +470,12 @@ public class RegistroView extends VerticalLayout {
         upload.getElement().setProperty("files", null);
     }
 
-    private Component crearLogo() {
+   /*  private Component crearLogo() {
         // Cargar el logo
         logo = new Image(
                 "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/be802ceb-49c7-493f-945a-078ed3b6bb4d.jpg/LogoSH.jpg",
                 "Solidarity Hub Logo");
         logo.setWidth("150px");
         return logo;
-    }
+    }*/
 }
