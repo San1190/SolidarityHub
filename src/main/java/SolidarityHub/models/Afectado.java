@@ -7,17 +7,20 @@ import java.util.List;
 @DiscriminatorValue("afectado")
 public class Afectado extends Usuario {
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.PERSIST, orphanRemoval = true)
     @JoinColumn(name = "afectado_id") // Agrega una columna en `Necesidad` para referenciar al `Afectado`
     private List<Necesidad> necesidades;
 
-    public Afectado() {}
+    public Afectado() {}    
 
     public Afectado(String dni, String nombre, String apellidos, String email, String password, String telefono, String direccion, byte[] foto, List<Necesidad> necesidades) {
         super(dni, nombre, apellidos, email, password, telefono, direccion, foto);
         this.necesidades = necesidades;
     }
-
+    public Afectado(String dni, String nombre, String apellidos, String email, String password, String telefono, String direccion, byte[] foto) {
+        super(dni, nombre, apellidos, email, password, telefono, direccion, foto);
+        this.necesidades = null;
+    }
     @Override
     public String getTipoUsuario() {
         return "afectado";
