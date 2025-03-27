@@ -18,6 +18,13 @@ public class UsuarioServicio {
         this.usuarioRepositorio = usuarioRepositorio;
     }
 
+    // Método para obtener usuario por email y tipo
+    public Usuario buscarUsuarioPorEmailYTipo(String email, String tipoUsuario) {
+        return usuarioRepositorio.findByEmailAndTipoUsuario(email, tipoUsuario)
+                .orElse(null);  // Retorna null si no se encuentra
+    }
+
+    // Otros métodos que ya tienes
     public List<Usuario> listarUsuarios() {
         return usuarioRepositorio.findAll();
     }
@@ -43,7 +50,6 @@ public class UsuarioServicio {
     public void eliminarUsuario(Long id) {
         usuarioRepositorio.deleteById(id);
     }
-
 
     public byte[] getDefaultProfileImage() throws IOException {
         Resource defaultImage = new ClassPathResource("static/images/IconoUsuarioPorDefecto.png");

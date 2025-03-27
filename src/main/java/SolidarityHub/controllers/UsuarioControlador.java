@@ -43,6 +43,23 @@ public class UsuarioControlador {
         usuarioServicio.eliminarUsuario(id);
         return ResponseEntity.noContent().build();
     }
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUsuario(@RequestBody Usuario usuario) {
+        System.out.println("Usuario: " + usuario.getEmail() + ", Tipo: " + usuario.getTipoUsuario());
+        Usuario usuarioEncontrado = usuarioServicio.buscarUsuarioPorEmailYTipo(usuario.getEmail(), usuario.getTipoUsuario());
+
+        if (usuarioEncontrado != null && usuarioEncontrado.getPassword().equals(usuario.getPassword())) {
+            // Si las credenciales son correctas
+            return ResponseEntity.ok("Usuario autenticado correctamente");
+        } else {
+            // Si las credenciales no son correctas
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales incorrectas");
+        }
+    }
+
+
+
+
 
     @PostMapping("/{id}/foto")
     public ResponseEntity<String> subirFoto(@PathVariable Long id, @RequestParam("foto") MultipartFile foto) throws IOException {
