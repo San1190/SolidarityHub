@@ -1,10 +1,8 @@
 package SolidarityHub.views;
 
 import SolidarityHub.controllers.UsuarioControlador;
-import SolidarityHub.models.Afectado;
-import SolidarityHub.models.Habilidad;
-import SolidarityHub.models.Voluntario;
-import SolidarityHub.models.Necesidad;
+import SolidarityHub.factories.FabricaUsuario;
+import SolidarityHub.models.*;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Key;
@@ -276,66 +274,44 @@ public class RegistroView extends VerticalLayout {
         // Configurar binder para Voluntario
         voluntarioBinder.forField(dniField)
                 .withValidator(new StringLengthValidator(
-                        "El DNI es obligatorio", 1, null))
-                .bind(Voluntario::getDni, Voluntario::setDni);
+                        "El DNI es obligatorio", 1, null));
 
         voluntarioBinder.forField(nombreField)
                 .withValidator(new StringLengthValidator(
-                        "El nombre es obligatorio", 1, null))
-                .bind(Voluntario::getNombre, Voluntario::setNombre);
+                        "El nombre es obligatorio", 1, null));
 
         voluntarioBinder.forField(apellidosField)
                 .withValidator(new StringLengthValidator(
-                        "Los apellidos son obligatorios", 1, null))
-                .bind(Voluntario::getApellidos, Voluntario::setApellidos);
+                        "Los apellidos son obligatorios", 1, null));
 
         voluntarioBinder.forField(emailField)
                 .withValidator(new EmailValidator(
-                        "Por favor ingrese un email válido"))
-                .bind(Voluntario::getEmail, Voluntario::setEmail);
-
-        voluntarioBinder.forField(telefonoField)
-                .bind(Voluntario::getTelefono, Voluntario::setTelefono);
-
-        voluntarioBinder.forField(direccionField)
-                .bind(Voluntario::getDireccion, Voluntario::setDireccion);
+                        "Por favor ingrese un email válido"));
 
         voluntarioBinder.forField(passwordField)
                 .withValidator(new StringLengthValidator(
-                        "La contraseña debe tener al menos 8 caracteres", 8, null))
-                .bind(Voluntario::getPassword, Voluntario::setPassword);
+                        "La contraseña debe tener al menos 8 caracteres", 8, null));
 
         // Configurar binder para Afectado
         afectadoBinder.forField(dniField)
                 .withValidator(new StringLengthValidator(
-                        "El DNI es obligatorio", 1, null))
-                .bind(Afectado::getDni, Afectado::setDni);
+                        "El DNI es obligatorio", 1, null));
 
         afectadoBinder.forField(nombreField)
                 .withValidator(new StringLengthValidator(
-                        "El nombre es obligatorio", 1, null))
-                .bind(Afectado::getNombre, Afectado::setNombre);
+                        "El nombre es obligatorio", 1, null));
 
         afectadoBinder.forField(apellidosField)
                 .withValidator(new StringLengthValidator(
-                        "Los apellidos son obligatorios", 1, null))
-                .bind(Afectado::getApellidos, Afectado::setApellidos);
+                        "Los apellidos son obligatorios", 1, null));
 
         afectadoBinder.forField(emailField)
                 .withValidator(new EmailValidator(
-                        "Por favor ingrese un email válido"))
-                .bind(Afectado::getEmail, Afectado::setEmail);
-
-        afectadoBinder.forField(telefonoField)
-                .bind(Afectado::getTelefono, Afectado::setTelefono);
-
-        afectadoBinder.forField(direccionField)
-                .bind(Afectado::getDireccion, Afectado::setDireccion);
+                        "Por favor ingrese un email válido"));
 
         afectadoBinder.forField(passwordField)
                 .withValidator(new StringLengthValidator(
-                        "La contraseña debe tener al menos 8 caracteres", 8, null))
-                .bind(Afectado::getPassword, Afectado::setPassword);
+                        "La contraseña debe tener al menos 8 caracteres", 8, null));
     }
 
     private void configureVisibility() {
@@ -360,90 +336,65 @@ public class RegistroView extends VerticalLayout {
             return;
         }
 
-        try {
-            boolean registroExitoso = false;
+        boolean registroExitoso = false;
+        FabricaUsuario fabricaUsuario = new FabricaUsuario();
 
-            if ("Voluntario".equals(tipoUsuarioRadio.getValue())) {
-                Voluntario voluntario = new Voluntario();
-                voluntarioBinder.writeBean(voluntario);
-
-                // Configurar datos específicos de voluntario
-                if (fotoBytes != null) {
-                    voluntario.setFoto(fotoBytes);
+        if ("Voluntario".equals(tipoUsuarioRadio.getValue())) {
+            List<Habilidad> listaHabilidades = new ArrayList<>();
+            if (habilidadesGroup.getValue() != null) {
+                for (String nombreHabilidad : habilidadesGroup.getValue()) {
+                    Habilidad habilidad = Habilidad.valueOf(nombreHabilidad.toUpperCase().replace(" ", "_"));
+                    listaHabilidades.add(habilidad);
                 }
+            }
+            Usuario voluntario = fabricaUsuario.crearUsuario(tipoUsuarioRadio.getValue(), dniField.getValue(), nombreField.getValue(), apellidosField.getValue(),emailField.getValue(),passwordField.getValue(),telefonoField.getValue(),direccionField.getValue(),fotoBytes,null,listaHabilidades, horaInicioField.getValue(),horaFinField.getValue());
 
-                // Convertir habilidades seleccionadas a lista de Habilidad
-                List<Habilidad> listaHabilidades = new ArrayList<>();
-                if (habilidadesGroup.getValue() != null) {
-                    for (String nombreHabilidad : habilidadesGroup.getValue()) {
-                        Habilidad habilidad = Habilidad.valueOf(nombreHabilidad.toUpperCase().replace(" ", "_"));
-                        listaHabilidades.add(habilidad);
-                    }
+            registroExitoso = usuarioControlador.crearUsuario(voluntario) != null;
+        } else {
+
+            //afectadoBinder.writeBean(afectado);
+            List<Necesidad> necesidades = null;
+
+            if (necesidadField.getValue() != null) {
+                necesidades = new ArrayList<>();
+                Necesidad necesidad = new Necesidad();
+
+                // Convert the selected string to the appropriate TipoNecesidad enum value
+                String seleccion = necesidadField.getValue().toUpperCase().replace(" DE ", "_").replace(" ", "_");
+                try {
+                    Necesidad.TipoNecesidad tipoNecesidad = Necesidad.TipoNecesidad.valueOf(seleccion);
+                    necesidad.setTipoNecesidad(tipoNecesidad);
+
+                    // Set default values for other required fields
+                    necesidad.setDescripcion("Necesidad registrada durante el registro de usuario");
+                    necesidad.setEstadoNecesidad(Necesidad.EstadoNecesidad.REGISTRADA);
+                    necesidad.setUrgencia(Necesidad.Urgencia.MEDIA);
+                    necesidad.setUbicacion(direccionField.getValue());
+                    necesidad.setFechaCreacion(LocalDateTime.now());
+
+                    necesidades.add(necesidad);
+                } catch (IllegalArgumentException e) {
+                    // Handle case where the string doesn't match any enum value
+                    Notification.show(
+                            "Error al procesar la necesidad seleccionada. Por favor, seleccione otra opción.",
+                            3000,
+                            Notification.Position.MIDDLE);
                 }
-                voluntario.setHabilidades(listaHabilidades);
-
-                voluntario.setHoraInicioTrabajo(horaInicioField.getValue());
-                voluntario.setHoraFinTrabajo(horaFinField.getValue());
-
-                registroExitoso = usuarioControlador.crearUsuario(voluntario) != null;
-            } else {
-                Afectado afectado = new Afectado();
-                afectadoBinder.writeBean(afectado);
-
-                // Configurar datos específicos de afectado
-                if (fotoBytes != null) {
-                    afectado.setFoto(fotoBytes);
-                }
-
-                if (necesidadField.getValue() != null) {
-                    List<Necesidad> necesidades = new ArrayList<>();
-
-                    // Create a new Necesidad object
-                    Necesidad necesidad = new Necesidad();
-
-                    // Convert the selected string to the appropriate TipoNecesidad enum value
-                    String seleccion = necesidadField.getValue().toUpperCase().replace(" DE ", "_").replace(" ", "_");
-                    try {
-                        Necesidad.TipoNecesidad tipoNecesidad = Necesidad.TipoNecesidad.valueOf(seleccion);
-                        necesidad.setTipoNecesidad(tipoNecesidad);
-
-                        // Set default values for other required fields
-                        necesidad.setDescripcion("Necesidad registrada durante el registro de usuario");
-                        necesidad.setEstadoNecesidad(Necesidad.EstadoNecesidad.REGISTRADA);
-                        necesidad.setUrgencia(Necesidad.Urgencia.MEDIA);
-                        necesidad.setUbicacion(direccionField.getValue());
-                        necesidad.setFechaCreacion(LocalDateTime.now());
-
-                        necesidades.add(necesidad);
-                        afectado.setNecesidades(necesidades);
-                    } catch (IllegalArgumentException e) {
-                        // Handle case where the string doesn't match any enum value
-                        Notification.show(
-                                "Error al procesar la necesidad seleccionada. Por favor, seleccione otra opción.",
-                                3000,
-                                Notification.Position.MIDDLE);
-                    }
-                }
-
-                registroExitoso = usuarioControlador.crearUsuario(afectado) != null;
             }
 
-            if (registroExitoso) {
-                Notification.show("¡Registro exitoso! Puede iniciar sesión ahora.",
-                        3000, Notification.Position.MIDDLE);
-                clearForm();
-                // Redirigir al login
-                UI.getCurrent().navigate("login");
-            } else {
-                Notification notification = Notification.show(
-                        "Error al registrar: El email o DNI ya existe",
-                        3000,
-                        Notification.Position.MIDDLE);
-                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            }
-        } catch (ValidationException e) {
+            Usuario afectado = fabricaUsuario.crearUsuario(tipoUsuarioRadio.getValue(), dniField.getValue(), nombreField.getValue(), apellidosField.getValue(), emailField.getValue(), passwordField.getValue(), telefonoField.getValue(), direccionField.getValue(), fotoBytes, necesidades, null, null, null);
+            registroExitoso = usuarioControlador.crearUsuario(afectado) != null;
+        }
+
+        if (registroExitoso) {
+            Notification.show("¡Registro exitoso! Puede iniciar sesión ahora.",
+                    3000, Notification.Position.MIDDLE);
+            clearForm();
+            // Redirigir al login
+            UI.getCurrent().navigate("login");
+        } else {
             Notification notification = Notification.show(
-                    "Por favor corrija los errores en el formulario: " + e.getMessage(),
+                    "Error al registrar: El email o DNI ya existe",
                     3000,
                     Notification.Position.MIDDLE);
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);

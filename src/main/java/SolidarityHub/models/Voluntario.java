@@ -26,25 +26,6 @@ public class Voluntario extends Usuario {
         this.horaInicioTrabajo = horaInicioTrabajo;
         this.horaFinTrabajo = horaFinTrabajo;
     }
-    public Voluntario(String dni, String nombre, String apellidos, String email, String password, String telefono, String direccion, byte[] foto,  LocalTime horaInicioTrabajo, LocalTime horaFinTrabajo) {
-        super(dni, nombre, apellidos, email, password, telefono, direccion, foto);
-        this.habilidades = null;
-        this.horaInicioTrabajo = horaInicioTrabajo;
-        this.horaFinTrabajo = horaFinTrabajo;
-    }
-    public Voluntario(String dni, String nombre, String apellidos, String email, String password, String telefono, String direccion, byte[] foto, List<Habilidad> habilidades) {
-        super(dni, nombre, apellidos, email, password, telefono, direccion, foto);
-        this.habilidades = habilidades;
-        this.horaInicioTrabajo = null;
-        this.horaFinTrabajo = null;
-    }
-    public Voluntario(String dni, String nombre, String apellidos, String email, String password, String telefono, String direccion, byte[] foto) {
-        super(dni, nombre, apellidos, email, password, telefono, direccion, foto);
-        this.habilidades = null;
-        this.horaInicioTrabajo = null;
-        this.horaFinTrabajo = null;
-    }
-
 
     @Override
     public String getTipoUsuario() {

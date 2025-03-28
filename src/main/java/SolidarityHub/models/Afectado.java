@@ -17,10 +17,7 @@ public class Afectado extends Usuario {
         super(dni, nombre, apellidos, email, password, telefono, direccion, foto);
         this.necesidades = necesidades;
     }
-    public Afectado(String dni, String nombre, String apellidos, String email, String password, String telefono, String direccion, byte[] foto) {
-        super(dni, nombre, apellidos, email, password, telefono, direccion, foto);
-        this.necesidades = null;
-    }
+
     @Override
     public String getTipoUsuario() {
         return "afectado";
