@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import SolidarityHub.models.Usuario;
+import SolidarityHub.models.Voluntario;
+import SolidarityHub.models.Afectado;
 import SolidarityHub.services.UsuarioServicio;
 
 import java.io.IOException;
@@ -23,11 +25,13 @@ public class UsuarioControlador {
         this.usuarioServicio = usuarioServicio;
     }
 
+    // 🔹 Obtener todos los usuarios
     @GetMapping
     public List<Usuario> obtenerUsuarios() {
         return usuarioServicio.listarUsuarios();
     }
-    
+
+    // 🔹 Crear un nuevo usuario
     @PostMapping
     public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
         try {
@@ -38,29 +42,44 @@ public class UsuarioControlador {
         }
     }
 
+    // 🔹 Eliminar usuario por ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
         usuarioServicio.eliminarUsuario(id);
         return ResponseEntity.noContent().build();
     }
+
+    // 🔹 **Método corregido para Login**
     @PostMapping("/login")
     public ResponseEntity<?> loginUsuario(@RequestBody Usuario usuario) {
         System.out.println("Usuario: " + usuario.getEmail() + ", Tipo: " + usuario.getTipoUsuario());
-        Usuario usuarioEncontrado = usuarioServicio.buscarUsuarioPorEmailYTipo(usuario.getEmail(), usuario.getTipoUsuario());
+
+        // 🔹 Convertimos el tipoUsuario de String a Class
+        Class<? extends Usuario> tipoClase = convertirTipoUsuario(usuario.getTipoUsuario());
+        if (tipoClase == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tipo de usuario inválido.");
+        }
+
+        // 🔹 Buscar usuario en la base de datos
+        Usuario usuarioEncontrado = usuarioServicio.buscarUsuarioPorEmailYTipo(usuario.getEmail(), tipoClase);
 
         if (usuarioEncontrado != null && usuarioEncontrado.getPassword().equals(usuario.getPassword())) {
-            // Si las credenciales son correctas
             return ResponseEntity.ok("Usuario autenticado correctamente");
         } else {
-            // Si las credenciales no son correctas
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales incorrectas");
         }
     }
 
+    // 🔹 Método para convertir String a Class<? extends Usuario>
+    private Class<? extends Usuario> convertirTipoUsuario(String tipoUsuario) {
+        return switch (tipoUsuario.toLowerCase()) {
+            case "voluntario" -> Voluntario.class;
+            case "afectado" -> Afectado.class;
+            default -> null;
+        };
+    }
 
-
-
-
+    // 🔹 Subir foto de perfil
     @PostMapping("/{id}/foto")
     public ResponseEntity<String> subirFoto(@PathVariable Long id, @RequestParam("foto") MultipartFile foto) throws IOException {
         Usuario usuario = usuarioServicio.obtenerUsuarioPorId(id);
@@ -73,6 +92,7 @@ public class UsuarioControlador {
         return ResponseEntity.ok("Foto subida correctamente.");
     }
 
+    // 🔹 Obtener foto de perfil del usuario
     @GetMapping("/{id}/foto")
     public ResponseEntity<byte[]> obtenerFoto(@PathVariable Long id) throws IOException {
         Usuario usuario = usuarioServicio.obtenerUsuarioPorId(id);

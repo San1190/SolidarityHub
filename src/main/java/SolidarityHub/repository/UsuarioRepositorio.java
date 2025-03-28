@@ -10,7 +10,7 @@ import SolidarityHub.models.Usuario;
 
 public interface UsuarioRepositorio extends JpaRepository<Usuario, Long> {
     boolean existsByEmail(String email); 
-    @Query("SELECT u FROM Usuario u WHERE u.email = :email AND u.getTipoUsuario() = :tipoUsuario")
-    Optional<Usuario> findByEmailAndTipoUsuario(@Param("email") String email, @Param("tipoUsuario") String tipoUsuario);
 
+    @Query("SELECT u FROM Usuario u WHERE u.email = :email AND TYPE(u) = :tipoUsuario")
+    Optional<Usuario> findByEmailAndTipoUsuario(@Param("email") String email, @Param("tipoUsuario") Class<? extends Usuario> tipoUsuario);
 }
