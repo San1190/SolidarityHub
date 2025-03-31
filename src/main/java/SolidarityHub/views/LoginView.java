@@ -180,7 +180,7 @@ public class LoginView extends VerticalLayout {
                 Notification.show("Credenciales incorrectas");
             }
         } catch (Exception e) {
-            Notification.show("Error al autenticar el usuario: " + e.getMessage());
+            Notification.show("Las credenciales son incorrectas ");
         }
     }
 
