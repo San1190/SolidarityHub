@@ -64,9 +64,9 @@ public class UsuarioControlador {
         Usuario usuarioEncontrado = usuarioServicio.buscarUsuarioPorEmailYTipo(usuario.getEmail(), tipoClase);
 
         if (usuarioEncontrado != null && usuarioEncontrado.getPassword().equals(usuario.getPassword())) {
-            return ResponseEntity.ok("Usuario autenticado correctamente");
+            return ResponseEntity.ok(usuarioEncontrado);
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales incorrectas");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
     }
 

@@ -15,6 +15,9 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.component.notification.Notification;
+
+import java.util.Optional;
+
 import org.springframework.web.client.RestTemplate;
 import SolidarityHub.models.Voluntario;
 import SolidarityHub.utils.handlerRegistrarBtn;
@@ -162,16 +165,15 @@ public class LoginView extends VerticalLayout {
     }
 
     private void autenticarUsuario(Usuario usuario) {
-        // Crear RestTemplate para hacer la solicitud HTTP POST al backend
         RestTemplate restTemplate = new RestTemplate();
         String url = "http://localhost:8080/api/usuarios/login"; // Cambiar por la URL de tu backend
 
         try {
             // Hacer la solicitud POST con los datos del usuario
-            String response = restTemplate.postForObject(url, usuario, String.class);
+            Usuario response = restTemplate.postForObject(url, usuario, Usuario.class);
 
-            if (response.equals("Usuario autenticado correctamente")) {
-                VaadinSession.getCurrent().setAttribute("usuario", usuario);
+            if (response != null) {
+                VaadinSession.getCurrent().setAttribute("usuario", response);
                 UI.getCurrent().navigate("main");
             } else {
                 // Si las credenciales son incorrectas, mostrar error
