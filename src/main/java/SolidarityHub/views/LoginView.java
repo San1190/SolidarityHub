@@ -14,6 +14,7 @@ import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.component.notification.Notification;
 import org.springframework.web.client.RestTemplate;
 import SolidarityHub.models.Voluntario;
+import SolidarityHub.utils.handlerRegistrarBtn;
 import SolidarityHub.models.Afectado;
 import SolidarityHub.models.Usuario;
 
@@ -127,7 +128,7 @@ public class LoginView extends VerticalLayout {
     private void autenticarUsuario(Usuario usuario) {
         // Crear RestTemplate para hacer la solicitud HTTP POST al backend
         RestTemplate restTemplate = new RestTemplate();
-        String url = "http://localhost:8080/api/usuarios/login";  // Cambiar por la URL de tu backend
+        String url = "http://localhost:8080/api/usuarios/login"; // Cambiar por la URL de tu backend
 
         try {
             // Hacer la solicitud POST con los datos del usuario
@@ -148,7 +149,7 @@ public class LoginView extends VerticalLayout {
     private Component crearRegistrarBtn() {
         // Botón para registrarse si no tiene cuenta
         registrarBtn = new Button("¿No tienes cuenta? Regístrate", event -> {
-            // Aquí iría la lógica para abrir la vista de registro
+            handlerRegistrarBtn.pulsarRegistrarBtn();
         });
         registrarBtn.getStyle().set("background-color", "white").set("color", "black");
         return registrarBtn;
@@ -159,5 +160,17 @@ public class LoginView extends VerticalLayout {
         contraseñaOlvidadaLink = new Anchor("#", "¿Ha olvidado su contraseña?");
         contraseñaOlvidadaLink.getStyle().set("font-size", "12px").set("color", "#000");
         return contraseñaOlvidadaLink;
+    }
+
+    public EmailField getEmailField() {
+        return emailField;
+    }
+
+    public PasswordField getContraseñaField() {
+        return contraseñaField;
+    }
+
+    public RadioButtonGroup<String> getTipoUsuario() {
+        return tipoUsuario;
     }
 }

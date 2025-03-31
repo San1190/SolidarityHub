@@ -76,7 +76,7 @@ public class MainView extends VerticalLayout {
             // Botón de cerrar sesión
             Button logoutBtn = new Button("Cerrar Sesión", event -> {
                 VaadinSession.getCurrent().close();
-                UI.getCurrent().navigate("login");
+                UI.getCurrent().navigate("/");
             });
             logoutBtn.getStyle()
                 .set("margin-top", "20px")
