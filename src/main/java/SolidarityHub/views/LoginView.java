@@ -5,6 +5,9 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.login.LoginI18n;
+import com.vaadin.flow.component.login.LoginOverlay;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.textfield.EmailField;
@@ -21,8 +24,9 @@ import SolidarityHub.models.Usuario;
 @Route("/") // Define la ruta accesible en la URL
 public class LoginView extends VerticalLayout {
 
-    private VerticalLayout panelIzq;
-    private VerticalLayout panelDer;
+    private VerticalLayout panel;
+
+    private LoginOverlay loginOverlay;
 
     private Image logo;
 
@@ -42,28 +46,60 @@ public class LoginView extends VerticalLayout {
         setSpacing(false);
         setPadding(false);
 
-        // Panel izquierdo: Logo y nombre
-        panelIzq = new VerticalLayout();
-        panelIzq.setWidth("50%");
-        panelIzq.setAlignItems(Alignment.CENTER);
-        panelIzq.setJustifyContentMode(JustifyContentMode.CENTER);
-
-        // Agregar logo al panel izquierdo
-        panelIzq.add(crearLogo());
-
-        // Panel derecho: Formulario de inicio de sesión
-        panelDer = new VerticalLayout();
-        panelDer.setWidth("50%");
-        panelDer.setAlignItems(Alignment.CENTER);
-        panelDer.setJustifyContentMode(JustifyContentMode.CENTER);
+        // Panel Formulario de inicio de sesión
+        panel = new VerticalLayout();
+        panel.setWidth("50%");
+        panel.setAlignItems(Alignment.CENTER);
+        panel.setJustifyContentMode(JustifyContentMode.CENTER);
 
         // Agregar componentes al panel derecho
-        panelDer.add(crearTipoUsuario(), crearEmailField(), crearContraseñaField(), crearIniciarSesionBtn(),
+        panel.add(crearLogo(), crearTipoUsuario(), crearEmailField(), crearContraseñaField(),
+                crearIniciarSesionBtn(),
                 crearContraseñaOlvidadaLink(), crearRegistrarBtn());
 
+        /*
+         * loginOverlay = new LoginOverlay();
+         * loginOverlay.setI18n(crearLogin());
+         * loginOverlay.setOpened(true);
+         * loginOverlay.setForgotPasswordButtonVisible(true);
+         * 
+         * panelDer.add(loginOverlay);
+         */
+
         // Agregar paneles al diseño principal
-        add(panelIzq, panelDer);
+        add(panel);
+
     }
+
+    /*
+     * private LoginI18n crearLogin() {
+     * LoginI18n i18n = LoginI18n.createDefault();
+     * 
+     * LoginI18n.Header i18nHeader = new LoginI18n.Header();
+     * i18nHeader.setTitle("Bienvenido a SolidarityHub");
+     * i18n.setHeader(i18nHeader);
+     * 
+     * LoginI18n.Form i18nForm = i18n.getForm();
+     * i18nForm.setUsername("Email");
+     * i18nForm.setPassword("Contraseña");
+     * i18nForm.setSubmit("Iniciar Sesión");
+     * i18nForm.setForgotPassword("¿Aún no te has registrado? Regístrate aquí", e ->
+     * {
+     * handlerRegistrarBtn.pulsarRegistrarBtn();
+     * });
+     * i18n.setForm(i18nForm);
+     * 
+     * LoginI18n.ErrorMessage i18nErrorMessage = i18n.getErrorMessage();
+     * i18nErrorMessage.setTitle("Error");
+     * i18nErrorMessage.setMessage("Credenciales incorrectas");
+     * i18n.setErrorMessage(i18nErrorMessage);
+     * 
+     * i18n.setAdditionalInformation("¿Olvidaste tu contraseña?");
+     * 
+     * return i18n;
+     * 
+     * }
+     */
 
     private Component crearLogo() {
         // Cargar el logo

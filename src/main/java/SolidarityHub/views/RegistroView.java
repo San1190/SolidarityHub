@@ -81,17 +81,20 @@ public class RegistroView extends VerticalLayout {
     private Upload upload;
 
     // Logo
-    //private Image logo;
-    // Layout del logo
-    //private VerticalLayout panelLogo;
+    private Image logo;
 
     public RegistroView(UsuarioControlador usuarioControlador) {
+        // Configuración del diseño principal
+        setSizeFull();
+        setSpacing(false);
+        setPadding(false);
+
         this.usuarioControlador = usuarioControlador;
 
         addClassName("registro-view");
         setSizeFull();
-        setAlignItems(Alignment.CENTER);
-        setJustifyContentMode(JustifyContentMode.CENTER);
+        setAlignItems(Alignment.STRETCH);
+        setJustifyContentMode(JustifyContentMode.EVENLY);
 
         add(
                 createTitle(),
@@ -103,11 +106,6 @@ public class RegistroView extends VerticalLayout {
 
         configureBinders();
         configureVisibility();
-
-       // panelLogo = new VerticalLayout();
-       // panelLogo.setWidth("20%");
-       // panelLogo.setAlignItems(Alignment.START);
-       // panelLogo.setJustifyContentMode(JustifyContentMode.START);
     }
 
     private Component createTitle() {
@@ -347,12 +345,15 @@ public class RegistroView extends VerticalLayout {
                     listaHabilidades.add(habilidad);
                 }
             }
-            Usuario voluntario = fabricaUsuario.crearUsuario(tipoUsuarioRadio.getValue(), dniField.getValue(), nombreField.getValue(), apellidosField.getValue(),emailField.getValue(),passwordField.getValue(),telefonoField.getValue(),direccionField.getValue(),fotoBytes,null,listaHabilidades, horaInicioField.getValue(),horaFinField.getValue());
+            Usuario voluntario = fabricaUsuario.crearUsuario(tipoUsuarioRadio.getValue(), dniField.getValue(),
+                    nombreField.getValue(), apellidosField.getValue(), emailField.getValue(), passwordField.getValue(),
+                    telefonoField.getValue(), direccionField.getValue(), fotoBytes, null, listaHabilidades,
+                    horaInicioField.getValue(), horaFinField.getValue());
 
             registroExitoso = usuarioControlador.crearUsuario(voluntario) != null;
         } else {
 
-            //afectadoBinder.writeBean(afectado);
+            // afectadoBinder.writeBean(afectado);
             List<Necesidad> necesidades = null;
 
             if (necesidadField.getValue() != null) {
@@ -382,7 +383,9 @@ public class RegistroView extends VerticalLayout {
                 }
             }
 
-            Usuario afectado = fabricaUsuario.crearUsuario(tipoUsuarioRadio.getValue(), dniField.getValue(), nombreField.getValue(), apellidosField.getValue(), emailField.getValue(), passwordField.getValue(), telefonoField.getValue(), direccionField.getValue(), fotoBytes, necesidades, null, null, null);
+            Usuario afectado = fabricaUsuario.crearUsuario(tipoUsuarioRadio.getValue(), dniField.getValue(),
+                    nombreField.getValue(), apellidosField.getValue(), emailField.getValue(), passwordField.getValue(),
+                    telefonoField.getValue(), direccionField.getValue(), fotoBytes, necesidades, null, null, null);
             registroExitoso = usuarioControlador.crearUsuario(afectado) != null;
         }
 
@@ -421,12 +424,12 @@ public class RegistroView extends VerticalLayout {
         upload.getElement().setProperty("files", null);
     }
 
-   /*  private Component crearLogo() {
+    private Component crearLogo() {
         // Cargar el logo
         logo = new Image(
                 "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/be802ceb-49c7-493f-945a-078ed3b6bb4d.jpg/LogoSH.jpg",
                 "Solidarity Hub Logo");
         logo.setWidth("150px");
         return logo;
-    }*/
+    }
 }

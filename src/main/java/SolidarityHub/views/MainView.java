@@ -1,19 +1,22 @@
 package SolidarityHub.views;
 
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.sidenav.SideNav;
+import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.component.button.Button;
 import org.springframework.beans.factory.annotation.Autowired;
 import SolidarityHub.services.UsuarioServicio;
 import SolidarityHub.models.Usuario;
 import SolidarityHub.models.Voluntario;
-import SolidarityHub.models.Afectado;
+import SolidarityHub.models.Afectado;;
 
 @Route("main")
 public class MainView extends VerticalLayout {
@@ -22,16 +25,16 @@ public class MainView extends VerticalLayout {
     @Autowired
     public MainView(UsuarioServicio usuarioServicio) {
         this.usuarioServicio = usuarioServicio;
-        
+
         Usuario usuarioActual = (Usuario) VaadinSession.getCurrent().getAttribute("usuario");
-        
+
         if (usuarioActual != null) {
             // Main container
             Div mainContainer = new Div();
             mainContainer.getStyle()
-                .set("padding", "20px")
-                .set("max-width", "800px")
-                .set("margin", "0 auto");
+                    .set("padding", "20px")
+                    .set("max-width", "800px")
+                    .set("margin", "0 auto");
 
             // Welcome section
             H1 welcome = new H1("Bienvenido/a a SolidarityHub");
@@ -40,37 +43,35 @@ public class MainView extends VerticalLayout {
             // User info card
             Div userCard = new Div();
             userCard.getStyle()
-                .set("background-color", "#f5f5f5")
-                .set("padding", "20px")
-                .set("border-radius", "8px")
-                .set("margin", "20px 0");
+                    .set("background-color", "#f5f5f5")
+                    .set("padding", "20px")
+                    .set("border-radius", "8px")
+                    .set("margin", "20px 0");
 
             H2 userInfo = new H2("Información del Usuario");
-            
+
             // Agregar información común al usuario
             userCard.add(userInfo);
-            
+
             // Agregar información específica según el tipo de usuario
             if (usuarioActual instanceof Voluntario) {
                 Voluntario voluntario = (Voluntario) usuarioActual;
                 userCard.add(
-                    new Paragraph("Tipo de Usuario: Voluntario"),
-                    new Paragraph("Email: " + voluntario.getEmail()),
-                    new Paragraph("Nombre: " + voluntario.getNombre()),
-                    new Paragraph("Teléfono: " + voluntario.getTelefono()),
-                    // Suponiendo que el método getCapacidades() devuelve un String o lista
-                    new Paragraph("Habilidades: " + voluntario.getHabilidades())
-                );
+                        new Paragraph("Tipo de Usuario: Voluntario"),
+                        new Paragraph("Email: " + voluntario.getEmail()),
+                        new Paragraph("Nombre: " + voluntario.getNombre()),
+                        new Paragraph("Teléfono: " + voluntario.getTelefono()),
+                        // Suponiendo que el método getCapacidades() devuelve un String o lista
+                        new Paragraph("Habilidades: " + voluntario.getHabilidades()));
             } else if (usuarioActual instanceof Afectado) {
                 Afectado afectado = (Afectado) usuarioActual;
                 userCard.add(
-                    new Paragraph("Tipo de Usuario: Afectado"),
-                    new Paragraph("Email: " + afectado.getEmail()),
-                    new Paragraph("Nombre: " + afectado.getNombre()),
-                    new Paragraph("Teléfono: " + afectado.getTelefono()),
-                    // Suponiendo que el método getNecesidades() devuelve un String o lista
-                    new Paragraph("Necesidades: " + afectado.getNecesidades())
-                );
+                        new Paragraph("Tipo de Usuario: Afectado"),
+                        new Paragraph("Email: " + afectado.getEmail()),
+                        new Paragraph("Nombre: " + afectado.getNombre()),
+                        new Paragraph("Teléfono: " + afectado.getTelefono()),
+                        // Suponiendo que el método getNecesidades() devuelve un String o lista
+                        new Paragraph("Necesidades: " + afectado.getNecesidades()));
             }
 
             // Botón de cerrar sesión
@@ -79,9 +80,9 @@ public class MainView extends VerticalLayout {
                 UI.getCurrent().navigate("/");
             });
             logoutBtn.getStyle()
-                .set("margin-top", "20px")
-                .set("background-color", "#f44336")
-                .set("color", "white");
+                    .set("margin-top", "20px")
+                    .set("background-color", "#f44336")
+                    .set("color", "white");
 
             // Agregar todos los componentes al contenedor principal
             mainContainer.add(welcome, userCard, logoutBtn);
@@ -91,6 +92,23 @@ public class MainView extends VerticalLayout {
             setSizeFull();
             setAlignItems(Alignment.CENTER);
             setJustifyContentMode(JustifyContentMode.START);
+
+            // Barra lateral de navegación
+            SideNav nav = new SideNav();
+            nav.setWidth("250px");
+            nav.setHeight("100%");
+            SideNavItem mapasItemsLink = new SideNavItem("Mapas y métricas", "mapas", VaadinIcon.MAP_MARKER.create());
+            SideNavItem gruposAyudaLink = new SideNavItem("Grupos de ayuda", "grupos", VaadinIcon.GROUP.create());
+            SideNavItem InventarioLink = new SideNavItem("Inventario", "inventario", VaadinIcon.CART.create());
+            SideNavItem ListaTareasLink = new SideNavItem("Lista de tareas", "tareas", VaadinIcon.TASKS.create());
+            SideNavItem sobreNosotrosLink = new SideNavItem("Sobre nosotros", "nosotros", VaadinIcon.INFO.create());
+            SideNavItem settingsLink = new SideNavItem("Settings", "configuracion", VaadinIcon.COG.create()); // Replace
+                                                                                                              // with
+                                                                                                              // the
+                                                                                                              // appropriate
+            nav.addItem(mapasItemsLink, gruposAyudaLink, InventarioLink, ListaTareasLink, sobreNosotrosLink,
+                    settingsLink);
+            add(nav);
         } else {
             UI.getCurrent().navigate("login");
         }
