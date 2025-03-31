@@ -116,19 +116,21 @@ public class LoginView extends VerticalLayout {
     private Component crearTipoUsuario() {
         // Grupo de botones para seleccionar tipo de usuario
         tipoUsuario = new RadioButtonGroup<>();
-        tipoUsuario.setItems("Voluntario", "Afectado");
-        tipoUsuario.setValue("Voluntario"); // Valor predeterminado
+        tipoUsuario.setItems("Afectado", "Voluntario");
+        tipoUsuario.setValue("Afectado");
         return tipoUsuario;
     }
 
     private Component crearEmailField() {
         emailField = new EmailField("Email");
         emailField.setPlaceholder("ejemplo@correo.com");
+        emailField.setWidth("300px");
         return emailField;
     }
 
     private Component crearContraseñaField() {
         contraseñaField = new PasswordField("Contraseña");
+        contraseñaField.setWidth("300px");
         return contraseñaField;
     }
 

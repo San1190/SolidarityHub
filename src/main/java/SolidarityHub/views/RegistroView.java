@@ -10,7 +10,6 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
@@ -19,6 +18,7 @@ import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
@@ -29,7 +29,6 @@ import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.validator.EmailValidator;
 import com.vaadin.flow.data.validator.StringLengthValidator;
 import com.vaadin.flow.router.PageTitle;
@@ -39,7 +38,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -71,10 +70,6 @@ public class RegistroView extends VerticalLayout {
     private TimePicker horaInicioField;
     private TimePicker horaFinField;
 
-    // Campos para afectado
-    private Div camposAfectado;
-    private ComboBox<String> necesidadField;
-
     // Foto de perfil
     private byte[] fotoBytes;
     private MemoryBuffer buffer;
@@ -93,16 +88,18 @@ public class RegistroView extends VerticalLayout {
 
         addClassName("registro-view");
         setSizeFull();
-        setAlignItems(Alignment.STRETCH);
+        setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.EVENLY);
 
-        add(
-                createTitle(),
+        add(createTitle(),
                 createTipoUsuarioSelection(),
                 createCommonFields(),
                 createVoluntarioFields(),
-                createAfectadoFields(),
                 createButtonLayout());
+
+        getStyle().set("background-color", "white");
+        setHeightFull();
+        setWidthFull();
 
         configureBinders();
         configureVisibility();
@@ -147,7 +144,7 @@ public class RegistroView extends VerticalLayout {
         // Configurar upload de foto
         buffer = new MemoryBuffer();
         upload = new Upload(buffer);
-        upload.setAcceptedFileTypes("image/jpeg", "image/png", "image/gif");
+        upload.setAcceptedFileTypes("image/jpeg", "image/png", "image/gif", "image/jpg");
         upload.setMaxFileSize(5 * 1024 * 1024); // 5MB
         upload.setDropLabel(new Span("Arrastra y suelta tu foto de perfil aquí"));
         upload.setUploadButton(new Button("Subir foto"));
@@ -182,80 +179,49 @@ public class RegistroView extends VerticalLayout {
 
     private Component createVoluntarioFields() {
         camposVoluntario = new Div();
-        camposVoluntario.setWidth("100%");
+        camposVoluntario.setWidth("600px");
+        VerticalLayout vlayout = new VerticalLayout();
+        vlayout.setMaxWidth("600px");
 
-        FormLayout formLayout = new FormLayout();
-        formLayout.setMaxWidth("600px");
-        formLayout.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("500px", 2));
-
-        H3 titulo = new H3("Información adicional para voluntarios");
+        H3 titulo = new H3("Introduzca sus habilidades y horario");
 
         // Habilidades
         habilidadesGroup = new CheckboxGroup<>();
         habilidadesGroup.setLabel("Habilidades");
 
         habilidadesGroup.setItems(Arrays.asList(
-                "Limpieza",
+                "Primeros Auxilios",
+                "Ayuda Psicología",
                 "Cocina",
-                "Compra de Alimentos",
-                "Distribución de Alimentos",
-                "Transporte de Alimentos",
+                "Limpieza",
+                "Electricista",
+                "Fontanería",
+                "Carpintería",
                 "Lavandería",
-                "Psicología",
-                "Terapia",
-                "Consejería",
-                "Transporte"));
+                "Transporte de Alimentos",
+                "Transporte de Personas"));
 
-        // Disponibilidad horaria
+        HorizontalLayout hlLayout = new HorizontalLayout();
         horaInicioField = new TimePicker("Hora de inicio disponibilidad");
         horaFinField = new TimePicker("Hora de fin disponibilidad");
-
-        formLayout.add(
+        horaInicioField.setWidth("270px");
+        horaFinField.setWidth("270px");
+        horaInicioField.setStep(Duration.ofMinutes(30));
+        horaFinField.setStep(Duration.ofMinutes(30));
+        hlLayout.add(horaInicioField, horaFinField);
+        vlayout.add(
                 titulo,
                 habilidadesGroup,
-                horaInicioField, horaFinField);
-
-        camposVoluntario.add(formLayout);
+                hlLayout);
+        camposVoluntario.add(vlayout);
         return camposVoluntario;
     }
 
-    private Component createAfectadoFields() {
-        camposAfectado = new Div();
-        camposAfectado.setWidth("100%");
-
-        FormLayout formLayout = new FormLayout();
-        formLayout.setMaxWidth("600px");
-        formLayout.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("500px", 2));
-
-        H3 titulo = new H3("Información adicional para afectados");
-
-        // Situación
-        necesidadField = new ComboBox<>();
-        necesidadField.setLabel("Necesidades");
-        necesidadField.setItems(Arrays.asList(
-                "Alimentación",
-                "Salud",
-                "Refugio",
-                "Ropa",
-                "Servicio de Limpieza",
-                "Ayuda Psicológica"));
-
-        formLayout.add(
-                titulo,
-                necesidadField);
-
-        camposAfectado.add(formLayout);
-        return camposAfectado;
-    }
 
     private Component createButtonLayout() {
         Button cancelar = new Button("Cancelar");
         cancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        cancelar.addClickListener(_ -> UI.getCurrent().navigate(""));
+        cancelar.addClickListener(_ -> UI.getCurrent().navigate("/"));
 
         Button registrar = new Button("Registrarse");
         registrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -264,7 +230,7 @@ public class RegistroView extends VerticalLayout {
 
         HorizontalLayout buttonLayout = new HorizontalLayout(cancelar, registrar);
         buttonLayout.setPadding(true);
-
+        buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         return buttonLayout;
     }
 
@@ -313,15 +279,7 @@ public class RegistroView extends VerticalLayout {
     }
 
     private void configureVisibility() {
-        String tipoSeleccionado = tipoUsuarioRadio.getValue();
-
-        if ("Voluntario".equals(tipoSeleccionado)) {
-            camposVoluntario.setVisible(true);
-            camposAfectado.setVisible(false);
-        } else {
-            camposVoluntario.setVisible(false);
-            camposAfectado.setVisible(true);
-        }
+        camposVoluntario.setVisible("Voluntario".equals(tipoUsuarioRadio.getValue()));
     }
 
     private void onRegistrar() {
@@ -334,7 +292,7 @@ public class RegistroView extends VerticalLayout {
             return;
         }
 
-        boolean registroExitoso = false;
+        boolean registroExitoso;
         FabricaUsuario fabricaUsuario = new FabricaUsuario();
 
         if ("Voluntario".equals(tipoUsuarioRadio.getValue())) {
@@ -352,40 +310,9 @@ public class RegistroView extends VerticalLayout {
 
             registroExitoso = usuarioControlador.crearUsuario(voluntario) != null;
         } else {
-
-            // afectadoBinder.writeBean(afectado);
-            List<Necesidad> necesidades = null;
-
-            if (necesidadField.getValue() != null) {
-                necesidades = new ArrayList<>();
-                Necesidad necesidad = new Necesidad();
-
-                // Convert the selected string to the appropriate TipoNecesidad enum value
-                String seleccion = necesidadField.getValue().toUpperCase().replace(" DE ", "_").replace(" ", "_");
-                try {
-                    Necesidad.TipoNecesidad tipoNecesidad = Necesidad.TipoNecesidad.valueOf(seleccion);
-                    necesidad.setTipoNecesidad(tipoNecesidad);
-
-                    // Set default values for other required fields
-                    necesidad.setDescripcion("Necesidad registrada durante el registro de usuario");
-                    necesidad.setEstadoNecesidad(Necesidad.EstadoNecesidad.REGISTRADA);
-                    necesidad.setUrgencia(Necesidad.Urgencia.MEDIA);
-                    necesidad.setUbicacion(direccionField.getValue());
-                    necesidad.setFechaCreacion(LocalDateTime.now());
-
-                    necesidades.add(necesidad);
-                } catch (IllegalArgumentException e) {
-                    // Handle case where the string doesn't match any enum value
-                    Notification.show(
-                            "Error al procesar la necesidad seleccionada. Por favor, seleccione otra opción.",
-                            3000,
-                            Notification.Position.MIDDLE);
-                }
-            }
-
             Usuario afectado = fabricaUsuario.crearUsuario(tipoUsuarioRadio.getValue(), dniField.getValue(),
                     nombreField.getValue(), apellidosField.getValue(), emailField.getValue(), passwordField.getValue(),
-                    telefonoField.getValue(), direccionField.getValue(), fotoBytes, necesidades, null, null, null);
+                    telefonoField.getValue(), direccionField.getValue(), fotoBytes, null, null, null, null);
             registroExitoso = usuarioControlador.crearUsuario(afectado) != null;
         }
 
@@ -394,7 +321,7 @@ public class RegistroView extends VerticalLayout {
                     3000, Notification.Position.MIDDLE);
             clearForm();
             // Redirigir al login
-            UI.getCurrent().navigate("login");
+            UI.getCurrent().navigate("/");
         } else {
             Notification notification = Notification.show(
                     "Error al registrar: El email o DNI ya existe",
@@ -413,19 +340,14 @@ public class RegistroView extends VerticalLayout {
         direccionField.clear();
         passwordField.clear();
         confirmPasswordField.clear();
-
         habilidadesGroup.clear();
         horaInicioField.clear();
         horaFinField.clear();
-
-        necesidadField.clear();
-
         fotoBytes = null;
         upload.getElement().setProperty("files", null);
     }
 
     private Component crearLogo() {
-        // Cargar el logo
         logo = new Image(
                 "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/be802ceb-49c7-493f-945a-078ed3b6bb4d.jpg/LogoSH.jpg",
                 "Solidarity Hub Logo");
