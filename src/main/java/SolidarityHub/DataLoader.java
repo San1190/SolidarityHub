@@ -10,7 +10,7 @@ import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 
-@Component
+/*@Component
 public class DataLoader implements CommandLineRunner {
 
     private final UsuarioRepositorio usuarioRepositorio;
@@ -85,3 +85,4 @@ public class DataLoader implements CommandLineRunner {
         System.out.println("Datos de prueba cargados correctamente.");
     }
 }
+*/

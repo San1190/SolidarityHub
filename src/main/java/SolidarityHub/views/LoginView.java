@@ -10,13 +10,14 @@ import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.component.notification.Notification;
 import org.springframework.web.client.RestTemplate;
 import SolidarityHub.models.Voluntario;
 import SolidarityHub.models.Afectado;
 import SolidarityHub.models.Usuario;
 
-@Route("login") // Define la ruta accesible en la URL
+@Route("/") // Define la ruta accesible en la URL
 public class LoginView extends VerticalLayout {
 
     private VerticalLayout panelIzq;
@@ -133,7 +134,7 @@ public class LoginView extends VerticalLayout {
             String response = restTemplate.postForObject(url, usuario, String.class);
 
             if (response.equals("Usuario autenticado correctamente")) {
-                // Si las credenciales son correctas, redirigir al MainView
+                VaadinSession.getCurrent().setAttribute("usuario", usuario);
                 UI.getCurrent().navigate("main");
             } else {
                 // Si las credenciales son incorrectas, mostrar error
