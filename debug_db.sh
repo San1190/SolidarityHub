@@ -1,5 +1,5 @@
 # Antes de esto ejecutar docker compose up -d
 
-docker exec -it solidarity_mysql mysql -u root -proot -D solidarityprueba
+docker exec -it solidarityhub_mysql mysql -u root -proot -D solidarityhub_db
 
 # Despues ejecutar docker compose down (cuando se quiera eliminar el contenedor)
