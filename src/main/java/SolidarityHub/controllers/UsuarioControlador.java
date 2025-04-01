@@ -32,9 +32,19 @@ public class UsuarioControlador {
     }
 
     // 🔹 Crear un nuevo usuario
-    @PostMapping
+    @PostMapping("/registrar")
     public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
         try {
+            // Verificar si el usuario tiene foto, si no, asignar la foto por defecto
+            if (usuario.getFoto() == null || usuario.getFoto().length == 0) {
+                try {
+                    usuario.setFoto(usuarioServicio.getDefaultProfileImage());
+                } catch (IOException e) {
+                    // Si hay un error al obtener la imagen por defecto, continuamos sin foto
+                    System.err.println("Error al cargar la imagen por defecto: " + e.getMessage());
+                }
+            }
+            
             Usuario nuevoUsuario = usuarioServicio.guardarUsuario(usuario);
             return ResponseEntity.ok(nuevoUsuario);
         } catch (RuntimeException e) {
