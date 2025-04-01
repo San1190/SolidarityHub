@@ -12,7 +12,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin.Minus.Horizontal;
 import SolidarityHub.models.Usuario;
-import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.timepicker.TimePicker;
 /*Imports del autogrid para lista de voluntariados 
 import { AutoGrid } from '@vaadin/hilla-react-crud';
@@ -73,6 +72,11 @@ public class ConfigurationView extends VerticalLayout {
         this.panelDerInferior.setJustifyContentMode(JustifyContentMode.CENTER);
         panelDerInferior.add(crearFormInfo());
 
+        panelIzq.add(panelIzqSuperior, panelIzqInferior);
+        panelDer.add(panelDerSuperior, panelDerInferior);
+
+        add(panelIzq, panelDer);
+
     }
 
     private Component crearHorarioIni() {
@@ -95,7 +99,7 @@ public class ConfigurationView extends VerticalLayout {
 
     private Component crearListaVoluntariados() {
         // return <AutoGrid service={ProductService} model={ProductModel} />;
-        return null;
+        return new VerticalLayout();
     }
 
     private Component crearFormInfo() {

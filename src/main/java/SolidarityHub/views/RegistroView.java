@@ -10,7 +10,6 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
@@ -20,6 +19,7 @@ import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
@@ -36,7 +36,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -251,7 +251,7 @@ public class RegistroView extends VerticalLayout {
         
         habilidadesGroup.setItems(habilidadesNombres);
 
-        // Disponibilidad horaria
+        HorizontalLayout hlLayout = new HorizontalLayout();
         horaInicioField = new TimePicker("Hora de inicio disponibilidad");
         horaFinField = new TimePicker("Hora de fin disponibilidad");
 
@@ -313,6 +313,7 @@ public class RegistroView extends VerticalLayout {
         Button cancelar = new Button("Cancelar");
         cancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         cancelar.addClickListener(_ -> UI.getCurrent().navigate("/"));
+        cancelar.addClickListener(_ -> UI.getCurrent().navigate("/"));
 
         Button registrar = new Button("Registrarse");
         registrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -321,20 +322,12 @@ public class RegistroView extends VerticalLayout {
 
         HorizontalLayout buttonLayout = new HorizontalLayout(cancelar, registrar);
         buttonLayout.setPadding(true);
-
+        buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         return buttonLayout;
     }
 
     private void configureVisibility() {
-        String tipoSeleccionado = tipoUsuarioRadio.getValue();
-
-        if ("Voluntario".equals(tipoSeleccionado)) {
-            camposVoluntario.setVisible(true);
-            camposAfectado.setVisible(false);
-        } else {
-            camposVoluntario.setVisible(false);
-            camposAfectado.setVisible(true);
-        }
+        camposVoluntario.setVisible("Voluntario".equals(tipoUsuarioRadio.getValue()));
     }
 
     private void onRegistrar() {
@@ -453,7 +446,6 @@ public class RegistroView extends VerticalLayout {
         direccionField.clear();
         passwordField.clear();
         confirmPasswordField.clear();
-
         habilidadesGroup.clear();
         horaInicioField.clear();
         horaFinField.clear();
