@@ -13,6 +13,7 @@ import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.component.notification.Notification;
 
@@ -25,6 +26,7 @@ import SolidarityHub.models.Afectado;
 import SolidarityHub.models.Usuario;
 
 @Route("/") // Define la ruta accesible en la URL
+@PageTitle("Login | SolidarityHub")
 public class LoginView extends VerticalLayout {
 
     private VerticalLayout panel;
