@@ -15,6 +15,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
@@ -67,7 +68,7 @@ public class RegistroView extends VerticalLayout {
 
     // Campos para afectado
     private Div camposAfectado;
-    private ComboBox<String> necesidadField;
+    private CheckboxGroup<String> necesidadesGroup;
 
     // Foto de perfil
     private byte[] fotoBytes;
@@ -86,7 +87,6 @@ public class RegistroView extends VerticalLayout {
         this.usuarioControlador = usuarioControlador;
 
         addClassName("registro-view");
-        setSizeFull();
         setAlignItems(Alignment.STRETCH);
         setJustifyContentMode(JustifyContentMode.EVENLY);
 
@@ -141,39 +141,55 @@ public class RegistroView extends VerticalLayout {
 
     private Component createCommonFields() {
         FormLayout formLayout = new FormLayout();
-        formLayout.setMaxWidth("600px");
+        formLayout.setMaxWidth("700px");
+        formLayout.getStyle().set("margin-bottom", "2em");
+        formLayout.getStyle().set("margin-top", "2em");
         formLayout.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("500px", 2));
+                new FormLayout.ResponsiveStep("520px", 2));
 
         dniField = new TextField("DNI");
         dniField.setRequired(true);
-        
+        dniField.setPattern("\\d{8}[A-Za-z]");
+        dniField.setErrorMessage("DNI con letra.");
+
         nombreField = new TextField("Nombre");
         nombreField.setRequired(true);
-        
+        nombreField.setErrorMessage("Nombre no puede estar vacío.");
+
         apellidosField = new TextField("Apellidos");
         apellidosField.setRequired(true);
-        
+        apellidosField.setErrorMessage("Apellidos no pueden estar vacíos.");
+
         emailField = new EmailField("Email");
         emailField.setRequired(true);
-        
+        emailField.setPattern(".*@.*"); // Must contain '@'
+        emailField.setErrorMessage("Email debe contener '@' y no puede estar vacío.");
+
         passwordField = new PasswordField("Contraseña");
         passwordField.setRequired(true);
         passwordField.setMinLength(8);
-        
+        passwordField.setErrorMessage("Contraseña debe tener al menos 8 caracteres.");
+
         confirmPasswordField = new PasswordField("Confirmar contraseña");
         confirmPasswordField.setRequired(true);
-        
-        telefonoField = new TextField("Teléfono");
-        direccionField = new TextField("Dirección");
+        confirmPasswordField.setErrorMessage("Confirmar contraseña no puede estar vacía.");
 
-        // Configurar upload de foto  //TODO: Mirar foto funcionament
+        telefonoField = new TextField("Teléfono");
+        telefonoField.setRequired(true);
+        telefonoField.setPattern("\\d{5,}$");
+        telefonoField.setErrorMessage("Teléfono debe tener al menos 5 digitos.");
+
+        direccionField = new TextField("Dirección");
+        direccionField.setRequired(true);
+        direccionField.setErrorMessage("La dirección no puede estar vacía.");
+
+        // Configurar upload de foto
         buffer = new MemoryBuffer();
         upload = new Upload(buffer);
-        upload.setAcceptedFileTypes("image/jpeg", "image/png", "image/gif");
+        upload.setAcceptedFileTypes("image/jpeg", "image/png");
         upload.setMaxFileSize(5 * 1024 * 1024); // 5MB
-        upload.setDropLabel(new Span("Arrastra y suelta tu foto de perfil aquí"));
+        upload.setDropLabel(new Span("Sube o arrastra tu foto de perfil aquí"));
         upload.setUploadButton(new Button("Subir foto"));
 
         upload.addSucceededListener(_ -> {
@@ -209,12 +225,21 @@ public class RegistroView extends VerticalLayout {
         camposVoluntario.setWidth("100%");
 
         FormLayout formLayout = new FormLayout();
-        formLayout.setMaxWidth("600px");
+        formLayout.setMaxWidth("700px");
         formLayout.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("500px", 2));
+                new FormLayout.ResponsiveStep("520px", 2));
 
+        // Group title and subtitle in a Div
+        Div headerDiv = new Div();
+        headerDiv.setWidthFull();
+        
         H3 titulo = new H3("Información adicional para voluntarios");
+        Paragraph subtitulo = new Paragraph("Podras modificar estos datos más tarde");
+        subtitulo.getStyle().set("font-size", "small");
+        subtitulo.getStyle().set("margin-top", "1em");
+        
+        headerDiv.add(titulo, subtitulo);
 
         // Habilidades
         habilidadesGroup = new CheckboxGroup<>();
@@ -230,10 +255,13 @@ public class RegistroView extends VerticalLayout {
         horaInicioField = new TimePicker("Hora de inicio disponibilidad");
         horaFinField = new TimePicker("Hora de fin disponibilidad");
 
-        formLayout.add(
-                titulo,
-                habilidadesGroup,
-                horaInicioField, horaFinField);
+        formLayout.add(headerDiv, habilidadesGroup);
+        formLayout.setColspan(headerDiv, 1); // Place header in the left column
+        formLayout.setColspan(habilidadesGroup, 1); // Place checkboxes in the right column
+
+        formLayout.add(horaInicioField, horaFinField);
+        formLayout.setColspan(horaInicioField, 1);
+        formLayout.setColspan(horaFinField, 1);
 
         camposVoluntario.add(formLayout);
         return camposVoluntario;
@@ -244,27 +272,38 @@ public class RegistroView extends VerticalLayout {
         camposAfectado.setWidth("100%");
 
         FormLayout formLayout = new FormLayout();
-        formLayout.setMaxWidth("600px");
+        formLayout.setMaxWidth("700px");
         formLayout.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("500px", 2));
+                new FormLayout.ResponsiveStep("520px", 2));
 
-        H3 titulo = new H3("Información adicional para afectados");
-
-        // Situación
-        necesidadField = new ComboBox<>();
-        necesidadField.setLabel("Necesidades");
+        // Group title and subtitle in a Div
+        Div headerDiv = new Div();
+        headerDiv.setWidthFull();
         
-        // Use values from TipoNecesidad enum instead of hardcoded strings
+        H3 titulo = new H3("Información adicional para afectados");
+        Paragraph subtitulo = new Paragraph("Podras modificar estos datos más tarde");
+        subtitulo.getStyle().set("font-size", "small");
+        subtitulo.getStyle().set("margin-top", "1em");
+        
+        headerDiv.add(titulo, subtitulo);
+
+        // Change ComboBox to CheckboxGroup
+        necesidadesGroup = new CheckboxGroup<>();
+        necesidadesGroup.setLabel("Necesidades");
+        
         List<String> necesidadesNombres = Arrays.stream(Necesidad.TipoNecesidad.values())
-                .map(tipo -> tipo.name().replace("_", " "))
+                .map(tipo -> {
+                    String name = tipo.name().replace("_", " ").toLowerCase();
+                    return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+                })
                 .collect(java.util.stream.Collectors.toList());
         
-        necesidadField.setItems(necesidadesNombres);
+        necesidadesGroup.setItems(necesidadesNombres);
 
-        formLayout.add(
-                titulo,
-                necesidadField);
+        formLayout.add(headerDiv, necesidadesGroup);
+        formLayout.setColspan(headerDiv, 1); // Place header in the left column
+        formLayout.setColspan(necesidadesGroup, 1); // Place checkboxes in the right column
 
         camposAfectado.add(formLayout);
         return camposAfectado;
@@ -349,7 +388,7 @@ public class RegistroView extends VerticalLayout {
                 direccionField.getValue(), 
                 fotoBytes, 
                 null, 
-                listaHabilidades,
+                listaHabilidades.isEmpty() ? null : listaHabilidades,
                 horaInicioField.getValue(), 
                 horaFinField.getValue());
 
@@ -357,26 +396,26 @@ public class RegistroView extends VerticalLayout {
     }
 
     private boolean registrarAfectado(FabricaUsuario fabricaUsuario) {
-        List<Necesidad> necesidades = null;
+        List<Necesidad> listaNecesidades = new ArrayList<>();
 
-        if (necesidadField.getValue() != null) {
-            necesidades = new ArrayList<>();
-            Necesidad necesidad = new Necesidad();
+        if (necesidadesGroup.getValue() != null && !necesidadesGroup.getValue().isEmpty()) {
+            for (String nombreNecesidad : necesidadesGroup.getValue()) {
+                Necesidad necesidad = new Necesidad();
+                
+                // Convert selected name to enum
+                Necesidad.TipoNecesidad tipoNecesidad = Necesidad.TipoNecesidad.valueOf(
+                        nombreNecesidad.toUpperCase().replace(" ", "_"));
+                necesidad.setTipoNecesidad(tipoNecesidad);
 
-            // Convertir el nombre seleccionado al enum correspondiente
-            String nombreNecesidad = necesidadField.getValue();
-            Necesidad.TipoNecesidad tipoNecesidad = Necesidad.TipoNecesidad.valueOf(
-                    nombreNecesidad.toUpperCase().replace(" ", "_"));
-            necesidad.setTipoNecesidad(tipoNecesidad);
+                // Set default values
+                necesidad.setDescripcion("Necesidad registrada durante el registro de usuario");
+                necesidad.setEstadoNecesidad(Necesidad.EstadoNecesidad.REGISTRADA);
+                necesidad.setUrgencia(Necesidad.Urgencia.MEDIA);
+                necesidad.setUbicacion(direccionField.getValue());
+                necesidad.setFechaCreacion(LocalDateTime.now());
 
-            // Establecer valores predeterminados
-            necesidad.setDescripcion("Necesidad registrada durante el registro de usuario");
-            necesidad.setEstadoNecesidad(Necesidad.EstadoNecesidad.REGISTRADA);
-            necesidad.setUrgencia(Necesidad.Urgencia.MEDIA);
-            necesidad.setUbicacion(direccionField.getValue());
-            necesidad.setFechaCreacion(LocalDateTime.now());
-
-            necesidades.add(necesidad);
+                listaNecesidades.add(necesidad);
+            }
         }
 
         Usuario afectado = fabricaUsuario.crearUsuario(
@@ -389,7 +428,7 @@ public class RegistroView extends VerticalLayout {
                 telefonoField.getValue(), 
                 direccionField.getValue(), 
                 fotoBytes, 
-                necesidades, 
+                listaNecesidades.isEmpty() ? null : listaNecesidades, 
                 null, 
                 null, 
                 null);
@@ -419,7 +458,7 @@ public class RegistroView extends VerticalLayout {
         horaInicioField.clear();
         horaFinField.clear();
 
-        necesidadField.clear();
+        necesidadesGroup.clear();
 
         fotoBytes = null;
         upload.getElement().setProperty("files", null);
