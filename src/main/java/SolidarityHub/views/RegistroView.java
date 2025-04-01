@@ -36,7 +36,6 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -252,7 +251,6 @@ public class RegistroView extends VerticalLayout {
         
         habilidadesGroup.setItems(habilidadesNombres);
 
-        HorizontalLayout hlLayout = new HorizontalLayout();
         horaInicioField = new TimePicker("Hora de inicio disponibilidad");
         horaFinField = new TimePicker("Hora de fin disponibilidad");
 

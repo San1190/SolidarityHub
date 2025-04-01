@@ -2,9 +2,6 @@ package SolidarityHub.models;
 
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Set;
-
-import org.springframework.cglib.core.Local;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -54,8 +51,4 @@ public class Voluntario extends Usuario {
     public void setHoraFinTrabajo(LocalTime horaFinTrabajo) {
         this.horaFinTrabajo = horaFinTrabajo;
     }
-
-
-
-    
 }

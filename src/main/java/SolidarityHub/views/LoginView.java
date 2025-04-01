@@ -5,9 +5,6 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.login.LoginI18n;
-import com.vaadin.flow.component.login.LoginOverlay;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.textfield.EmailField;
@@ -16,8 +13,6 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.component.notification.Notification;
-
-import java.util.Optional;
 
 import org.springframework.web.client.RestTemplate;
 import SolidarityHub.models.Voluntario;
@@ -30,8 +25,6 @@ import SolidarityHub.models.Usuario;
 public class LoginView extends VerticalLayout {
 
     private VerticalLayout panel;
-
-    private LoginOverlay loginOverlay;
 
     private Image logo;
 
@@ -138,7 +131,7 @@ public class LoginView extends VerticalLayout {
 
     private Component crearIniciarSesionBtn() {
         // Botón: Iniciar Sesión
-        iniciarSesionBtn = new Button("Iniciar Sesión", event -> {
+        iniciarSesionBtn = new Button("Iniciar Sesión", _ -> {
             // Crear el objeto de usuario dependiendo del tipo seleccionado
             String tipoUsuarioSeleccionado = tipoUsuario.getValue();
             Usuario usuario = null;
@@ -190,7 +183,7 @@ public class LoginView extends VerticalLayout {
 
     private Component crearRegistrarBtn() {
         // Botón para registrarse si no tiene cuenta
-        registrarBtn = new Button("¿No tienes cuenta? Regístrate", event -> {
+        registrarBtn = new Button("¿No tienes cuenta? Regístrate", _ -> {
             handlerRegistrarBtn.pulsarRegistrarBtn();
         });
         registrarBtn.getStyle().set("background-color", "white").set("color", "black");

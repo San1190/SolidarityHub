@@ -1,5 +1,5 @@
 package SolidarityHub;
-
+/*
 import SolidarityHub.models.*;
 import SolidarityHub.repository.*;
 import org.springframework.boot.CommandLineRunner;
@@ -10,7 +10,7 @@ import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 
-/*@Component
+@Component
 public class DataLoader implements CommandLineRunner {
 
     private final UsuarioRepositorio usuarioRepositorio;
