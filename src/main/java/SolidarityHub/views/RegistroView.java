@@ -299,77 +299,110 @@ public class RegistroView extends VerticalLayout {
     }
 
     private void onRegistrar() {
-        // Validate that passwords match
+        // Validar que las contraseñas coinciden
         if (!passwordField.getValue().equals(confirmPasswordField.getValue())) {
-            Notification notification = Notification.show(
-                    "Las contraseñas no coinciden",
-                    3000,
-                    Notification.Position.MIDDLE);
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            mostrarError("Las contraseñas no coinciden");
             return;
         }
         
         boolean registroExitoso = false;
         FabricaUsuario fabricaUsuario = new FabricaUsuario();
 
-        if ("Voluntario".equals(tipoUsuarioRadio.getValue())) {
-            List<Habilidad> listaHabilidades = new ArrayList<>();
-            if (habilidadesGroup.getValue() != null) {
-                for (String nombreHabilidad : habilidadesGroup.getValue()) {
-                    Habilidad habilidad = Habilidad.valueOf(nombreHabilidad.toUpperCase().replace(" ", "_"));
-                    listaHabilidades.add(habilidad);
-                }
-            }
-            Usuario voluntario = fabricaUsuario.crearUsuario(tipoUsuarioRadio.getValue(), dniField.getValue(),
-                    nombreField.getValue(), apellidosField.getValue(), emailField.getValue(), passwordField.getValue(),
-                    telefonoField.getValue(), direccionField.getValue(), fotoBytes, null, listaHabilidades,
-                    horaInicioField.getValue(), horaFinField.getValue());
-
-            registroExitoso = usuarioControlador.crearUsuario(voluntario) != null;
-        } else {
-            List<Necesidad> necesidades = null;
-
-            if (necesidadField.getValue() != null) {
-                necesidades = new ArrayList<>();
-                Necesidad necesidad = new Necesidad();
-
-                // Convert the selected string to the appropriate TipoNecesidad enum value
-                // Similar approach as with Habilidad
-                String nombreNecesidad = necesidadField.getValue();
-                Necesidad.TipoNecesidad tipoNecesidad = Necesidad.TipoNecesidad.valueOf(
-                        nombreNecesidad.toUpperCase().replace(" ", "_"));
-                necesidad.setTipoNecesidad(tipoNecesidad);
-
-                // Set default values for other required fields
-                necesidad.setDescripcion("Necesidad registrada durante el registro de usuario");
-                necesidad.setEstadoNecesidad(Necesidad.EstadoNecesidad.REGISTRADA);
-                necesidad.setUrgencia(Necesidad.Urgencia.MEDIA);
-                necesidad.setUbicacion(direccionField.getValue());
-                necesidad.setFechaCreacion(LocalDateTime.now());
-
-                necesidades.add(necesidad);
+        try {
+            if ("Voluntario".equals(tipoUsuarioRadio.getValue())) {
+                registroExitoso = registrarVoluntario(fabricaUsuario);
+            } else {
+                registroExitoso = registrarAfectado(fabricaUsuario);
             }
 
-            Usuario afectado = fabricaUsuario.crearUsuario(tipoUsuarioRadio.getValue(), dniField.getValue(),
-                    nombreField.getValue(), apellidosField.getValue(), emailField.getValue(), passwordField.getValue(),
-                    telefonoField.getValue(), direccionField.getValue(), fotoBytes, necesidades, null, null, null);
+            if (registroExitoso) {
+                Notification.show("¡Registro exitoso! Puede iniciar sesión ahora.",
+                        3000, Notification.Position.MIDDLE);
+                clearForm();
+                // Redirigir al login
+                UI.getCurrent().navigate("login");
+            } else {
+                mostrarError("Error al registrar: El email o DNI ya existe");
+            }
+        } catch (Exception e) {
+            mostrarError("Error en el registro: " + e.getMessage());
+        }
+    }
 
-            registroExitoso = usuarioControlador.crearUsuario(afectado) != null;
+    private boolean registrarVoluntario(FabricaUsuario fabricaUsuario) {
+        List<Habilidad> listaHabilidades = new ArrayList<>();
+        if (habilidadesGroup.getValue() != null) {
+            for (String nombreHabilidad : habilidadesGroup.getValue()) {
+                Habilidad habilidad = Habilidad.valueOf(nombreHabilidad.toUpperCase().replace(" ", "_"));
+                listaHabilidades.add(habilidad);
+            }
+        }
+        
+        Usuario voluntario = fabricaUsuario.crearUsuario(
+                tipoUsuarioRadio.getValue(), 
+                dniField.getValue(),
+                nombreField.getValue(), 
+                apellidosField.getValue(), 
+                emailField.getValue(), 
+                passwordField.getValue(),
+                telefonoField.getValue(), 
+                direccionField.getValue(), 
+                fotoBytes, 
+                null, 
+                listaHabilidades,
+                horaInicioField.getValue(), 
+                horaFinField.getValue());
+
+        return usuarioControlador.crearUsuario(voluntario) != null;
+    }
+
+    private boolean registrarAfectado(FabricaUsuario fabricaUsuario) {
+        List<Necesidad> necesidades = null;
+
+        if (necesidadField.getValue() != null) {
+            necesidades = new ArrayList<>();
+            Necesidad necesidad = new Necesidad();
+
+            // Convertir el nombre seleccionado al enum correspondiente
+            String nombreNecesidad = necesidadField.getValue();
+            Necesidad.TipoNecesidad tipoNecesidad = Necesidad.TipoNecesidad.valueOf(
+                    nombreNecesidad.toUpperCase().replace(" ", "_"));
+            necesidad.setTipoNecesidad(tipoNecesidad);
+
+            // Establecer valores predeterminados
+            necesidad.setDescripcion("Necesidad registrada durante el registro de usuario");
+            necesidad.setEstadoNecesidad(Necesidad.EstadoNecesidad.REGISTRADA);
+            necesidad.setUrgencia(Necesidad.Urgencia.MEDIA);
+            necesidad.setUbicacion(direccionField.getValue());
+            necesidad.setFechaCreacion(LocalDateTime.now());
+
+            necesidades.add(necesidad);
         }
 
-        if (registroExitoso) {
-            Notification.show("¡Registro exitoso! Puede iniciar sesión ahora.",
-                    3000, Notification.Position.MIDDLE);
-            clearForm();
-            // Redirigir al login
-            UI.getCurrent().navigate("/main");
-        } else {
-            Notification notification = Notification.show(
-                    "Error al registrar: El email o DNI ya existe",
-                    3000,
-                    Notification.Position.MIDDLE);
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-        }
+        Usuario afectado = fabricaUsuario.crearUsuario(
+                tipoUsuarioRadio.getValue(), 
+                dniField.getValue(),
+                nombreField.getValue(), 
+                apellidosField.getValue(), 
+                emailField.getValue(), 
+                passwordField.getValue(),
+                telefonoField.getValue(), 
+                direccionField.getValue(), 
+                fotoBytes, 
+                necesidades, 
+                null, 
+                null, 
+                null);
+                
+        return usuarioControlador.crearUsuario(afectado) != null;
+    }
+
+    private void mostrarError(String mensaje) {
+        Notification notification = Notification.show(
+                mensaje,
+                3000,
+                Notification.Position.MIDDLE);
+        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
     }
 
     private void clearForm() {
