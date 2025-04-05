@@ -18,12 +18,20 @@ import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
+import SolidarityHub.models.Usuario;
+import SolidarityHub.services.UsuarioServicio;
+
 @Route(value = "configuracion", layout = MainLayout.class)
 public class ConfigurationView extends VerticalLayout {
 
-    public ConfigurationView() {
+    private final UsuarioServicio usuarioServicio;
+
+    private Usuario usuario;
+
+    public ConfigurationView(UsuarioServicio usuarioServicio) {
+        this.usuarioServicio = usuarioServicio;
+
         // Configuración general de la vista
-        setSizeFull();
         setPadding(false);
         setSpacing(false);
         setAlignItems(Alignment.CENTER);
@@ -32,10 +40,13 @@ public class ConfigurationView extends VerticalLayout {
 
         // Título de la página
         H1 title = new H1("Configuración de Usuario");
-        title.getStyle().set("color", "var(--lumo-primary-color)");
+        title.getStyle().set("color", "var(--lumo-primary-color)").set("padding", "1rem").set("font-size", "2rem")
+                .set("font-weight", "bold").set("text-align", "center");
+        title.getStyle().set("margin-top", "1rem").set("margin-bottom", "1rem");
 
         // Panel contenedor para separar el contenido en dos columnas
-        VerticalLayout panel = new VerticalLayout();
+        HorizontalLayout panel = new HorizontalLayout();
+        panel.setSizeFull();
         panel.setWidth("80%");
         panel.setHeight("auto");
         panel.setSpacing(true);
@@ -45,6 +56,7 @@ public class ConfigurationView extends VerticalLayout {
 
         // Panel izquierdo: Horarios y lista de voluntariados
         VerticalLayout panelIzq = new VerticalLayout();
+        panelIzq.setSizeFull();
         panelIzq.setWidth("100%");
         panelIzq.setSpacing(true);
         panelIzq.setPadding(true);
@@ -56,6 +68,7 @@ public class ConfigurationView extends VerticalLayout {
 
         // Panel derecho: Avatar y formulario de información
         VerticalLayout panelDer = new VerticalLayout();
+        panelDer.setSizeFull();
         panelDer.setWidth("100%");
         panelDer.setSpacing(true);
         panelDer.setPadding(true);
@@ -66,10 +79,11 @@ public class ConfigurationView extends VerticalLayout {
         panelDer.add(crearAvatar(), crearFormInfo());
 
         HorizontalLayout panelBtns = new HorizontalLayout();
+        panelBtns.setSizeFull();
         panelBtns.setWidth("80%");
         panelBtns.setSpacing(true);
         panelBtns.setPadding(true);
-        panelBtns.setJustifyContentMode(JustifyContentMode.CENTER);
+        panelBtns.setJustifyContentMode(JustifyContentMode.END);
         panelBtns.getStyle()
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
                 .set("border-radius", "8px")
@@ -78,10 +92,10 @@ public class ConfigurationView extends VerticalLayout {
         panelBtns.getStyle().set("margin-top", "1rem");
         panelBtns.add(crearGuardarInfoBtn(), crearCancelarBtn());
 
-        panel.add(title, panelIzq, panelDer);
+        panel.add(panelIzq, panelDer);
 
         // Se agregan los componentes principales a la vista
-        add(panel, panelBtns);
+        add(title, panel, panelBtns);
     }
 
     private Component crearDiasHorario() {
@@ -124,9 +138,16 @@ public class ConfigurationView extends VerticalLayout {
         formLayout.setWidthFull();
 
         TextField nombreField = new TextField("Nombre:");
+        // nombreField.setValue(usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getNombre());
+
         TextField apellidosField = new TextField("Apellidos:");
+        // apellidosField.setValue(usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getApellidos());
+
         TextField emailField = new TextField("Email:");
+        // emailField.setValue(usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getEmail());
+
         PasswordField passwordField = new PasswordField("Contraseña:");
+        // passwordField.setValue(usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getPassword());
 
         // Configuración de pasos responsivos para mejorar la disposición en diferentes
         // anchos
@@ -140,9 +161,16 @@ public class ConfigurationView extends VerticalLayout {
 
     private Component crearGuardarInfoBtn() {
         Button guardarBtn = new Button("Guardar Cambios");
+        guardarBtn.getStyle()
+                .set("background-color", "var(--lumo-primary-color)")
+                .set("color", "white")
+                .set("font-weight", "bold")
+                .set("border-radius", "4px")
+                .set("padding", "0.5rem 1rem");
         guardarBtn.addClickListener(event -> {
-            // Lógica para guardar cambios
+            // usuarioServicio.guardarUsuario(usuario); // Guardar cambios en el usuario
             Notification.show("Cambios guardados con éxito.");
+            UI.getCurrent().navigate("main"); // Navegar a la vista principal
         });
         return guardarBtn;
     }
