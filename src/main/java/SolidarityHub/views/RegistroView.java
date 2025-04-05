@@ -89,12 +89,10 @@ public class RegistroView extends VerticalLayout {
                 createTipoUsuarioSelection(),
                 createCommonFields(),
                 createVoluntarioFields(),
-                createButtonLayout()
-            );
+                createButtonLayout());
 
         configureVisibility();
     }
-
 
     private Component createLogo() {
         // Cargar el logo
@@ -102,12 +100,12 @@ public class RegistroView extends VerticalLayout {
                 "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/be802ceb-49c7-493f-945a-078ed3b6bb4d.jpg/LogoSH.jpg",
                 "Solidarity Hub Logo");
         logo.setWidth("150px");
-        
+
         // Center the logo
         HorizontalLayout logoLayout = new HorizontalLayout(logo);
         logoLayout.setWidthFull();
         logoLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-        
+
         return logoLayout;
     }
 
@@ -223,22 +221,22 @@ public class RegistroView extends VerticalLayout {
         // Group title and subtitle in a Div
         Div headerDiv = new Div();
         headerDiv.setWidthFull();
-        
+
         H3 titulo = new H3("Información adicional para voluntarios");
         Paragraph subtitulo = new Paragraph("Podras modificar estos datos más tarde");
         subtitulo.getStyle().set("font-size", "small");
         subtitulo.getStyle().set("margin-top", "1em");
-        
+
         headerDiv.add(titulo, subtitulo);
 
         // Habilidades
         habilidadesGroup = new CheckboxGroup<>();
         habilidadesGroup.setLabel("Habilidades");
-        
+
         List<String> habilidadesNombres = Arrays.stream(Habilidad.values())
                 .map(Habilidad::getNombre)
                 .collect(java.util.stream.Collectors.toList());
-        
+
         habilidadesGroup.setItems(habilidadesNombres);
 
         HorizontalLayout hlLayout = new HorizontalLayout();
@@ -250,7 +248,7 @@ public class RegistroView extends VerticalLayout {
         horaFinField.setWidth("300px");
         hlLayout.add(horaInicioField, horaFinField);
         hlLayout.setAlignItems(Alignment.CENTER);
-        vLayout.add(headerDiv, habilidadesGroup,hlLayout);
+        vLayout.add(headerDiv, habilidadesGroup, hlLayout);
         camposVoluntario.add(vLayout);
         return camposVoluntario;
     }
@@ -281,7 +279,7 @@ public class RegistroView extends VerticalLayout {
             mostrarError("Las contraseñas no coinciden");
             return;
         }
-        
+
         boolean registroExitoso = false;
         FabricaUsuario fabricaUsuario = new FabricaUsuario();
 
@@ -296,8 +294,8 @@ public class RegistroView extends VerticalLayout {
                 Notification.show("¡Registro exitoso! Puede iniciar sesión ahora.",
                         3000, Notification.Position.MIDDLE);
                 clearForm();
-                // Redirigir al login
-                UI.getCurrent().navigate("login");
+
+                UI.getCurrent().navigate("/src");
             } else {
                 mostrarError("Error al registrar: El email o DNI ya existe");
             }
@@ -314,20 +312,20 @@ public class RegistroView extends VerticalLayout {
                 listaHabilidades.add(habilidad);
             }
         }
-        
+
         Usuario voluntario = fabricaUsuario.crearUsuario(
-                tipoUsuarioRadio.getValue(), 
+                tipoUsuarioRadio.getValue(),
                 dniField.getValue(),
-                nombreField.getValue(), 
-                apellidosField.getValue(), 
-                emailField.getValue(), 
+                nombreField.getValue(),
+                apellidosField.getValue(),
+                emailField.getValue(),
                 passwordField.getValue(),
-                telefonoField.getValue(), 
-                direccionField.getValue(), 
-                fotoBytes, 
-                null, 
+                telefonoField.getValue(),
+                direccionField.getValue(),
+                fotoBytes,
+                null,
                 listaHabilidades.isEmpty() ? null : listaHabilidades,
-                horaInicioField.getValue(), 
+                horaInicioField.getValue(),
                 horaFinField.getValue());
 
         RestTemplate restTemplate = new RestTemplate();
@@ -339,18 +337,18 @@ public class RegistroView extends VerticalLayout {
 
     private boolean registrarAfectado(FabricaUsuario fabricaUsuario) {
         Usuario afectado = fabricaUsuario.crearUsuario(
-                tipoUsuarioRadio.getValue(), 
+                tipoUsuarioRadio.getValue(),
                 dniField.getValue(),
-                nombreField.getValue(), 
-                apellidosField.getValue(), 
-                emailField.getValue(), 
+                nombreField.getValue(),
+                apellidosField.getValue(),
+                emailField.getValue(),
                 passwordField.getValue(),
-                telefonoField.getValue(), 
-                direccionField.getValue(), 
-                fotoBytes, 
+                telefonoField.getValue(),
+                direccionField.getValue(),
+                fotoBytes,
                 null,
                 null,
-                null, 
+                null,
                 null);
 
         RestTemplate restTemplate = new RestTemplate();
