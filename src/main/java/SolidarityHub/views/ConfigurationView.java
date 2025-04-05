@@ -2,6 +2,9 @@ package SolidarityHub.views;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.checkbox.CheckboxGroup;
+import com.vaadin.flow.component.checkbox.CheckboxGroupVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -43,7 +46,7 @@ public class ConfigurationView extends VerticalLayout {
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
                 .set("border-radius", "8px")
                 .set("padding", "1rem");
-        panelIzq.add(crearHorarioIni(), crearHorarioFin(), crearListaVoluntariados());
+        panelIzq.add(crearDiasHorario(), crearTurnoHorario(), crearListaVoluntariados());
 
         // Panel derecho: Avatar y formulario de información
         VerticalLayout panelDer = new VerticalLayout();
@@ -62,16 +65,21 @@ public class ConfigurationView extends VerticalLayout {
         add(title, panel);
     }
 
-    private Component crearHorarioIni() {
-        TimePicker timePicker = new TimePicker("Desde:");
-        timePicker.setWidthFull();
-        return timePicker;
+    private Component crearDiasHorario() {
+        CheckboxGroup<String> checkboxGroup = new CheckboxGroup<>();
+        checkboxGroup.setLabel("Días de la semana disponible:");
+        checkboxGroup.setItems("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo");
+        checkboxGroup.select("Order ID", "Customer");
+        checkboxGroup.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
+        return checkboxGroup;
     }
 
-    private Component crearHorarioFin() {
-        TimePicker timePicker = new TimePicker("Hasta:");
-        timePicker.setWidthFull();
-        return timePicker;
+    private Component crearTurnoHorario() {
+        ComboBox<String> comboBox = new ComboBox<>("Turno de disponibilidad:");
+        comboBox.setItems("Mañana", "Tarde", "Día Entero");
+        comboBox.setPlaceholder("Selecciona un turno");
+        comboBox.setClearButtonVisible(true);
+        return comboBox;
     }
 
     private Component crearAvatar() {

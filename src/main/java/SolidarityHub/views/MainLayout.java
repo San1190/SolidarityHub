@@ -4,6 +4,7 @@ import SolidarityHub.models.Usuario;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
@@ -45,8 +46,9 @@ public class MainLayout extends AppLayout implements RouterLayout {
         nav.setWidthFull();
 
         // Crear ítems de navegación
-        SideNavItem mainItem = new SideNavItem("Main", "main");
-        SideNavItem configItem = new SideNavItem("Configuración", "configuracion");
+        SideNavItem mainItem = new SideNavItem("Main", "main", VaadinIcon.MAP_MARKER.create());
+        SideNavItem configItem = new SideNavItem("Configuración", "configuracion", VaadinIcon.COG.create());
+        //configItem.setVisible(usuario.getRol().equals("admin") || usuario.getRol().equals("coordinador"));
         
 
         SideNavItem logoutItem = new SideNavItem("Cerrar Sesión", "");
