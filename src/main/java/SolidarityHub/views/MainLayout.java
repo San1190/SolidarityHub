@@ -48,14 +48,16 @@ public class MainLayout extends AppLayout implements RouterLayout {
         // Crear ítems de navegación
         SideNavItem mainItem = new SideNavItem("Main", "main", VaadinIcon.MAP_MARKER.create());
         SideNavItem configItem = new SideNavItem("Configuración", "configuracion", VaadinIcon.COG.create());
-        //configItem.setVisible(usuario.getRol().equals("admin") || usuario.getRol().equals("coordinador"));
-        
+        // configItem.setVisible(usuario.getRol().equals("admin") ||
+        // usuario.getRol().equals("coordinador"));
 
-        SideNavItem logoutItem = new SideNavItem("Cerrar Sesión", "");
+        
+        SideNavItem logoutItem = new SideNavItem("Cerrar Sesión", "", VaadinIcon.SIGN_OUT.create());
         logoutItem.getElement().addEventListener("click", event -> {
-            VaadinSession.getCurrent().close();
-            UI.getCurrent().navigate("/");
+        VaadinSession.getCurrent().close();
+        UI.getCurrent().navigate("/");
         });
+        
 
         // Resaltar el ítem activo según la ruta actual
         String currentRoute = UI.getCurrent().getInternals().getActiveViewLocation().getPath();
