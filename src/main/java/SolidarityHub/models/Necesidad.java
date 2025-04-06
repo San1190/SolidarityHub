@@ -53,7 +53,7 @@ public class Necesidad {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public TipoNecesidad geTipoNecesidad() { return tipoNecesidad; }
+    public TipoNecesidad getTipoNecesidad() { return tipoNecesidad; }
     public void setTipoNecesidad(TipoNecesidad tipoNecesidad) { this.tipoNecesidad = tipoNecesidad; }
 
     public String getDescripcion() { return descripcion; }
@@ -72,4 +72,4 @@ public class Necesidad {
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
 
 
-} 
+}

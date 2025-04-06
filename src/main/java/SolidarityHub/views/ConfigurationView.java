@@ -18,6 +18,8 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import SolidarityHub.models.Usuario;
+import SolidarityHub.models.Afectado;
+import SolidarityHub.models.Necesidad;
 import SolidarityHub.services.UsuarioServicio;
 
 import org.springframework.web.client.RestTemplate;
@@ -26,6 +28,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.ArrayList;
+import java.time.LocalDateTime;
 
 @Route(value = "configuracion", layout = MainLayout.class)
 public class ConfigurationView extends VerticalLayout {
@@ -203,7 +208,41 @@ public class ConfigurationView extends VerticalLayout {
         // Usamos un CheckboxGroup para que el usuario seleccione sus necesidades
         necesidadesGroup = new CheckboxGroup<>();
         necesidadesGroup.setLabel("Selecciona tus Necesidades:");
-        necesidadesGroup.setItems("Alimentación", "Vestimenta", "Alojamiento", "Asesoría Legal", "Salud");
+        
+        // Usamos los valores del enum TipoNecesidad
+        necesidadesGroup.setItems(
+            SolidarityHub.models.Necesidad.TipoNecesidad.PRIMEROS_AUXILIOS.toString(),
+            SolidarityHub.models.Necesidad.TipoNecesidad.MEDICAMENTOS.toString(),
+            SolidarityHub.models.Necesidad.TipoNecesidad.ALIMENTACION.toString(),
+            SolidarityHub.models.Necesidad.TipoNecesidad.ALIMENTACION_BEBE.toString(),
+            SolidarityHub.models.Necesidad.TipoNecesidad.REFUGIO.toString(),
+            SolidarityHub.models.Necesidad.TipoNecesidad.ROPA.toString(),
+            SolidarityHub.models.Necesidad.TipoNecesidad.SERVICIO_LIMPIEZA.toString(),
+            SolidarityHub.models.Necesidad.TipoNecesidad.AYUDA_PSICOLOGICA.toString(),
+            SolidarityHub.models.Necesidad.TipoNecesidad.AYUDA_CARPINTERIA.toString(),
+            SolidarityHub.models.Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD.toString(),
+            SolidarityHub.models.Necesidad.TipoNecesidad.AYUDA_FONTANERIA.toString(),
+            SolidarityHub.models.Necesidad.TipoNecesidad.MATERIAL_HIGENE.toString()
+        );
+        
+        // Si el usuario es un afectado, marcamos las necesidades que ya tiene
+        if (usuario instanceof Afectado) {
+            Afectado afectado = (Afectado) usuario;
+            if (afectado.getNecesidades() != null && !afectado.getNecesidades().isEmpty()) {
+                // Convertimos las necesidades del usuario a strings para marcarlas en el checkbox
+                Set<String> necesidadesSeleccionadas = new HashSet<>();
+                for (Necesidad necesidad : afectado.getNecesidades()) {
+                    if (necesidad.getTipoNecesidad() != null) {
+                        necesidadesSeleccionadas.add(necesidad.getTipoNecesidad().toString());
+                    }
+                }
+                // Establecer las necesidades seleccionadas en el grupo de checkboxes
+                if (!necesidadesSeleccionadas.isEmpty()) {
+                    necesidadesGroup.setValue(necesidadesSeleccionadas);
+                }
+            }
+        }
+        
         necesidadesGroup.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
         return necesidadesGroup;
     }
@@ -213,10 +252,31 @@ public class ConfigurationView extends VerticalLayout {
         lista.setWidthFull();
         lista.setSpacing(true);
         lista.getStyle().set("padding", "0.5rem");
-        // Aquí se mostraría la lista de necesidades seleccionadas del usuario.
-        lista.add("Lista de Necesidades: ");
-        // Por ejemplo, si el usuario tiene una lista de necesidades:
-        // usuario.getNecesidades().forEach(n -> lista.add(n));
+        
+        // Título de la sección
+        lista.add("Lista de Necesidades Actuales: ");
+        
+        // Si el usuario es un afectado, mostramos sus necesidades actuales
+        if (usuario instanceof Afectado) {
+            Afectado afectado = (Afectado) usuario;
+            if (afectado.getNecesidades() != null && !afectado.getNecesidades().isEmpty()) {
+                // Creamos una lista con las necesidades actuales
+                for (Necesidad necesidad : afectado.getNecesidades()) {
+                    if (necesidad.getTipoNecesidad() != null) {
+                        String descripcionAdicional = necesidad.getDescripcion() != null && !necesidad.getDescripcion().isEmpty() 
+                            ? " - " + necesidad.getDescripcion() : "";
+                        String urgenciaInfo = necesidad.getUrgencia() != null ? " (Urgencia: " + necesidad.getUrgencia() + ")" : "";
+                        
+                        lista.add(necesidad.getTipoNecesidad().toString() + descripcionAdicional + urgenciaInfo);
+                    }
+                }
+            } else {
+                lista.add("No tienes necesidades registradas actualmente.");
+            }
+        } else {
+            lista.add("No disponible para este tipo de usuario.");
+        }
+        
         return lista;
     }
 
@@ -270,6 +330,46 @@ public class ConfigurationView extends VerticalLayout {
             usuario.setApellidos(apellidosField.getValue());
             usuario.setEmail(emailField.getValue());
             usuario.setPassword(passwordField.getValue());
+            
+            // Si el usuario es un afectado, actualizar sus necesidades
+            if (usuario instanceof Afectado && necesidadesGroup != null) {
+                Afectado afectado = (Afectado) usuario;
+                
+                // Obtener las necesidades seleccionadas del CheckboxGroup
+                Set<String> necesidadesSeleccionadas = necesidadesGroup.getValue();
+                
+                // Limpiar la lista actual de necesidades
+                if (afectado.getNecesidades() == null) {
+                    afectado.setNecesidades(new ArrayList<>());
+                } else {
+                    afectado.getNecesidades().clear();
+                }
+                
+                // Crear nuevas necesidades basadas en las selecciones
+                for (String tipoNecesidadStr : necesidadesSeleccionadas) {
+                    try {
+                        // Convertir el string al enum TipoNecesidad
+                        Necesidad.TipoNecesidad tipoNecesidad = Necesidad.TipoNecesidad.valueOf(tipoNecesidadStr);
+                        
+                        // Crear una nueva necesidad con valores predeterminados
+                        Necesidad nuevaNecesidad = new Necesidad(
+                            tipoNecesidad,
+                            "Necesidad de " + tipoNecesidadStr,
+                            Necesidad.EstadoNecesidad.REGISTRADA,
+                            Necesidad.Urgencia.MEDIA,
+                            afectado.getDireccion(), // Usar la dirección del afectado
+                            LocalDateTime.now() // Fecha actual
+                        );
+                        
+                        // Agregar la necesidad a la lista del afectado
+                        afectado.getNecesidades().add(nuevaNecesidad);
+                    } catch (IllegalArgumentException e) {
+                        // Manejar el caso en que el string no coincida con ningún valor del enum
+                        Notification.show("Error al procesar la necesidad: " + tipoNecesidadStr, 
+                            3000, Notification.Position.BOTTOM_CENTER);
+                    }
+                }
+            }
             
             // Llamar al endpoint REST para actualizar el usuario
             RestTemplate restTemplate = new RestTemplate();
