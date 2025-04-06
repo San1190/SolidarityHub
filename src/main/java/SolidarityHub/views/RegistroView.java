@@ -89,7 +89,8 @@ public class RegistroView extends VerticalLayout {
                 createTipoUsuarioSelection(),
                 createCommonFields(),
                 createVoluntarioFields(),
-                createButtonLayout());
+                createButtonLayout()
+                );
 
         configureVisibility();
     }
@@ -271,7 +272,16 @@ public class RegistroView extends VerticalLayout {
     }
 
     private void configureVisibility() {
-        camposVoluntario.setVisible("Voluntario".equals(tipoUsuarioRadio.getValue()));
+        boolean isVoluntario = "Voluntario".equals(tipoUsuarioRadio.getValue());
+        camposVoluntario.setVisible(isVoluntario);
+        
+        if (isVoluntario) {
+            setPadding(true);
+            getStyle().set("padding-bottom", "1500px");
+        } else {
+            setPadding(false);
+            getStyle().remove("padding-top");
+        }
     }
 
     private void onRegistrar() {
