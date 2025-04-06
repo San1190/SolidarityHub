@@ -38,10 +38,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Route("registro")
 @PageTitle("Registro | SolidarityHub")
@@ -74,24 +74,46 @@ public class RegistroView extends VerticalLayout {
 
     public RegistroView(UsuarioControlador usuarioControlador) {
         setSizeFull();
-        setSpacing(true);
-        setPadding(true);
+        setSpacing(false);
+        setPadding(false);
+        setAlignItems(Alignment.CENTER);
+        
+        getElement().getStyle().set("background", "white");
+        getElement().getStyle().set("height", "100%");
+        getElement().getStyle().set("width", "100vw");
+        getElement().getStyle().set("margin", "auto");
+        getElement().getStyle().set("padding", "0");
+        getElement().getStyle().set("box-shadow", "none");
 
+        getElement().executeJs(
+            "document.documentElement.style.background = 'white';" +
+            "document.body.style.background = 'white';" +
+            "this.parentNode.style.background = 'white';"
+        );
+        
         this.usuarioControlador = usuarioControlador;
 
-        addClassName("registro-view");
-        setAlignItems(Alignment.CENTER);
-        setJustifyContentMode(JustifyContentMode.EVENLY);
-
-        add(
-                createLogo(),
-                createTitle(),
-                createTipoUsuarioSelection(),
-                createCommonFields(),
-                createVoluntarioFields(),
-                createButtonLayout()
-                );
-
+        Div formCard = new Div();
+        formCard.addClassName("form-card");
+        formCard.getStyle()
+            .set("background-color", "white")
+            .set("border-radius", "12px")
+            .set("box-shadow", "0 8px 24px rgba(0,0,0,0.1)")
+            .set("padding", "2em")
+            .set("max-width", "800px")
+            .set("width", "100%")
+            .set("margin", "2em auto");
+            
+        formCard.add(
+            createLogo(),
+            createTitle(),
+            createTipoUsuarioSelection(),
+            createCommonFields(),
+            createVoluntarioFields(),
+            createButtonLayout()
+        );
+        
+        add(formCard);
         configureVisibility();
     }
 
@@ -115,6 +137,12 @@ public class RegistroView extends VerticalLayout {
         title.addClassNames(
                 LumoUtility.Margin.NONE,
                 LumoUtility.FontSize.XXXLARGE);
+        title.getStyle()
+            .set("color", "#2c3e50")
+            .set("text-align", "center")
+            .set("margin-bottom", "1em")
+            .set("margin-top", "1em")
+            .set("font-weight", "600");
         return title;
     }
 
@@ -126,7 +154,14 @@ public class RegistroView extends VerticalLayout {
         tipoUsuarioRadio.addValueChangeListener(_ -> {
             configureVisibility();
         });
-
+        
+        // Style the radio group
+        tipoUsuarioRadio.getStyle()
+            .set("margin-bottom", "2em")
+            .set("border-radius", "8px")
+            .set("padding", "2em 10em")
+            .set("background-color", "rgba(52, 152, 219, 0.05)");
+            
         return tipoUsuarioRadio;
     }
 
@@ -201,6 +236,23 @@ public class RegistroView extends VerticalLayout {
             }
         });
 
+        // Add styles to form fields
+        Stream.of(dniField, nombreField, apellidosField, emailField, 
+                  passwordField, confirmPasswordField, telefonoField, direccionField)
+            .forEach(field -> {
+                field.getStyle()
+                    .set("border-radius", "6px")
+                    .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
+                    .set("--lumo-primary-color", "#3498db");
+            });
+            
+        // Style upload component
+        upload.getStyle()
+            .set("border", "2px dashed #3498db")
+            .set("border-radius", "8px")
+            .set("padding", "1em")
+            .set("background-color", "rgba(52, 152, 219, 0.05)");
+
         formLayout.add(
                 dniField, nombreField,
                 apellidosField, emailField,
@@ -216,7 +268,6 @@ public class RegistroView extends VerticalLayout {
         camposVoluntario.setWidth("100%");
 
         VerticalLayout vLayout = new VerticalLayout();
-        FormLayout formLayout = new FormLayout();
         vLayout.setMaxWidth("700px");
 
         // Group title and subtitle in a Div
@@ -229,6 +280,10 @@ public class RegistroView extends VerticalLayout {
         subtitulo.getStyle().set("margin-top", "1em");
 
         headerDiv.add(titulo, subtitulo);
+        
+        titulo.getStyle()
+            .set("color", "#2c3e50")
+            .set("margin", "0");
 
         // Habilidades
         habilidadesGroup = new CheckboxGroup<>();
@@ -240,6 +295,11 @@ public class RegistroView extends VerticalLayout {
 
         habilidadesGroup.setItems(habilidadesNombres);
 
+        habilidadesGroup.getStyle()
+            .set("background-color", "rgba(236, 240, 243, 0.5)")
+            .set("padding", "1em")
+            .set("border-radius", "8px");
+
         HorizontalLayout hlLayout = new HorizontalLayout();
         horaInicioField = new TimePicker("Hora de inicio disponibilidad");
         horaFinField = new TimePicker("Hora de fin disponibilidad");
@@ -247,6 +307,13 @@ public class RegistroView extends VerticalLayout {
         horaFinField.setStep(Duration.ofMinutes(30));
         horaInicioField.setWidth("300px");
         horaFinField.setWidth("300px");
+
+        Stream.of(horaInicioField, horaFinField)
+            .forEach(field -> {
+                field.getStyle()
+                    .set("--lumo-primary-color", "#3498db");
+            });
+
         hlLayout.add(horaInicioField, horaFinField);
         hlLayout.setAlignItems(Alignment.CENTER);
         vLayout.add(headerDiv, habilidadesGroup, hlLayout);
@@ -265,23 +332,32 @@ public class RegistroView extends VerticalLayout {
         registrar.addClickShortcut(Key.ENTER);
         registrar.addClickListener(_ -> onRegistrar());
 
+        registrar.getStyle()
+            .set("background-color", "#3498db")
+            .set("color", "white")
+            .set("border-radius", "6px")
+            .set("font-weight", "600")
+            .set("box-shadow", "0 4px 6px rgba(52, 152, 219, 0.2)")
+            .set("transition", "transform 0.1s ease-in-out");
+            
+        registrar.getElement().addEventListener("mouseover", _ -> 
+            registrar.getStyle().set("transform", "translateY(-2px)"));
+            
+        registrar.getElement().addEventListener("mouseout", _ -> 
+            registrar.getStyle().set("transform", "translateY(0)"));
+
         HorizontalLayout buttonLayout = new HorizontalLayout(cancelar, registrar);
         buttonLayout.setPadding(true);
         buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        buttonLayout.getStyle()
+            .set("margin-top", "2em");
+            
         return buttonLayout;
     }
 
     private void configureVisibility() {
         boolean isVoluntario = "Voluntario".equals(tipoUsuarioRadio.getValue());
         camposVoluntario.setVisible(isVoluntario);
-        
-        if (isVoluntario) {
-            setPadding(true);
-            getStyle().set("padding-bottom", "1500px");
-        } else {
-            setPadding(false);
-            getStyle().remove("padding-top");
-        }
     }
 
     private void onRegistrar() {
