@@ -6,6 +6,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -74,6 +75,7 @@ public class LoginView extends VerticalLayout {
         // Añadir componentes al card
         formCard.add(
             crearLogo(),
+            createSeparador(),
             crearTitulo(),
             crearTipoUsuario(),
             crearEmailField(),
@@ -87,6 +89,33 @@ public class LoginView extends VerticalLayout {
         add(formCard);
     }
 
+    private Component crearLogo() {
+        // Cargar el logo
+        logo = new Image(
+                "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/7dcef7b2-6389-45f4-9961-8741a558c286.png/LogoSH-transparent.png",
+                "Solidarity Hub Logo");
+        logo.setWidth("220px");
+        
+        // Center the logo
+        HorizontalLayout logoLayout = new HorizontalLayout(logo);
+        logoLayout.setWidthFull();
+        logoLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        
+        return logoLayout;
+    }
+
+    private Component createSeparador() {
+        Hr separador = new Hr();
+        separador.getStyle()
+            .set("margin-top", "2.2em")
+            .set("margin-bottom", "1.2em")
+            .set("width", "100%")
+            .set("border", "none")
+            .set("height", "2px")
+            .set("background-color", "rgba(52, 152, 219, 0.3)");
+        return separador;
+    }
+
     private Component crearTitulo() {
         H1 title = new H1("Iniciar Sesión");
         title.addClassNames(
@@ -96,24 +125,8 @@ public class LoginView extends VerticalLayout {
             .set("color", "#2c3e50")
             .set("text-align", "center")
             .set("margin-bottom", "1em")
-            .set("margin-top", "1em")
             .set("font-weight", "600");
         return title;
-    }
-
-    private Component crearLogo() {
-        // Cargar el logo
-        logo = new Image(
-                "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/be802ceb-49c7-493f-945a-078ed3b6bb4d.jpg/LogoSH.jpg",
-                "Solidarity Hub Logo");
-        logo.setWidth("200px");
-        
-        // Center the logo
-        HorizontalLayout logoLayout = new HorizontalLayout(logo);
-        logoLayout.setWidthFull();
-        logoLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-        
-        return logoLayout;
     }
 
     private Component crearTipoUsuario() {
@@ -126,6 +139,7 @@ public class LoginView extends VerticalLayout {
         // Style the radio group similar to RegistroView
         tipoUsuario.getStyle()
             .set("margin-bottom", "2em")
+            .set("margin-top", "0.5em")
             .set("border-radius", "8px")
             .set("padding", "1.5em 4em")
             .set("background-color", "rgba(52, 152, 219, 0.05)");

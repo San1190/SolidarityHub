@@ -14,6 +14,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
@@ -106,6 +107,7 @@ public class RegistroView extends VerticalLayout {
             
         formCard.add(
             createLogo(),
+            createSeparador(),
             createTitle(),
             createTipoUsuarioSelection(),
             createCommonFields(),
@@ -120,9 +122,9 @@ public class RegistroView extends VerticalLayout {
     private Component createLogo() {
         // Cargar el logo
         logo = new Image(
-                "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/be802ceb-49c7-493f-945a-078ed3b6bb4d.jpg/LogoSH.jpg",
+                "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/7dcef7b2-6389-45f4-9961-8741a558c286.png/LogoSH-transparent.png",
                 "Solidarity Hub Logo");
-        logo.setWidth("150px");
+        logo.setWidth("220px");
 
         // Center the logo
         HorizontalLayout logoLayout = new HorizontalLayout(logo);
@@ -130,6 +132,18 @@ public class RegistroView extends VerticalLayout {
         logoLayout.setJustifyContentMode(JustifyContentMode.CENTER);
 
         return logoLayout;
+    }
+
+    private Component createSeparador() {
+        Hr separador = new Hr();
+        separador.getStyle()
+            .set("margin-top", "2.2em")
+            .set("margin-bottom", "1.2em")
+            .set("width", "100%")
+            .set("border", "none")
+            .set("height", "2px")
+            .set("background-color", "rgba(52, 152, 219, 0.3)");
+        return separador;
     }
 
     private Component createTitle() {
@@ -141,7 +155,6 @@ public class RegistroView extends VerticalLayout {
             .set("color", "#2c3e50")
             .set("text-align", "center")
             .set("margin-bottom", "1em")
-            .set("margin-top", "1em")
             .set("font-weight", "600");
         return title;
     }
