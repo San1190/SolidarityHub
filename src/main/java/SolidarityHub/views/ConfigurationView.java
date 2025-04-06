@@ -1,5 +1,10 @@
 package SolidarityHub.views;
 
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
+
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -8,7 +13,10 @@ import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.checkbox.CheckboxGroupVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -18,6 +26,7 @@ import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
+import SolidarityHub.models.Habilidad;
 import SolidarityHub.models.Usuario;
 import SolidarityHub.services.UsuarioServicio;
 
@@ -26,10 +35,18 @@ public class ConfigurationView extends VerticalLayout {
 
     private final UsuarioServicio usuarioServicio;
 
+    private Div voluntarioInfo = new Div();
+
+    boolean isVoluntario;
+
     private Usuario usuario;
 
     public ConfigurationView(UsuarioServicio usuarioServicio) {
         this.usuarioServicio = usuarioServicio;
+
+        // Usuario usuario = (Usuario)
+        // UI.getCurrent().getSession().getAttribute("name");
+        // usuario = usuarioServicio.obtenerUsuarioPorId(usuario.getId());
 
         // Configuración general de la vista
         setPadding(false);
@@ -64,6 +81,7 @@ public class ConfigurationView extends VerticalLayout {
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
                 .set("border-radius", "8px")
                 .set("padding", "1rem");
+        // panelIzq.add(crearVoluntarioInfo());
         panelIzq.add(crearDiasHorario(), crearTurnoHorario(), crearListaVoluntariados());
 
         // Panel derecho: Avatar y formulario de información
@@ -77,6 +95,17 @@ public class ConfigurationView extends VerticalLayout {
                 .set("border-radius", "8px")
                 .set("padding", "1rem");
         panelDer.add(crearAvatar(), crearFormInfo());
+
+        Div formCard = new Div();
+        formCard.addClassName("form-card");
+        formCard.getStyle()
+                .set("background-color", "white")
+                .set("border-radius", "12px")
+                .set("box-shadow", "0 8px 24px rgba(0,0,0,0.1)")
+                .set("padding", "2em")
+                .set("max-width", "800px")
+                .set("width", "100%")
+                .set("margin", "2em auto");
 
         HorizontalLayout panelBtns = new HorizontalLayout();
         panelBtns.setSizeFull();
@@ -94,8 +123,12 @@ public class ConfigurationView extends VerticalLayout {
 
         panel.add(panelIzq, panelDer);
 
+        formCard.add(panel);
+
         // Se agregan los componentes principales a la vista
         add(title, panel, panelBtns);
+
+        // configureVisibility();
     }
 
     private Component crearDiasHorario() {
@@ -138,16 +171,16 @@ public class ConfigurationView extends VerticalLayout {
         formLayout.setWidthFull();
 
         TextField nombreField = new TextField("Nombre:");
-        // nombreField.setValue(usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getNombre());
+        // nombreField.setValue(usuario.getNombre());
 
         TextField apellidosField = new TextField("Apellidos:");
-        // apellidosField.setValue(usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getApellidos());
+        // apellidosField.setValue(usuario.getApellidos());
 
         TextField emailField = new TextField("Email:");
-        // emailField.setValue(usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getEmail());
+        // emailField.setValue(usuario.getEmail());
 
         PasswordField passwordField = new PasswordField("Contraseña:");
-        // passwordField.setValue(usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getPassword());
+        // passwordField.setValue(usuario.getPassword());
 
         // Configuración de pasos responsivos para mejorar la disposición en diferentes
         // anchos
@@ -181,5 +214,27 @@ public class ConfigurationView extends VerticalLayout {
             UI.getCurrent().navigate("main"); // Navegar a la vista principal
         });
         return cancelarBtn;
+    }
+
+    private void configureVisibility() {
+        isVoluntario = "Voluntario".equals(usuario.getTipoUsuario());
+        voluntarioInfo.setVisible(isVoluntario);
+    }
+
+    private Component crearVoluntarioInfo() {
+        Div camposVoluntario = new Div();
+        camposVoluntario.setWidth("100%");
+
+        VerticalLayout vLayout = new VerticalLayout();
+        vLayout.setMaxWidth("700px");
+
+        HorizontalLayout hlLayout = new HorizontalLayout();
+        Component dias = crearDiasHorario();
+        Component turno = crearTurnoHorario();
+        hlLayout.add(dias, turno);
+        hlLayout.setAlignItems(Alignment.CENTER);
+        vLayout.add(hlLayout, crearListaVoluntariados());
+        camposVoluntario.add(vLayout);
+        return camposVoluntario;
     }
 }
