@@ -49,6 +49,52 @@ public class UsuarioControlador {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+    
+    // Endpoint para actualizar un usuario (voluntario o afectado)
+    @PutMapping("/{id}")
+    public ResponseEntity<?> actualizarUsuario(@PathVariable Long id, @RequestBody Usuario usuarioActualizado) {
+        Usuario usuarioExistente = usuarioServicio.obtenerUsuarioPorId(id);
+        if (usuarioExistente == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado.");
+        }
+
+        // Actualización de campos comunes
+        usuarioExistente.setNombre(usuarioActualizado.getNombre());
+        usuarioExistente.setApellidos(usuarioActualizado.getApellidos());
+        usuarioExistente.setEmail(usuarioActualizado.getEmail());
+        usuarioExistente.setPassword(usuarioActualizado.getPassword());
+
+        // Actualización de campos específicos según el tipo
+        if (usuarioExistente instanceof Voluntario && usuarioActualizado instanceof Voluntario) {
+            Voluntario volExist = (Voluntario) usuarioExistente;
+            Voluntario volAct = (Voluntario) usuarioActualizado;
+            volExist.setHabilidades(volAct.getHabilidades());
+            volExist.setDiasDisponibles(volAct.getDiasDisponibles());
+            volExist.setTurnoDisponibilidad(volAct.getTurnoDisponibilidad());
+            volExist.setHoraInicioTrabajo(volAct.getHoraInicioTrabajo());
+            volExist.setHoraFinTrabajo(volAct.getHoraFinTrabajo());
+        } else if (usuarioExistente instanceof Afectado && usuarioActualizado instanceof Afectado) {
+            Afectado afectExist = (Afectado) usuarioExistente;
+            Afectado afectAct = (Afectado) usuarioActualizado;
+            
+            // Manejo correcto de la colección con orphanRemoval=true
+            // Primero limpiamos la lista actual pero manteniendo la referencia
+            if (afectExist.getNecesidades() != null) {
+                afectExist.getNecesidades().clear();
+                
+                // Luego agregamos todos los elementos de la nueva lista
+                if (afectAct.getNecesidades() != null) {
+                    afectExist.getNecesidades().addAll(afectAct.getNecesidades());
+                }
+            } else {
+                // Si la lista es null, simplemente asignamos la nueva lista
+                afectExist.setNecesidades(afectAct.getNecesidades());
+            }
+        }
+
+        Usuario actualizado = usuarioServicio.guardarUsuario(usuarioExistente);
+        return ResponseEntity.ok(actualizado);
+    }
 
     // 🔹 Eliminar usuario por ID
     @DeleteMapping("/{id}")

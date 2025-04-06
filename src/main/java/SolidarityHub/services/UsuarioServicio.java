@@ -40,7 +40,8 @@ public class UsuarioServicio {
                 usuario.getEmail(), usuario.getClass()
         );
 
-        if (usuarioExistente.isPresent()) {
+        // Si existe un usuario con el mismo email y tipo, verificar que no sea el mismo usuario que estamos actualizando
+        if (usuarioExistente.isPresent() && !usuarioExistente.get().getId().equals(usuario.getId())) {
             throw new RuntimeException("Ya existe un usuario del tipo '" + usuario.getClass().getSimpleName() + "' con este email.");
         }
 

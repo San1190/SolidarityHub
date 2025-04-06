@@ -20,6 +20,13 @@ import com.vaadin.flow.server.VaadinSession;
 import SolidarityHub.models.Usuario;
 import SolidarityHub.services.UsuarioServicio;
 
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import java.util.HashSet;
+
 @Route(value = "configuracion", layout = MainLayout.class)
 public class ConfigurationView extends VerticalLayout {
 
@@ -264,17 +271,34 @@ public class ConfigurationView extends VerticalLayout {
             usuario.setEmail(emailField.getValue());
             usuario.setPassword(passwordField.getValue());
             
-            // Aquí también podrías actualizar la lista de habilidades o necesidades según lo seleccionado.
-            // Por ejemplo, actualizar usuario.setHabilidades(...) o usuario.setNecesidades(...)
-
-            // Guardar el usuario actualizado en la base de datos
-            usuarioServicio.guardarUsuario(usuario);
+            // Llamar al endpoint REST para actualizar el usuario
+            RestTemplate restTemplate = new RestTemplate();
+            String url = "http://localhost:8080/api/usuarios/" + usuario.getId();
             
-            // Actualizar el usuario en la sesión para reflejar los cambios
-            VaadinSession.getCurrent().setAttribute("usuario", usuario);
-            
-            Notification.show("Cambios guardados con éxito.");
-            UI.getCurrent().navigate("main"); // Navegar a la vista principal
+            try {
+                // Realizar la solicitud PUT al endpoint
+                ResponseEntity<Usuario> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.PUT,
+                    new HttpEntity<>(usuario),
+                    Usuario.class
+                );
+                
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    // Actualizar el usuario en la sesión con la respuesta del servidor
+                    Usuario usuarioActualizado = response.getBody();
+                    VaadinSession.getCurrent().setAttribute("usuario", usuarioActualizado);
+                    
+                    Notification.show("Cambios guardados con éxito.", 3000, Notification.Position.BOTTOM_CENTER);
+                    UI.getCurrent().navigate("main");
+                } else {
+                    Notification.show("Error al guardar los cambios: " + response.getStatusCode(), 
+                        3000, Notification.Position.BOTTOM_CENTER);
+                }
+            } catch (Exception e) {
+                Notification.show("Error de conexión: " + e.getMessage(), 
+                    3000, Notification.Position.BOTTOM_CENTER);
+            }
         });
         return guardarBtn;
     }
