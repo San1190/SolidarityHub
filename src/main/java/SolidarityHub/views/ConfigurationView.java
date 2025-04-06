@@ -1,10 +1,5 @@
 package SolidarityHub.views;
 
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
-
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -15,18 +10,13 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.theme.lumo.LumoUtility;
-
-import SolidarityHub.models.Habilidad;
+import com.vaadin.flow.server.VaadinSession;
 import SolidarityHub.models.Usuario;
 import SolidarityHub.services.UsuarioServicio;
 
@@ -34,32 +24,48 @@ import SolidarityHub.services.UsuarioServicio;
 public class ConfigurationView extends VerticalLayout {
 
     private final UsuarioServicio usuarioServicio;
-
-    private Div voluntarioInfo = new Div();
-
-    boolean isVoluntario;
-
     private Usuario usuario;
+
+    // Campos del formulario de datos personales (comunes)
+    private TextField nombreField;
+    private TextField apellidosField;
+    private TextField emailField;
+    private PasswordField passwordField;
+
+    // Campos para voluntarios (habilidades)
+    private TextField habilidadField;
+
+    // Campos para afectados (necesidades)
+    private CheckboxGroup<String> necesidadesGroup;
 
     public ConfigurationView(UsuarioServicio usuarioServicio) {
         this.usuarioServicio = usuarioServicio;
-
-        // Usuario usuario = (Usuario)
-        // UI.getCurrent().getSession().getAttribute("name");
-        // usuario = usuarioServicio.obtenerUsuarioPorId(usuario.getId());
+        
+        // Recuperar el usuario actual desde la sesión
+        usuario = (Usuario) VaadinSession.getCurrent().getAttribute("usuario");
+        if (usuario == null) {
+            UI.getCurrent().navigate("/");
+            return;
+        }
+        // Obtener el usuario actualizado de la BD
+        usuario = usuarioServicio.obtenerUsuarioPorId(usuario.getId());
 
         // Configuración general de la vista
         setPadding(false);
         setSpacing(false);
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
-        // setDefaultHorizontalComponentAlignment(Alignment.CENTER);
 
         // Título de la página
         H1 title = new H1("Configuración de Usuario");
-        title.getStyle().set("color", "var(--lumo-primary-color)").set("padding", "1rem").set("font-size", "2rem")
-                .set("font-weight", "bold").set("text-align", "center");
-        title.getStyle().set("margin-top", "1rem").set("margin-bottom", "1rem");
+        title.getStyle()
+                .set("color", "var(--lumo-primary-color)")
+                .set("padding", "1rem")
+                .set("font-size", "2rem")
+                .set("font-weight", "bold")
+                .set("text-align", "center")
+                .set("margin-top", "1rem")
+                .set("margin-bottom", "1rem");
 
         // Panel contenedor para separar el contenido en dos columnas
         HorizontalLayout panel = new HorizontalLayout();
@@ -69,9 +75,8 @@ public class ConfigurationView extends VerticalLayout {
         panel.setSpacing(true);
         panel.setPadding(true);
         panel.setAlignItems(Alignment.CENTER);
-        // panel.setJustifyContentMode(JustifyContentMode.CENTER);
 
-        // Panel izquierdo: Horarios y lista de voluntariados
+        // Panel izquierdo: se muestra según el tipo de usuario
         VerticalLayout panelIzq = new VerticalLayout();
         panelIzq.setSizeFull();
         panelIzq.setWidth("100%");
@@ -81,10 +86,17 @@ public class ConfigurationView extends VerticalLayout {
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
                 .set("border-radius", "8px")
                 .set("padding", "1rem");
-        // panelIzq.add(crearVoluntarioInfo());
-        panelIzq.add(crearDiasHorario(), crearTurnoHorario(), crearListaVoluntariados());
 
-        // Panel derecho: Avatar y formulario de información
+        // Si el usuario es voluntario, se muestran horarios y habilidades
+        if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario")) {
+            panelIzq.add(crearDiasHorario(), crearTurnoHorario(), crearHabilidades(), crearListaHabilidades());
+        }
+        // Si el usuario es afectado, se muestra la selección de necesidades
+        else if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("afectado")) {
+            panelIzq.add(crearNecesidades(), crearListaNecesidades());
+        }
+
+        // Panel derecho: Avatar y formulario de datos personales
         VerticalLayout panelDer = new VerticalLayout();
         panelDer.setSizeFull();
         panelDer.setWidth("100%");
@@ -96,6 +108,7 @@ public class ConfigurationView extends VerticalLayout {
                 .set("padding", "1rem");
         panelDer.add(crearAvatar(), crearFormInfo());
 
+        // Contenedor principal
         Div formCard = new Div();
         formCard.addClassName("form-card");
         formCard.getStyle()
@@ -107,6 +120,7 @@ public class ConfigurationView extends VerticalLayout {
                 .set("width", "100%")
                 .set("margin", "2em auto");
 
+        // Panel de botones
         HorizontalLayout panelBtns = new HorizontalLayout();
         panelBtns.setSizeFull();
         panelBtns.setWidth("80%");
@@ -117,25 +131,21 @@ public class ConfigurationView extends VerticalLayout {
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
                 .set("border-radius", "8px")
                 .set("padding", "1rem")
-                .set("background-color", "var(--lumo-base-color)");
-        panelBtns.getStyle().set("margin-top", "1rem");
+                .set("background-color", "var(--lumo-base-color)")
+                .set("margin-top", "1rem");
         panelBtns.add(crearGuardarInfoBtn(), crearCancelarBtn());
 
         panel.add(panelIzq, panelDer);
-
         formCard.add(panel);
-
-        // Se agregan los componentes principales a la vista
-        add(title, panel, panelBtns);
-
-        // configureVisibility();
+        add(title, formCard, panelBtns);
     }
+
+    // Métodos para usuarios voluntarios
 
     private Component crearDiasHorario() {
         CheckboxGroup<String> checkboxGroup = new CheckboxGroup<>();
         checkboxGroup.setLabel("Días de la semana disponible:");
         checkboxGroup.setItems("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo");
-        checkboxGroup.select("Order ID", "Customer");
         checkboxGroup.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
         return checkboxGroup;
     }
@@ -148,45 +158,92 @@ public class ConfigurationView extends VerticalLayout {
         return comboBox;
     }
 
-    private Component crearAvatar() {
-        Avatar user = new Avatar();
-        // Se puede reemplazar la imagen por la del usuario
-        user.setImage("https://via.placeholder.com/150");
-        user.setName("Nombre de Usuario");
-        return user;
+    private Component crearHabilidades() {
+        VerticalLayout habilidadLayout = new VerticalLayout();
+        habilidadField = new TextField("Añadir Habilidad:");
+        Button agregarBtn = new Button("Agregar Habilidad");
+        agregarBtn.addClickListener(event -> {
+            String habilidad = habilidadField.getValue();
+            if (!habilidad.isEmpty()) {
+                // Aquí debes implementar la lógica para agregar la habilidad al usuario.
+                // Por ejemplo: usuario.agregarHabilidad(new Habilidad(habilidad));
+                Notification.show("Habilidad agregada: " + habilidad);
+                habilidadField.clear();
+                // Puedes actualizar la lista de habilidades si es necesario.
+            } else {
+                Notification.show("Ingrese una habilidad.");
+            }
+        });
+        habilidadLayout.add(habilidadField, agregarBtn);
+        return habilidadLayout;
     }
 
-    private Component crearListaVoluntariados() {
+    private Component crearListaHabilidades() {
         VerticalLayout lista = new VerticalLayout();
         lista.setWidthFull();
         lista.setSpacing(true);
         lista.getStyle().set("padding", "0.5rem");
-        // Placeholder para lista de voluntariados, luego se puede integrar el AutoGrid
-        lista.add("Lista de Voluntariados: ");
+        // Aquí se mostraría la lista de habilidades del usuario.
+        lista.add("Lista de Habilidades: ");
+        // Por ejemplo, si el usuario tiene una lista de habilidades:
+        // usuario.getHabilidades().forEach(h -> lista.add(h.getNombre()));
         return lista;
+    }
+
+    // Métodos para usuarios afectados
+
+    private Component crearNecesidades() {
+        // Usamos un CheckboxGroup para que el usuario seleccione sus necesidades
+        necesidadesGroup = new CheckboxGroup<>();
+        necesidadesGroup.setLabel("Selecciona tus Necesidades:");
+        necesidadesGroup.setItems("Alimentación", "Vestimenta", "Alojamiento", "Asesoría Legal", "Salud");
+        necesidadesGroup.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
+        return necesidadesGroup;
+    }
+
+    private Component crearListaNecesidades() {
+        VerticalLayout lista = new VerticalLayout();
+        lista.setWidthFull();
+        lista.setSpacing(true);
+        lista.getStyle().set("padding", "0.5rem");
+        // Aquí se mostraría la lista de necesidades seleccionadas del usuario.
+        lista.add("Lista de Necesidades: ");
+        // Por ejemplo, si el usuario tiene una lista de necesidades:
+        // usuario.getNecesidades().forEach(n -> lista.add(n));
+        return lista;
+    }
+
+    // Métodos comunes
+
+    private Component crearAvatar() {
+        Avatar avatar = new Avatar();
+        // Se asigna la imagen del usuario recuperada vía endpoint
+        avatar.setImage("/api/usuarios/" + usuario.getId() + "/foto");
+        avatar.setName(usuario.getNombre() + " " + usuario.getApellidos());
+        return avatar;
     }
 
     private Component crearFormInfo() {
         FormLayout formLayout = new FormLayout();
         formLayout.setWidthFull();
 
-        TextField nombreField = new TextField("Nombre:");
-        // nombreField.setValue(usuario.getNombre());
+        // Inicializar y asignar los valores actuales del usuario
+        nombreField = new TextField("Nombre:");
+        nombreField.setValue(usuario.getNombre() != null ? usuario.getNombre() : "");
 
-        TextField apellidosField = new TextField("Apellidos:");
-        // apellidosField.setValue(usuario.getApellidos());
+        apellidosField = new TextField("Apellidos:");
+        apellidosField.setValue(usuario.getApellidos() != null ? usuario.getApellidos() : "");
 
-        TextField emailField = new TextField("Email:");
-        // emailField.setValue(usuario.getEmail());
+        emailField = new TextField("Email:");
+        emailField.setValue(usuario.getEmail() != null ? usuario.getEmail() : "");
 
-        PasswordField passwordField = new PasswordField("Contraseña:");
-        // passwordField.setValue(usuario.getPassword());
+        passwordField = new PasswordField("Contraseña:");
+        passwordField.setValue(usuario.getPassword() != null ? usuario.getPassword() : "");
 
-        // Configuración de pasos responsivos para mejorar la disposición en diferentes
-        // anchos
         formLayout.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("500px", 2));
+                new FormLayout.ResponsiveStep("500px", 2)
+        );
 
         formLayout.add(nombreField, apellidosField, emailField, passwordField);
         return formLayout;
@@ -201,7 +258,21 @@ public class ConfigurationView extends VerticalLayout {
                 .set("border-radius", "4px")
                 .set("padding", "0.5rem 1rem");
         guardarBtn.addClickListener(event -> {
-            // usuarioServicio.guardarUsuario(usuario); // Guardar cambios en el usuario
+            // Actualizar el objeto usuario con los datos del formulario
+            usuario.setNombre(nombreField.getValue());
+            usuario.setApellidos(apellidosField.getValue());
+            usuario.setEmail(emailField.getValue());
+            usuario.setPassword(passwordField.getValue());
+            
+            // Aquí también podrías actualizar la lista de habilidades o necesidades según lo seleccionado.
+            // Por ejemplo, actualizar usuario.setHabilidades(...) o usuario.setNecesidades(...)
+
+            // Guardar el usuario actualizado en la base de datos
+            usuarioServicio.guardarUsuario(usuario);
+            
+            // Actualizar el usuario en la sesión para reflejar los cambios
+            VaadinSession.getCurrent().setAttribute("usuario", usuario);
+            
             Notification.show("Cambios guardados con éxito.");
             UI.getCurrent().navigate("main"); // Navegar a la vista principal
         });
@@ -210,31 +281,7 @@ public class ConfigurationView extends VerticalLayout {
 
     private Component crearCancelarBtn() {
         Button cancelarBtn = new Button("Cancelar");
-        cancelarBtn.addClickListener(event -> {
-            UI.getCurrent().navigate("main"); // Navegar a la vista principal
-        });
+        cancelarBtn.addClickListener(event -> UI.getCurrent().navigate("main"));
         return cancelarBtn;
-    }
-
-    private void configureVisibility() {
-        isVoluntario = "Voluntario".equals(usuario.getTipoUsuario());
-        voluntarioInfo.setVisible(isVoluntario);
-    }
-
-    private Component crearVoluntarioInfo() {
-        Div camposVoluntario = new Div();
-        camposVoluntario.setWidth("100%");
-
-        VerticalLayout vLayout = new VerticalLayout();
-        vLayout.setMaxWidth("700px");
-
-        HorizontalLayout hlLayout = new HorizontalLayout();
-        Component dias = crearDiasHorario();
-        Component turno = crearTurnoHorario();
-        hlLayout.add(dias, turno);
-        hlLayout.setAlignItems(Alignment.CENTER);
-        vLayout.add(hlLayout, crearListaVoluntariados());
-        camposVoluntario.add(vLayout);
-        return camposVoluntario;
     }
 }
