@@ -394,7 +394,7 @@ public class RegistroView extends VerticalLayout {
                         3000, Notification.Position.MIDDLE);
                 clearForm();
 
-                UI.getCurrent().navigate("/src");
+                UI.getCurrent().navigate("/");
             } else {
                 mostrarError("Error al registrar: El email o DNI ya existe");
             }

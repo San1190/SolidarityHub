@@ -47,7 +47,13 @@ public class MainLayout extends AppLayout implements RouterLayout {
 
         // Crear ítems de navegación
         SideNavItem mainItem = new SideNavItem("Main", "main", VaadinIcon.MAP_MARKER.create());
+        
+        SideNavItem necesidadesItem = new SideNavItem("Necesidades", "necesidades", VaadinIcon.HEART.create());
+            
+        
         SideNavItem configItem = new SideNavItem("Configuración", "configuracion", VaadinIcon.COG.create());
+        //comprobar si el usuario es afectado para añadir una pestaña llamada necesidades 
+        
         // configItem.setVisible(usuario.getRol().equals("admin") ||
         // usuario.getRol().equals("coordinador"));
 
@@ -65,9 +71,15 @@ public class MainLayout extends AppLayout implements RouterLayout {
             mainItem.getElement().getThemeList().add("primary");
         } else if ("configuracion".equals(currentRoute)) {
             configItem.getElement().getThemeList().add("primary");
+        } else if ("necesidades".equals(currentRoute)) {
+            necesidadesItem.getElement().getThemeList().add("primary");
         }
 
-        nav.addItem(mainItem, configItem, logoutItem);
+        nav.addItem(mainItem);
+        if (usuario.getTipoUsuario().equals("afectado")) {
+            nav.addItem(necesidadesItem);
+        }
+        nav.addItem(configItem, logoutItem);
 
         Scroller scroller = new Scroller(nav);
         scroller.setClassName(LumoUtility.Padding.SMALL);
