@@ -16,8 +16,8 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin.Minus.Horizontal;
 
-@Route("main")
-@PageTitle("Main | SolidarityHub")
+@Route("necesidades")
+@PageTitle("Necesidades | SolidarityHub")
 public class NecesidadesView extends MainLayout {
 
 
