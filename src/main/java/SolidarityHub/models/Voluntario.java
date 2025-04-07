@@ -13,25 +13,22 @@ public class Voluntario extends Usuario {
     private List<Habilidad> habilidades;
     
     // Nuevos campos para guardar días y turno
-    @ElementCollection
+    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
     private List<String> diasDisponibles; // Por ejemplo: "Lunes", "Martes", ...
     
     private String turnoDisponibilidad; // Por ejemplo: "Mañana", "Tarde", "Día Entero"
     
-    private LocalTime horaInicioTrabajo;
-    private LocalTime horaFinTrabajo;
+    
 
     public Voluntario() {}
 
     public Voluntario(String dni, String nombre, String apellidos, String email, String password, String telefono, String direccion, byte[] foto,
-                      List<Habilidad> habilidades, List<String> diasDisponibles, String turnoDisponibilidad,
-                      LocalTime horaInicioTrabajo, LocalTime horaFinTrabajo) {
+                      List<Habilidad> habilidades, List<String> diasDisponibles, String turnoDisponibilidad) {
         super(dni, nombre, apellidos, email, password, telefono, direccion, foto);
         this.habilidades = habilidades;
         this.diasDisponibles = diasDisponibles;
         this.turnoDisponibilidad = turnoDisponibilidad;
-        this.horaInicioTrabajo = horaInicioTrabajo;
-        this.horaFinTrabajo = horaFinTrabajo;
+        
     }
 
     @Override
@@ -62,17 +59,5 @@ public class Voluntario extends Usuario {
         this.turnoDisponibilidad = turnoDisponibilidad;
     }
 
-    public LocalTime getHoraInicioTrabajo() {
-        return horaInicioTrabajo;
-    }
-    public void setHoraInicioTrabajo(LocalTime horaInicioTrabajo) {
-        this.horaInicioTrabajo = horaInicioTrabajo;
-    }
-
-    public LocalTime getHoraFinTrabajo() {
-        return horaFinTrabajo;
-    }
-    public void setHoraFinTrabajo(LocalTime horaFinTrabajo) {
-        this.horaFinTrabajo = horaFinTrabajo;
-    }
+ 
 }

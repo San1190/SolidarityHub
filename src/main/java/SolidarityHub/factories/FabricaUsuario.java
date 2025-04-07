@@ -16,7 +16,7 @@ public class FabricaUsuario extends FabricaGeneral {
         return switch (tipoDeUsuario) {
             case "Voluntario" ->
                     new Voluntario(dni, nombre, apellidos, email, password, telefono, direccion, foto,
-                            habilidades, new ArrayList<>(), "", horaInicioTrabajo, horaFinTrabajo);
+                            habilidades, new ArrayList<>(), "");
             case "Afectado" ->
                     new Afectado(dni, nombre, apellidos, email, password, telefono, direccion, foto, necesidades);
             default -> null;

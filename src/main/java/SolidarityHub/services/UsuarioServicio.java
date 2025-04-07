@@ -30,7 +30,15 @@ public class UsuarioServicio {
 
     // 🔹 Obtener usuario por ID
     public Usuario obtenerUsuarioPorId(Long id) {
-        return usuarioRepositorio.findById(id).orElse(null);
+        // Primero intentamos obtener el usuario para determinar su tipo
+        Usuario usuario = usuarioRepositorio.findById(id).orElse(null);
+        
+        // Si el usuario es de tipo Voluntario, usamos la consulta específica que carga las colecciones
+        if (usuario != null && "voluntario".equals(usuario.getTipoUsuario())) {
+            return usuarioRepositorio.findVoluntarioByIdWithDiasDisponibles(id).orElse((SolidarityHub.models.Voluntario)usuario);
+        }
+        
+        return usuario;
     }
 
     // 🔹 Guardar usuario con validación de duplicados

@@ -71,8 +71,7 @@ public class UsuarioControlador {
             volExist.setHabilidades(volAct.getHabilidades());
             volExist.setDiasDisponibles(volAct.getDiasDisponibles());
             volExist.setTurnoDisponibilidad(volAct.getTurnoDisponibilidad());
-            volExist.setHoraInicioTrabajo(volAct.getHoraInicioTrabajo());
-            volExist.setHoraFinTrabajo(volAct.getHoraFinTrabajo());
+            
         } else if (usuarioExistente instanceof Afectado && usuarioActualizado instanceof Afectado) {
             Afectado afectExist = (Afectado) usuarioExistente;
             Afectado afectAct = (Afectado) usuarioActualizado;
@@ -144,6 +143,20 @@ public class UsuarioControlador {
         usuario.setFoto(foto.getBytes());
         usuarioServicio.guardarUsuario(usuario);
         return ResponseEntity.ok("Foto subida correctamente.");
+    }
+
+    // 🔹 Eliminar foto de perfil (establecer a la imagen por defecto)
+    @DeleteMapping("/{id}/foto/eliminar")
+    public ResponseEntity<String> eliminarFoto(@PathVariable Long id) throws IOException {
+        Usuario usuario = usuarioServicio.obtenerUsuarioPorId(id);
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado.");
+        }
+        
+        // Establecer la imagen por defecto
+        usuario.setFoto(usuarioServicio.getDefaultProfileImage());
+        usuarioServicio.guardarUsuario(usuario);
+        return ResponseEntity.ok("Foto eliminada correctamente.");
     }
 
     // 🔹 Obtener foto de perfil del usuario
