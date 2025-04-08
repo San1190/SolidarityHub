@@ -427,8 +427,12 @@ public class RegistroView extends VerticalLayout {
         List<Habilidad> listaHabilidades = new ArrayList<>();
         if (habilidadesGroup.getValue() != null) {
             for (String nombreHabilidad : habilidadesGroup.getValue()) {
-                Habilidad habilidad = Habilidad.valueOf(nombreHabilidad.toUpperCase().replace(" ", "_"));
-                listaHabilidades.add(habilidad);
+                for (Habilidad habilidad : Habilidad.values()) {
+                    if (habilidad.getNombre().equals(nombreHabilidad)) {
+                        listaHabilidades.add(habilidad);
+                        break;
+                    }
+                }
             }
         }
 
