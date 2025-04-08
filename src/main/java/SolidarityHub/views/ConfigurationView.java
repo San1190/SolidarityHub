@@ -29,12 +29,13 @@ import SolidarityHub.models.Afectado;
 import SolidarityHub.models.Habilidad;
 import SolidarityHub.models.Necesidad;
 import SolidarityHub.services.UsuarioServicio;
+
+import org.checkerframework.checker.units.qual.s;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
-
 
 import java.util.HashSet;
 import java.util.Set;
@@ -64,7 +65,7 @@ public class ConfigurationView extends VerticalLayout {
 
     public ConfigurationView(UsuarioServicio usuarioServicio) {
         this.usuarioServicio = usuarioServicio;
-        
+
         // Recuperar el usuario actual desde la sesión
         usuario = (Usuario) VaadinSession.getCurrent().getAttribute("usuario");
         if (usuario == null) {
@@ -80,7 +81,9 @@ public class ConfigurationView extends VerticalLayout {
         setPadding(false);
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
-        
+        setHeight("auto");
+        setWidth("auto");
+
         // Estilos consistentes con RegistroView y LoginView
         getElement().getStyle().set("background", "white");
         getElement().getStyle().set("height", "100%");
@@ -90,11 +93,10 @@ public class ConfigurationView extends VerticalLayout {
         getElement().getStyle().set("box-shadow", "none");
 
         getElement().executeJs(
-            "document.documentElement.style.background = 'white';" +
-            "document.body.style.background = 'white';" +
-            "this.parentNode.style.background = 'white';"
-        );
-        
+                "document.documentElement.style.background = 'white';" +
+                        "document.body.style.background = 'white';" +
+                        "this.parentNode.style.background = 'white';");
+
         // Centrar todo el contenido
         getStyle().set("display", "flex")
                 .set("flex-direction", "column")
@@ -114,7 +116,10 @@ public class ConfigurationView extends VerticalLayout {
                 .set("margin", "2em auto")
                 .set("display", "flex")
                 .set("flex-direction", "column")
-                .set("align-items", "center");
+                .set("align-items", "center")
+                .set("margin-top", "45em")
+                .set("margin-bottom", "5em");
+        formCard.setHeight("auto");
 
         // Título de la página con estilo mejorado
         H1 title = new H1("Configuración de Usuario");
@@ -130,12 +135,12 @@ public class ConfigurationView extends VerticalLayout {
         // Separador estilizado
         Hr separador = new Hr();
         separador.getStyle()
-            .set("margin-top", "1em")
-            .set("margin-bottom", "1.2em")
-            .set("width", "100%")
-            .set("border", "none")
-            .set("height", "2px")
-            .set("background-color", "rgba(52, 152, 219, 0.3)");
+                .set("margin-top", "1em")
+                .set("margin-bottom", "1.2em")
+                .set("width", "100%")
+                .set("border", "none")
+                .set("height", "2px")
+                .set("background-color", "rgba(52, 152, 219, 0.3)");
 
         // Panel contenedor para separar el contenido en dos columnas
         HorizontalLayout panel = new HorizontalLayout();
@@ -146,6 +151,7 @@ public class ConfigurationView extends VerticalLayout {
         panel.setAlignItems(Alignment.CENTER);
         panel.setJustifyContentMode(JustifyContentMode.CENTER);
         panel.getStyle().set("margin", "0 auto");
+        panel.setHeight("auto");
 
         // Panel izquierdo: se muestra según el tipo de usuario
         VerticalLayout panelIzq = new VerticalLayout();
@@ -158,12 +164,14 @@ public class ConfigurationView extends VerticalLayout {
                 .set("border-radius", "8px")
                 .set("padding", "1.5rem")
                 .set("margin", "0 auto");
+        panelIzq.setHeight("auto");
 
         // Si el usuario es voluntario, se muestran horarios y habilidades
         if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario")) {
             panelIzq.add(crearDiasHorario(), crearTurnoHorario(), crearHabilidades());
         }
-        // Para usuarios afectados, mostramos información sobre la gestión de necesidades
+        // Para usuarios afectados, mostramos información sobre la gestión de
+        // necesidades
         else if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("afectado")) {
             panelIzq.add(crearInfoNecesidades());
         }
@@ -179,6 +187,7 @@ public class ConfigurationView extends VerticalLayout {
                 .set("border-radius", "8px")
                 .set("padding", "1.5rem")
                 .set("margin", "0 auto");
+        panelDer.setHeight("auto");
         panelDer.add(crearAvatar(), crearFormInfo());
 
         // Panel de botones con estilo mejorado
@@ -190,6 +199,7 @@ public class ConfigurationView extends VerticalLayout {
         panelBtns.getStyle()
                 .set("margin-top", "2em");
         panelBtns.add(crearCancelarBtn(), crearGuardarInfoBtn());
+        panelBtns.setHeight("auto");
 
         panel.add(panelIzq, panelDer);
         formCard.add(title, separador, panel, panelBtns);
@@ -203,13 +213,13 @@ public class ConfigurationView extends VerticalLayout {
         diasDisponiblesGroup.setLabel("Días de la semana disponible:");
         diasDisponiblesGroup.setItems("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo");
         diasDisponiblesGroup.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
-        
+
         // Estilo mejorado para el grupo de checkboxes
         diasDisponiblesGroup.getStyle()
-            .set("background-color", "rgba(236, 240, 243, 0.5)")
-            .set("padding", "1em")
-            .set("border-radius", "8px");
-        
+                .set("background-color", "rgba(236, 240, 243, 0.5)")
+                .set("padding", "1em")
+                .set("border-radius", "8px");
+
         // Si el usuario es un voluntario, marcamos los días que ya tiene seleccionados
         if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario")) {
             try {
@@ -225,11 +235,11 @@ public class ConfigurationView extends VerticalLayout {
                 }
             } catch (ClassCastException e) {
                 // Manejar el caso en que el usuario no sea un Voluntario
-                Notification.show("Error al cargar los días disponibles", 
-                    3000, Notification.Position.BOTTOM_CENTER);
+                Notification.show("Error al cargar los días disponibles",
+                        3000, Notification.Position.BOTTOM_CENTER);
             }
         }
-        
+
         return diasDisponiblesGroup;
     }
 
@@ -239,16 +249,17 @@ public class ConfigurationView extends VerticalLayout {
         turnoDisponibilidadCombo.setPlaceholder("Selecciona un turno");
         turnoDisponibilidadCombo.setClearButtonVisible(true);
         turnoDisponibilidadCombo.setWidthFull();
-        
+
         // Estilo mejorado para el combobox
         turnoDisponibilidadCombo.getStyle()
-            .set("border-radius", "6px")
-            .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
-            .set("--lumo-primary-color", "#3498db")
-            .set("margin-top", "1em")
-            .set("margin-bottom", "1em");
-        
-        // Si el usuario es un voluntario, seleccionamos el turno que ya tiene configurado
+                .set("border-radius", "6px")
+                .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
+                .set("--lumo-primary-color", "#3498db")
+                .set("margin-top", "1em")
+                .set("margin-bottom", "1em");
+
+        // Si el usuario es un voluntario, seleccionamos el turno que ya tiene
+        // configurado
         if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario")) {
             try {
                 // Intentamos hacer un cast a Voluntario
@@ -259,11 +270,11 @@ public class ConfigurationView extends VerticalLayout {
                 }
             } catch (ClassCastException e) {
                 // Manejar el caso en que el usuario no sea un Voluntario
-                Notification.show("Error al cargar el turno disponible", 
-                    3000, Notification.Position.BOTTOM_CENTER);
+                Notification.show("Error al cargar el turno disponible",
+                        3000, Notification.Position.BOTTOM_CENTER);
             }
         }
-        
+
         return turnoDisponibilidadCombo;
     }
 
@@ -271,18 +282,18 @@ public class ConfigurationView extends VerticalLayout {
         // Usamos un CheckboxGroup para que el usuario seleccione sus habilidades
         habilidadesGroup = new CheckboxGroup<>();
         habilidadesGroup.setLabel("Selecciona tus Habilidades:");
-        
+
         // Usamos los valores del enum Habilidad
         habilidadesGroup.setItems(Habilidad.values());
         habilidadesGroup.setItemLabelGenerator(Habilidad::getNombre);
-        
+
         // Estilo mejorado para el grupo de habilidades
         habilidadesGroup.getStyle()
-            .set("background-color", "rgba(236, 240, 243, 0.5)")
-            .set("padding", "1em")
-            .set("border-radius", "8px")
-            .set("margin-top", "1em");
-        
+                .set("background-color", "rgba(236, 240, 243, 0.5)")
+                .set("padding", "1em")
+                .set("border-radius", "8px")
+                .set("margin-top", "1em");
+
         // Si el usuario es un voluntario, marcamos las habilidades que ya tiene
         if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario")) {
             try {
@@ -297,11 +308,11 @@ public class ConfigurationView extends VerticalLayout {
                 }
             } catch (ClassCastException e) {
                 // Manejar el caso en que el usuario no sea un Voluntario
-                Notification.show("Error al cargar las habilidades", 
-                    3000, Notification.Position.BOTTOM_CENTER);
+                Notification.show("Error al cargar las habilidades",
+                        3000, Notification.Position.BOTTOM_CENTER);
             }
         }
-        
+
         habilidadesGroup.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
         return habilidadesGroup;
     }
@@ -319,36 +330,37 @@ public class ConfigurationView extends VerticalLayout {
         avatarContainer.setSpacing(true);
         avatarContainer.setWidthFull();
         avatarContainer.getStyle().set("text-align", "center");
-        
+
         Avatar avatar = new Avatar();
-        // Se asigna la imagen del usuario recuperada vía endpoint con timestamp para evitar caché
+        // Se asigna la imagen del usuario recuperada vía endpoint con timestamp para
+        // evitar caché
         avatar.setImage("/api/usuarios/" + usuario.getId() + "/foto?t=" + System.currentTimeMillis());
         avatar.setName(usuario.getNombre() + " " + usuario.getApellidos());
         avatar.setHeight("120px");
         avatar.setWidth("120px");
         avatar.getStyle()
-            .set("margin", "0 auto")
-            .set("display", "block");
-        
+                .set("margin", "0 auto")
+                .set("display", "block");
+
         // Nombre del usuario debajo del avatar
         H1 nombreUsuario = new H1(usuario.getNombre() + " " + usuario.getApellidos());
         nombreUsuario.getStyle()
-            .set("color", "#2c3e50")
-            .set("font-size", "1.5em")
-            .set("margin", "0.5em auto")
-            .set("font-weight", "600")
-            .set("text-align", "center");
-        
+                .set("color", "#2c3e50")
+                .set("font-size", "1.5em")
+                .set("margin", "0.5em auto")
+                .set("font-weight", "600")
+                .set("text-align", "center");
+
         // Información del tipo de usuario
         Div tipoUsuarioDiv = new Div();
         tipoUsuarioDiv.setText("Tipo de usuario: " + usuario.getTipoUsuario());
         tipoUsuarioDiv.getStyle()
-            .set("color", "#7f8c8d")
-            .set("font-size", "1em")
-            .set("margin", "0.5em auto 1.5em auto")
-            .set("font-style", "italic")
-            .set("text-align", "center");
-        
+                .set("color", "#7f8c8d")
+                .set("font-size", "1em")
+                .set("margin", "0.5em auto 1.5em auto")
+                .set("font-style", "italic")
+                .set("text-align", "center");
+
         avatarContainer.add(avatar, nombreUsuario, tipoUsuarioDiv);
         return avatarContainer;
     }
@@ -373,19 +385,18 @@ public class ConfigurationView extends VerticalLayout {
 
         // Aplicar estilos consistentes a todos los campos
         Stream.of(nombreField, apellidosField, emailField, passwordField)
-            .forEach(field -> {
-                field.setWidthFull();
-                field.getStyle()
-                    .set("border-radius", "6px")
-                    .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
-                    .set("--lumo-primary-color", "#3498db")
-                    .set("margin-bottom", "1em");
-            });
+                .forEach(field -> {
+                    field.setWidthFull();
+                    field.getStyle()
+                            .set("border-radius", "6px")
+                            .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
+                            .set("--lumo-primary-color", "#3498db")
+                            .set("margin-bottom", "1em");
+                });
 
         formLayout.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("500px", 2)
-        );
+                new FormLayout.ResponsiveStep("500px", 2));
 
         formLayout.add(nombreField, apellidosField, emailField, passwordField);
         return formLayout;
@@ -409,69 +420,71 @@ public class ConfigurationView extends VerticalLayout {
                 usuario.setApellidos(apellidosField.getValue());
                 usuario.setEmail(emailField.getValue());
                 usuario.setPassword(passwordField.getValue());
-                
-                // Si el usuario es un voluntario, actualizar sus días, turno y habilidades disponibles
-                if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario") && 
-                    diasDisponiblesGroup != null && turnoDisponibilidadCombo != null && habilidadesGroup != null) {
+
+                // Si el usuario es un voluntario, actualizar sus días, turno y habilidades
+                // disponibles
+                if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario") &&
+                        diasDisponiblesGroup != null && turnoDisponibilidadCombo != null && habilidadesGroup != null) {
                     try {
                         // Intentamos hacer un cast a Voluntario
                         SolidarityHub.models.Voluntario voluntario = (SolidarityHub.models.Voluntario) usuario;
-                        
+
                         // Obtener los días seleccionados del CheckboxGroup
                         Set<String> diasSeleccionados = diasDisponiblesGroup.getValue();
-                        
+
                         // Actualizar los días disponibles del voluntario
                         if (voluntario.getDiasDisponibles() == null) {
                             voluntario.setDiasDisponibles(new ArrayList<>());
                         } else {
                             voluntario.getDiasDisponibles().clear();
                         }
-                        
+
                         // Agregar los días seleccionados a la lista del voluntario
                         if (diasSeleccionados != null && !diasSeleccionados.isEmpty()) {
                             voluntario.getDiasDisponibles().addAll(diasSeleccionados);
                         }
-                        
+
                         // Actualizar el turno de disponibilidad
                         String turnoSeleccionado = turnoDisponibilidadCombo.getValue();
                         if (turnoSeleccionado != null && !turnoSeleccionado.isEmpty()) {
                             voluntario.setTurnoDisponibilidad(turnoSeleccionado);
                         }
-                        
+
                         // Actualizar las habilidades del voluntario
                         Set<Habilidad> habilidadesSeleccionadas = habilidadesGroup.getValue();
-                        
+
                         // Limpiar la lista actual de habilidades
                         if (voluntario.getHabilidades() == null) {
                             voluntario.setHabilidades(new ArrayList<>());
                         } else {
                             voluntario.getHabilidades().clear();
                         }
-                        
+
                         // Agregar las habilidades seleccionadas a la lista del voluntario
                         if (habilidadesSeleccionadas != null && !habilidadesSeleccionadas.isEmpty()) {
                             voluntario.getHabilidades().addAll(habilidadesSeleccionadas);
                         }
                     } catch (ClassCastException e) {
                         // Manejar el caso en que el usuario no sea un Voluntario
-                        Notification.show("Error al actualizar los datos del voluntario: " + e.getMessage(), 
-                            3000, Notification.Position.BOTTOM_CENTER);
+                        Notification.show("Error al actualizar los datos del voluntario: " + e.getMessage(),
+                                3000, Notification.Position.BOTTOM_CENTER);
                     }
                 }
-                
-                // Ya no actualizamos las necesidades aquí, se gestionan en la ventana específica de necesidades
-                
+
+                // Ya no actualizamos las necesidades aquí, se gestionan en la ventana
+                // específica de necesidades
+
                 // Usar el servicio directamente en lugar de la API REST
                 Usuario usuarioActualizado = usuarioServicio.guardarUsuario(usuario);
-                
+
                 // Actualizar el usuario en la sesión
                 VaadinSession.getCurrent().setAttribute("usuario", usuarioActualizado);
-                
+
                 Notification.show("Cambios guardados con éxito.", 3000, Notification.Position.BOTTOM_CENTER);
                 UI.getCurrent().navigate("main");
             } catch (Exception e) {
-                Notification.show("Error al guardar los cambios: " + e.getMessage(), 
-                    3000, Notification.Position.BOTTOM_CENTER);
+                Notification.show("Error al guardar los cambios: " + e.getMessage(),
+                        3000, Notification.Position.BOTTOM_CENTER);
             }
         });
         return guardarBtn;
@@ -487,7 +500,7 @@ public class ConfigurationView extends VerticalLayout {
         cancelarBtn.addClickListener(event -> UI.getCurrent().navigate("main"));
         return cancelarBtn;
     }
-    
+
     // Método para crear el panel informativo sobre la gestión de necesidades
     private Component crearInfoNecesidades() {
         // Contenedor principal con estilo mejorado
@@ -500,7 +513,7 @@ public class ConfigurationView extends VerticalLayout {
                 .set("border", "1px solid rgba(52, 152, 219, 0.15)")
                 .set("transition", "all 0.3s ease")
                 .set("overflow", "hidden");
-        
+
         // Título del panel con estilo mejorado
         H1 title = new H1("Gestión de Necesidades");
         title.getStyle()
@@ -511,14 +524,14 @@ public class ConfigurationView extends VerticalLayout {
                 .set("font-weight", "700")
                 .set("text-align", "center")
                 .set("letter-spacing", "0.5px");
-        
+
         // Contenedor para la línea vertical y el mensaje (lado a lado)
         HorizontalLayout contenidoLayout = new HorizontalLayout();
         contenidoLayout.setWidthFull();
         contenidoLayout.setSpacing(true);
         contenidoLayout.setPadding(false);
         contenidoLayout.setAlignItems(Alignment.CENTER);
-        
+
         // Línea vertical decorativa mejorada (ahora a la izquierda del texto)
         Div lineaVertical = new Div();
         lineaVertical.getStyle()
@@ -527,10 +540,11 @@ public class ConfigurationView extends VerticalLayout {
                 .set("height", "70px")
                 .set("border-radius", "4px")
                 .set("flex-shrink", "0");
-        
+
         // Mensaje informativo con estilo mejorado
         Div mensaje = new Div();
-        mensaje.setText("La gestión de necesidades ahora se realiza en una ventana específica. Por favor, utilice la opción 'Necesidades' en el menú principal para gestionar sus necesidades.");
+        mensaje.setText(
+                "La gestión de necesidades ahora se realiza en una ventana específica. Por favor, utilice la opción 'Necesidades' en el menú principal para gestionar sus necesidades.");
         mensaje.getStyle()
                 .set("color", "#34495e")
                 .set("font-size", "1.05em")
@@ -538,10 +552,10 @@ public class ConfigurationView extends VerticalLayout {
                 .set("margin-left", "1rem")
                 .set("text-align", "center")
                 .set("font-weight", "400");
-        
+
         // Añadir línea vertical y mensaje al contenedor horizontal
         contenidoLayout.add(lineaVertical, mensaje);
-        
+
         // Botón para ir a la vista de necesidades con estilo mejorado
         Button irANecesidadesBtn = new Button("Ir a Necesidades");
         irANecesidadesBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -556,21 +570,19 @@ public class ConfigurationView extends VerticalLayout {
                 .set("margin-top", "1.5rem")
                 .set("border", "none")
                 .set("cursor", "pointer");
-        
+
         // Efecto hover para el botón
-        irANecesidadesBtn.getElement().addEventListener("mouseover", event -> 
-            irANecesidadesBtn.getStyle()
+        irANecesidadesBtn.getElement().addEventListener("mouseover", event -> irANecesidadesBtn.getStyle()
                 .set("transform", "translateY(-3px)")
                 .set("box-shadow", "0 6px 12px rgba(52, 152, 219, 0.4)"));
-        
-        irANecesidadesBtn.getElement().addEventListener("mouseout", event -> 
-            irANecesidadesBtn.getStyle()
+
+        irANecesidadesBtn.getElement().addEventListener("mouseout", event -> irANecesidadesBtn.getStyle()
                 .set("transform", "translateY(0)")
                 .set("box-shadow", "0 4px 10px rgba(52, 152, 219, 0.3)"));
-        
+
         // Añadir evento de clic para navegar a la vista de necesidades
         irANecesidadesBtn.addClickListener(event -> UI.getCurrent().navigate("necesidades"));
-        
+
         // Contenedor para centrar el botón
         Div buttonContainer = new Div(irANecesidadesBtn);
         buttonContainer.getStyle()
@@ -578,10 +590,10 @@ public class ConfigurationView extends VerticalLayout {
                 .set("justify-content", "center")
                 .set("width", "100%")
                 .set("margin-top", "1rem");
-        
+
         // Añadir componentes al contenedor principal
         infoContainer.add(title, contenidoLayout, buttonContainer);
-        
+
         return infoContainer;
     }
 }

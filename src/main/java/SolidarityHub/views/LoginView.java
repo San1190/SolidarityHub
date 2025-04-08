@@ -45,7 +45,7 @@ public class LoginView extends VerticalLayout {
         setPadding(false);
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
-        
+
         // Estilos consistentes con RegistroView
         getElement().getStyle().set("background", "white");
         getElement().getStyle().set("height", "100%");
@@ -55,36 +55,35 @@ public class LoginView extends VerticalLayout {
         getElement().getStyle().set("box-shadow", "none");
 
         getElement().executeJs(
-            "document.documentElement.style.background = 'white';" +
-            "document.body.style.background = 'white';" +
-            "this.parentNode.style.background = 'white';"
-        );
+                "document.documentElement.style.background = 'white';" +
+                        "document.body.style.background = 'white';" +
+                        "this.parentNode.style.background = 'white';");
 
         // Crear card contenedor similar a RegistroView
         Div formCard = new Div();
         formCard.addClassName("form-card");
         formCard.getStyle()
-            .set("background-color", "white")
-            .set("border-radius", "12px")
-            .set("box-shadow", "0 8px 24px rgba(0,0,0,0.1)")
-            .set("padding", "2em")
-            .set("max-width", "500px")
-            .set("width", "90%")
-            .set("margin", "2em auto");
-        
+                .set("background-color", "white")
+                .set("border-radius", "12px")
+                .set("box-shadow", "0 8px 24px rgba(0,0,0,0.1)")
+                .set("padding", "2em")
+                .set("max-width", "500px")
+                .set("width", "90%")
+                .set("margin", "2em auto")
+                .set("margin-top", "10em")
+                .set("margin-bottom", "2em");
         // Añadir componentes al card
         formCard.add(
-            crearLogo(),
-            createSeparador(),
-            crearTitulo(),
-            crearTipoUsuario(),
-            crearEmailField(),
-            crearContraseñaField(),
-            crearIniciarSesionBtn(),
-            crearContraseñaOlvidadaLink(),
-            crearRegistrarBtn()
-        );
-        
+                crearLogo(),
+                createSeparador(),
+                crearTitulo(),
+                crearTipoUsuario(),
+                crearEmailField(),
+                crearContraseñaField(),
+                crearIniciarSesionBtn(),
+                crearContraseñaOlvidadaLink(),
+                crearRegistrarBtn());
+
         // Añadir card al layout principal
         add(formCard);
     }
@@ -95,24 +94,24 @@ public class LoginView extends VerticalLayout {
                 "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/7dcef7b2-6389-45f4-9961-8741a558c286.png/LogoSH-transparent.png",
                 "Solidarity Hub Logo");
         logo.setWidth("220px");
-        
+
         // Center the logo
         HorizontalLayout logoLayout = new HorizontalLayout(logo);
         logoLayout.setWidthFull();
         logoLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-        
+
         return logoLayout;
     }
 
     private Component createSeparador() {
         Hr separador = new Hr();
         separador.getStyle()
-            .set("margin-top", "2.2em")
-            .set("margin-bottom", "1.2em")
-            .set("width", "100%")
-            .set("border", "none")
-            .set("height", "2px")
-            .set("background-color", "rgba(52, 152, 219, 0.3)");
+                .set("margin-top", "2.2em")
+                .set("margin-bottom", "1.2em")
+                .set("width", "100%")
+                .set("border", "none")
+                .set("height", "2px")
+                .set("background-color", "rgba(52, 152, 219, 0.3)");
         return separador;
     }
 
@@ -122,10 +121,10 @@ public class LoginView extends VerticalLayout {
                 LumoUtility.Margin.NONE,
                 LumoUtility.FontSize.XXXLARGE);
         title.getStyle()
-            .set("color", "#2c3e50")
-            .set("text-align", "center")
-            .set("margin-bottom", "1em")
-            .set("font-weight", "600");
+                .set("color", "#2c3e50")
+                .set("text-align", "center")
+                .set("margin-bottom", "1em")
+                .set("font-weight", "600");
         return title;
     }
 
@@ -135,15 +134,15 @@ public class LoginView extends VerticalLayout {
         tipoUsuario.setLabel("Tipo de cuenta");
         tipoUsuario.setItems("Afectado", "Voluntario");
         tipoUsuario.setValue("Afectado");
-        
+
         // Style the radio group similar to RegistroView
         tipoUsuario.getStyle()
-            .set("margin-bottom", "2em")
-            .set("margin-top", "0.5em")
-            .set("border-radius", "8px")
-            .set("padding", "1.5em 4em")
-            .set("background-color", "rgba(52, 152, 219, 0.05)");
-            
+                .set("margin-bottom", "2em")
+                .set("margin-top", "0.5em")
+                .set("border-radius", "8px")
+                .set("padding", "1.5em 4em")
+                .set("background-color", "rgba(52, 152, 219, 0.05)");
+
         return tipoUsuario;
     }
 
@@ -152,10 +151,10 @@ public class LoginView extends VerticalLayout {
         emailField.setPlaceholder("ejemplo@correo.com");
         emailField.setWidthFull();
         emailField.getStyle()
-            .set("border-radius", "6px")
-            .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
-            .set("--lumo-primary-color", "#3498db")
-            .set("margin-bottom", "1em");
+                .set("border-radius", "6px")
+                .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
+                .set("--lumo-primary-color", "#3498db")
+                .set("margin-bottom", "1em");
         return emailField;
     }
 
@@ -163,10 +162,10 @@ public class LoginView extends VerticalLayout {
         contraseñaField = new PasswordField("Contraseña");
         contraseñaField.setWidthFull();
         contraseñaField.getStyle()
-            .set("border-radius", "6px")
-            .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
-            .set("--lumo-primary-color", "#3498db")
-            .set("margin-bottom", "1em");
+                .set("border-radius", "6px")
+                .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
+                .set("--lumo-primary-color", "#3498db")
+                .set("margin-bottom", "1em");
         return contraseñaField;
     }
 
@@ -196,25 +195,25 @@ public class LoginView extends VerticalLayout {
             // Autenticar usuario
             autenticarUsuario(usuario);
         });
-        
+
         // Estilo consistente con RegistroView
         iniciarSesionBtn.getStyle()
-            .set("background-color", "#3498db")
-            .set("color", "white")
-            .set("border-radius", "6px")
-            .set("font-weight", "600")
-            .set("margin-top", "1em")
-            .set("margin-bottom", "1em")
-            .set("box-shadow", "0 4px 6px rgba(52, 152, 219, 0.2)")
-            .set("transition", "transform 0.1s ease-in-out")
-            .set("width", "100%");
-            
-        iniciarSesionBtn.getElement().addEventListener("mouseover", _ -> 
-            iniciarSesionBtn.getStyle().set("transform", "translateY(-2px)"));
-            
-        iniciarSesionBtn.getElement().addEventListener("mouseout", _ -> 
-            iniciarSesionBtn.getStyle().set("transform", "translateY(0)"));
-        
+                .set("background-color", "#3498db")
+                .set("color", "white")
+                .set("border-radius", "6px")
+                .set("font-weight", "600")
+                .set("margin-top", "1em")
+                .set("margin-bottom", "1em")
+                .set("box-shadow", "0 4px 6px rgba(52, 152, 219, 0.2)")
+                .set("transition", "transform 0.1s ease-in-out")
+                .set("width", "auto");
+
+        iniciarSesionBtn.getElement().addEventListener("mouseover",
+                _ -> iniciarSesionBtn.getStyle().set("transform", "translateY(-2px)"));
+
+        iniciarSesionBtn.getElement().addEventListener("mouseout",
+                _ -> iniciarSesionBtn.getStyle().set("transform", "translateY(0)"));
+
         return iniciarSesionBtn;
     }
 
@@ -223,17 +222,17 @@ public class LoginView extends VerticalLayout {
         registrarBtn = new Button("¿No tienes cuenta? Regístrate", _ -> {
             handlerRegistrarBtn.pulsarRegistrarBtn();
         });
-        
+
         // Estilo consistente
         registrarBtn.getStyle()
-            .set("background-color", "white")
-            .set("color", "#3498db")
-            .set("border", "1px solid #3498db")
-            .set("border-radius", "6px")
-            .set("font-weight", "500")
-            .set("width", "100%")
-            .set("margin-top", "1.2em");
-            
+                .set("background-color", "white")
+                .set("color", "#3498db")
+                .set("border", "1px solid #3498db")
+                .set("border-radius", "6px")
+                .set("font-weight", "500")
+                .set("width", "auto")
+                .set("margin-top", "1.2em");
+
         return registrarBtn;
     }
 
@@ -241,11 +240,11 @@ public class LoginView extends VerticalLayout {
         // Link de contraseña olvidada
         contraseñaOlvidadaLink = new Anchor("#", "¿Ha olvidado su contraseña?");
         contraseñaOlvidadaLink.getStyle()
-            .set("font-size", "14px")
-            .set("color", "#3498db")
-            .set("text-align", "center")
-            .set("display", "block")
-            .set("margin-top", "0.5em");
+                .set("font-size", "14px")
+                .set("color", "#3498db")
+                .set("text-align", "center")
+                .set("display", "block")
+                .set("margin-top", "0.5em");
         return contraseñaOlvidadaLink;
     }
 
@@ -266,7 +265,7 @@ public class LoginView extends VerticalLayout {
             mostrarError("Las credenciales son incorrectas");
         }
     }
-    
+
     private void mostrarError(String mensaje) {
         Notification notification = Notification.show(
                 mensaje,

@@ -10,6 +10,8 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
+import com.vaadin.flow.component.checkbox.CheckboxGroupVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
@@ -39,6 +41,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -78,7 +81,7 @@ public class RegistroView extends VerticalLayout {
         setSpacing(false);
         setPadding(false);
         setAlignItems(Alignment.CENTER);
-        
+
         getElement().getStyle().set("background", "white");
         getElement().getStyle().set("height", "100%");
         getElement().getStyle().set("width", "100vw");
@@ -87,34 +90,32 @@ public class RegistroView extends VerticalLayout {
         getElement().getStyle().set("box-shadow", "none");
 
         getElement().executeJs(
-            "document.documentElement.style.background = 'white';" +
-            "document.body.style.background = 'white';" +
-            "this.parentNode.style.background = 'white';"
-        );
-        
+                "document.documentElement.style.background = 'white';" +
+                        "document.body.style.background = 'white';" +
+                        "this.parentNode.style.background = 'white';");
+
         this.usuarioControlador = usuarioControlador;
 
         Div formCard = new Div();
         formCard.addClassName("form-card");
         formCard.getStyle()
-            .set("background-color", "white")
-            .set("border-radius", "12px")
-            .set("box-shadow", "0 8px 24px rgba(0,0,0,0.1)")
-            .set("padding", "2em")
-            .set("max-width", "800px")
-            .set("width", "100%")
-            .set("margin", "2em auto");
-            
+                .set("background-color", "white")
+                .set("border-radius", "12px")
+                .set("box-shadow", "0 8px 24px rgba(0,0,0,0.1)")
+                .set("padding", "2em")
+                .set("max-width", "800px")
+                .set("width", "100%")
+                .set("margin", "2em auto");
+
         formCard.add(
-            createLogo(),
-            createSeparador(),
-            createTitle(),
-            createTipoUsuarioSelection(),
-            createCommonFields(),
-            createVoluntarioFields(),
-            createButtonLayout()
-        );
-        
+                createLogo(),
+                createSeparador(),
+                createTitle(),
+                createTipoUsuarioSelection(),
+                createCommonFields(),
+                createVoluntarioFields(),
+                createButtonLayout());
+
         add(formCard);
         configureVisibility();
     }
@@ -137,12 +138,12 @@ public class RegistroView extends VerticalLayout {
     private Component createSeparador() {
         Hr separador = new Hr();
         separador.getStyle()
-            .set("margin-top", "2.2em")
-            .set("margin-bottom", "1.2em")
-            .set("width", "100%")
-            .set("border", "none")
-            .set("height", "2px")
-            .set("background-color", "rgba(52, 152, 219, 0.3)");
+                .set("margin-top", "2.2em")
+                .set("margin-bottom", "1.2em")
+                .set("width", "100%")
+                .set("border", "none")
+                .set("height", "2px")
+                .set("background-color", "rgba(52, 152, 219, 0.3)");
         return separador;
     }
 
@@ -152,10 +153,10 @@ public class RegistroView extends VerticalLayout {
                 LumoUtility.Margin.NONE,
                 LumoUtility.FontSize.XXXLARGE);
         title.getStyle()
-            .set("color", "#2c3e50")
-            .set("text-align", "center")
-            .set("margin-bottom", "1em")
-            .set("font-weight", "600");
+                .set("color", "#2c3e50")
+                .set("text-align", "center")
+                .set("margin-bottom", "1em")
+                .set("font-weight", "600");
         return title;
     }
 
@@ -167,14 +168,14 @@ public class RegistroView extends VerticalLayout {
         tipoUsuarioRadio.addValueChangeListener(_ -> {
             configureVisibility();
         });
-        
+
         // Style the radio group
         tipoUsuarioRadio.getStyle()
-            .set("margin-bottom", "2em")
-            .set("border-radius", "8px")
-            .set("padding", "2em 10em")
-            .set("background-color", "rgba(52, 152, 219, 0.05)");
-            
+                .set("margin-bottom", "2em")
+                .set("border-radius", "8px")
+                .set("padding", "2em 10em")
+                .set("background-color", "rgba(52, 152, 219, 0.05)");
+
         return tipoUsuarioRadio;
     }
 
@@ -250,21 +251,21 @@ public class RegistroView extends VerticalLayout {
         });
 
         // Add styles to form fields
-        Stream.of(dniField, nombreField, apellidosField, emailField, 
-                  passwordField, confirmPasswordField, telefonoField, direccionField)
-            .forEach(field -> {
-                field.getStyle()
-                    .set("border-radius", "6px")
-                    .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
-                    .set("--lumo-primary-color", "#3498db");
-            });
-            
+        Stream.of(dniField, nombreField, apellidosField, emailField,
+                passwordField, confirmPasswordField, telefonoField, direccionField)
+                .forEach(field -> {
+                    field.getStyle()
+                            .set("border-radius", "6px")
+                            .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
+                            .set("--lumo-primary-color", "#3498db");
+                });
+
         // Style upload component
         upload.getStyle()
-            .set("border", "2px dashed #3498db")
-            .set("border-radius", "8px")
-            .set("padding", "1em")
-            .set("background-color", "rgba(52, 152, 219, 0.05)");
+                .set("border", "2px dashed #3498db")
+                .set("border-radius", "8px")
+                .set("padding", "1em")
+                .set("background-color", "rgba(52, 152, 219, 0.05)");
 
         formLayout.add(
                 dniField, nombreField,
@@ -293,10 +294,10 @@ public class RegistroView extends VerticalLayout {
         subtitulo.getStyle().set("margin-top", "1em");
 
         headerDiv.add(titulo, subtitulo);
-        
+
         titulo.getStyle()
-            .set("color", "#2c3e50")
-            .set("margin", "0");
+                .set("color", "#2c3e50")
+                .set("margin", "0");
 
         // Habilidades
         habilidadesGroup = new CheckboxGroup<>();
@@ -309,25 +310,44 @@ public class RegistroView extends VerticalLayout {
         habilidadesGroup.setItems(habilidadesNombres);
 
         habilidadesGroup.getStyle()
-            .set("background-color", "rgba(236, 240, 243, 0.5)")
-            .set("padding", "1em")
-            .set("border-radius", "8px");
+                .set("background-color", "rgba(236, 240, 243, 0.5)")
+                .set("padding", "1em")
+                .set("border-radius", "8px");
 
         HorizontalLayout hlLayout = new HorizontalLayout();
-        horaInicioField = new TimePicker("Hora de inicio disponibilidad");
-        horaFinField = new TimePicker("Hora de fin disponibilidad");
-        horaInicioField.setStep(Duration.ofMinutes(30));
-        horaFinField.setStep(Duration.ofMinutes(30));
-        horaInicioField.setWidth("300px");
-        horaFinField.setWidth("300px");
+        CheckboxGroup<String> diasDisponiblesGroup = new CheckboxGroup<>();
+        diasDisponiblesGroup.setLabel("Días de la semana disponible:");
+        diasDisponiblesGroup.setItems("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo");
+        diasDisponiblesGroup.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
+        ComboBox<String> turnoDisponibilidadCombo = new ComboBox<>("Turno de disponibilidad:");
+        turnoDisponibilidadCombo.setItems("Mañana", "Tarde", "Día Entero");
+        turnoDisponibilidadCombo.setPlaceholder("Selecciona un turno");
+        turnoDisponibilidadCombo.setClearButtonVisible(true);
+        turnoDisponibilidadCombo.setWidthFull();
 
-        Stream.of(horaInicioField, horaFinField)
-            .forEach(field -> {
-                field.getStyle()
-                    .set("--lumo-primary-color", "#3498db");
-            });
+        // Estilo mejorado para el combobox
+        turnoDisponibilidadCombo.getStyle()
+                .set("border-radius", "6px")
+                .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
+                .set("--lumo-primary-color", "#3498db")
+                .set("margin-top", "1em")
+                .set("margin-bottom", "1em");
 
-        hlLayout.add(horaInicioField, horaFinField);
+        // Estilo mejorado para el grupo de checkboxes
+        diasDisponiblesGroup.getStyle()
+                .set("background-color", "rgba(236, 240, 243, 0.5)")
+                .set("padding", "1em")
+                .set("border-radius", "8px");
+
+        /*
+         * Stream.of(horaInicioField, horaFinField)
+         * .forEach(field -> {
+         * field.getStyle()
+         * .set("--lumo-primary-color", "#3498db");
+         * });
+         */
+
+        hlLayout.add(diasDisponiblesGroup, turnoDisponibilidadCombo);
         hlLayout.setAlignItems(Alignment.CENTER);
         vLayout.add(headerDiv, habilidadesGroup, hlLayout);
         camposVoluntario.add(vLayout);
@@ -346,25 +366,25 @@ public class RegistroView extends VerticalLayout {
         registrar.addClickListener(_ -> onRegistrar());
 
         registrar.getStyle()
-            .set("background-color", "#3498db")
-            .set("color", "white")
-            .set("border-radius", "6px")
-            .set("font-weight", "600")
-            .set("box-shadow", "0 4px 6px rgba(52, 152, 219, 0.2)")
-            .set("transition", "transform 0.1s ease-in-out");
-            
-        registrar.getElement().addEventListener("mouseover", _ -> 
-            registrar.getStyle().set("transform", "translateY(-2px)"));
-            
-        registrar.getElement().addEventListener("mouseout", _ -> 
-            registrar.getStyle().set("transform", "translateY(0)"));
+                .set("background-color", "#3498db")
+                .set("color", "white")
+                .set("border-radius", "6px")
+                .set("font-weight", "600")
+                .set("box-shadow", "0 4px 6px rgba(52, 152, 219, 0.2)")
+                .set("transition", "transform 0.1s ease-in-out");
+
+        registrar.getElement().addEventListener("mouseover",
+                _ -> registrar.getStyle().set("transform", "translateY(-2px)"));
+
+        registrar.getElement().addEventListener("mouseout",
+                _ -> registrar.getStyle().set("transform", "translateY(0)"));
 
         HorizontalLayout buttonLayout = new HorizontalLayout(cancelar, registrar);
         buttonLayout.setPadding(true);
         buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         buttonLayout.getStyle()
-            .set("margin-top", "2em");
-            
+                .set("margin-top", "2em");
+
         return buttonLayout;
     }
 
@@ -424,8 +444,8 @@ public class RegistroView extends VerticalLayout {
                 fotoBytes,
                 null,
                 listaHabilidades.isEmpty() ? null : listaHabilidades,
-                horaInicioField.getValue(),
-                horaFinField.getValue());
+                LocalTime.now(),
+                LocalTime.now());
 
         RestTemplate restTemplate = new RestTemplate();
         String url = "http://localhost:8080/api/usuarios/registrar";
@@ -447,8 +467,8 @@ public class RegistroView extends VerticalLayout {
                 fotoBytes,
                 null,
                 null,
-                null,
-                null);
+                LocalTime.now(),
+                LocalTime.now());
 
         RestTemplate restTemplate = new RestTemplate();
         String url = "http://localhost:8080/api/usuarios/registrar";
@@ -475,8 +495,8 @@ public class RegistroView extends VerticalLayout {
         passwordField.clear();
         confirmPasswordField.clear();
         habilidadesGroup.clear();
-        horaInicioField.clear();
-        horaFinField.clear();
+        // horaInicioField.clear();
+        // horaFinField.clear();
         fotoBytes = null;
         upload.getElement().setProperty("files", null);
     }
