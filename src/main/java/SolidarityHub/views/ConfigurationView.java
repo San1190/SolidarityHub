@@ -60,8 +60,7 @@ public class ConfigurationView extends VerticalLayout {
     private CheckboxGroup<String> diasDisponiblesGroup;
     private ComboBox<String> turnoDisponibilidadCombo;
 
-    // Campos para afectados (necesidades)
-    private CheckboxGroup<String> necesidadesGroup;
+    // Ya no necesitamos campos para afectados, se gestionan en otra vista
 
     public ConfigurationView(UsuarioServicio usuarioServicio) {
         this.usuarioServicio = usuarioServicio;
@@ -95,6 +94,12 @@ public class ConfigurationView extends VerticalLayout {
             "document.body.style.background = 'white';" +
             "this.parentNode.style.background = 'white';"
         );
+        
+        // Centrar todo el contenido
+        getStyle().set("display", "flex")
+                .set("flex-direction", "column")
+                .set("align-items", "center")
+                .set("justify-content", "center");
 
         // Contenedor principal con estilo consistente
         Div formCard = new Div();
@@ -106,7 +111,10 @@ public class ConfigurationView extends VerticalLayout {
                 .set("padding", "2em")
                 .set("max-width", "800px")
                 .set("width", "90%")
-                .set("margin", "2em auto");
+                .set("margin", "2em auto")
+                .set("display", "flex")
+                .set("flex-direction", "column")
+                .set("align-items", "center");
 
         // Título de la página con estilo mejorado
         H1 title = new H1("Configuración de Usuario");
@@ -135,36 +143,42 @@ public class ConfigurationView extends VerticalLayout {
         panel.setHeight("auto");
         panel.setSpacing(true);
         panel.setPadding(true);
-        panel.setAlignItems(Alignment.START);
+        panel.setAlignItems(Alignment.CENTER);
+        panel.setJustifyContentMode(JustifyContentMode.CENTER);
+        panel.getStyle().set("margin", "0 auto");
 
         // Panel izquierdo: se muestra según el tipo de usuario
         VerticalLayout panelIzq = new VerticalLayout();
-        panelIzq.setWidthFull();
+        panelIzq.setWidth("48%");
         panelIzq.setSpacing(true);
         panelIzq.setPadding(true);
+        panelIzq.setAlignItems(Alignment.CENTER);
         panelIzq.getStyle()
                 .set("background-color", "rgba(52, 152, 219, 0.05)")
                 .set("border-radius", "8px")
-                .set("padding", "1.5rem");
+                .set("padding", "1.5rem")
+                .set("margin", "0 auto");
 
         // Si el usuario es voluntario, se muestran horarios y habilidades
         if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario")) {
             panelIzq.add(crearDiasHorario(), crearTurnoHorario(), crearHabilidades());
         }
-        // Si el usuario es afectado, se muestra la selección de necesidades
+        // Para usuarios afectados, mostramos información sobre la gestión de necesidades
         else if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("afectado")) {
-            panelIzq.add(crearNecesidades(), crearListaNecesidades());
+            panelIzq.add(crearInfoNecesidades());
         }
 
         // Panel derecho: Avatar y formulario de datos personales
         VerticalLayout panelDer = new VerticalLayout();
-        panelDer.setWidthFull();
+        panelDer.setWidth("48%");
         panelDer.setSpacing(true);
         panelDer.setPadding(true);
+        panelDer.setAlignItems(Alignment.CENTER);
         panelDer.getStyle()
                 .set("background-color", "rgba(236, 240, 243, 0.5)")
                 .set("border-radius", "8px")
-                .set("padding", "1.5rem");
+                .set("padding", "1.5rem")
+                .set("margin", "0 auto");
         panelDer.add(crearAvatar(), crearFormInfo());
 
         // Panel de botones con estilo mejorado
@@ -292,123 +306,7 @@ public class ConfigurationView extends VerticalLayout {
         return habilidadesGroup;
     }
 
-    // Métodos para usuarios afectados
-
-    private Component crearNecesidades() {
-        // Usamos un CheckboxGroup para que el usuario seleccione sus necesidades
-        necesidadesGroup = new CheckboxGroup<>();
-        necesidadesGroup.setLabel("Selecciona tus Necesidades:");
-        
-        // Usamos los valores del enum TipoNecesidad
-        necesidadesGroup.setItems(
-            SolidarityHub.models.Necesidad.TipoNecesidad.PRIMEROS_AUXILIOS.toString(),
-            SolidarityHub.models.Necesidad.TipoNecesidad.MEDICAMENTOS.toString(),
-            SolidarityHub.models.Necesidad.TipoNecesidad.ALIMENTACION.toString(),
-            SolidarityHub.models.Necesidad.TipoNecesidad.ALIMENTACION_BEBE.toString(),
-            SolidarityHub.models.Necesidad.TipoNecesidad.REFUGIO.toString(),
-            SolidarityHub.models.Necesidad.TipoNecesidad.ROPA.toString(),
-            SolidarityHub.models.Necesidad.TipoNecesidad.SERVICIO_LIMPIEZA.toString(),
-            SolidarityHub.models.Necesidad.TipoNecesidad.AYUDA_PSICOLOGICA.toString(),
-            SolidarityHub.models.Necesidad.TipoNecesidad.AYUDA_CARPINTERIA.toString(),
-            SolidarityHub.models.Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD.toString(),
-            SolidarityHub.models.Necesidad.TipoNecesidad.AYUDA_FONTANERIA.toString(),
-            SolidarityHub.models.Necesidad.TipoNecesidad.MATERIAL_HIGENE.toString()
-        );
-        
-        // Estilo mejorado para el grupo de necesidades
-        necesidadesGroup.getStyle()
-            .set("background-color", "rgba(236, 240, 243, 0.5)")
-            .set("padding", "1em")
-            .set("border-radius", "8px")
-            .set("margin-top", "1em");
-        
-        // Si el usuario es un afectado, marcamos las necesidades que ya tiene
-        if (usuario instanceof Afectado) {
-            Afectado afectado = (Afectado) usuario;
-            if (afectado.getNecesidades() != null && !afectado.getNecesidades().isEmpty()) {
-                // Convertimos las necesidades del usuario a strings para marcarlas en el checkbox
-                Set<String> necesidadesSeleccionadas = new HashSet<>();
-                for (Necesidad necesidad : afectado.getNecesidades()) {
-                    if (necesidad.getTipoNecesidad() != null) {
-                        necesidadesSeleccionadas.add(necesidad.getTipoNecesidad().toString());
-                    }
-                }
-                // Establecer las necesidades seleccionadas en el grupo de checkboxes
-                if (!necesidadesSeleccionadas.isEmpty()) {
-                    necesidadesGroup.setValue(necesidadesSeleccionadas);
-                }
-            }
-        }
-        
-        necesidadesGroup.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
-        return necesidadesGroup;
-    }
-
-    private Component crearListaNecesidades() {
-        VerticalLayout lista = new VerticalLayout();
-        lista.setWidthFull();
-        lista.setSpacing(true);
-        lista.setPadding(true);
-        
-        // Estilo mejorado para la lista de necesidades
-        lista.getStyle()
-            .set("background-color", "rgba(236, 240, 243, 0.5)")
-            .set("border-radius", "8px")
-            .set("margin-top", "1em")
-            .set("padding", "1em");
-        
-        // Título de la sección con estilo mejorado
-        H1 titulo = new H1("Lista de Necesidades Actuales");
-        titulo.getStyle()
-            .set("color", "#2c3e50")
-            .set("font-size", "1.2em")
-            .set("margin", "0 0 0.5em 0")
-            .set("font-weight", "600");
-        lista.add(titulo);
-        
-        // Si el usuario es un afectado, mostramos sus necesidades actuales
-        if (usuario instanceof Afectado) {
-            Afectado afectado = (Afectado) usuario;
-            if (afectado.getNecesidades() != null && !afectado.getNecesidades().isEmpty()) {
-                // Creamos una lista con las necesidades actuales
-                for (Necesidad necesidad : afectado.getNecesidades()) {
-                    if (necesidad.getTipoNecesidad() != null) {
-                        String descripcionAdicional = necesidad.getDescripcion() != null && !necesidad.getDescripcion().isEmpty() 
-                            ? " - " + necesidad.getDescripcion() : "";
-                        String urgenciaInfo = necesidad.getUrgencia() != null ? " (Urgencia: " + necesidad.getUrgencia() + ")" : "";
-                        
-                        Div itemDiv = new Div();
-                        itemDiv.setText(necesidad.getTipoNecesidad().toString() + descripcionAdicional + urgenciaInfo);
-                        itemDiv.getStyle()
-                            .set("padding", "0.5em 1em")
-                            .set("margin-bottom", "0.5em")
-                            .set("background-color", "rgba(255, 255, 255, 0.7)")
-                            .set("border-radius", "4px")
-                            .set("border-left", "3px solid #3498db");
-                        lista.add(itemDiv);
-                    }
-                }
-            } else {
-                Div mensajeDiv = new Div();
-                mensajeDiv.setText("No tienes necesidades registradas actualmente.");
-                mensajeDiv.getStyle()
-                    .set("padding", "1em")
-                    .set("color", "#7f8c8d")
-                    .set("font-style", "italic");
-                lista.add(mensajeDiv);
-            }
-        } else {
-            Div mensajeDiv = new Div();
-            mensajeDiv.setText("No disponible para este tipo de usuario.");
-            mensajeDiv.getStyle()
-                .set("padding", "1em")
-                .set("color", "#7f8c8d")
-                .set("font-style", "italic");
-            lista.add(mensajeDiv);
-        }
-        
-        return lista;
-    }
+    // Métodos comunes
 
     // Métodos comunes
 
@@ -416,9 +314,11 @@ public class ConfigurationView extends VerticalLayout {
         // Contenedor para centrar el avatar
         VerticalLayout avatarContainer = new VerticalLayout();
         avatarContainer.setAlignItems(Alignment.CENTER);
+        avatarContainer.setJustifyContentMode(JustifyContentMode.CENTER);
         avatarContainer.setPadding(true);
         avatarContainer.setSpacing(true);
         avatarContainer.setWidthFull();
+        avatarContainer.getStyle().set("text-align", "center");
         
         Avatar avatar = new Avatar();
         // Se asigna la imagen del usuario recuperada vía endpoint con timestamp para evitar caché
@@ -426,114 +326,30 @@ public class ConfigurationView extends VerticalLayout {
         avatar.setName(usuario.getNombre() + " " + usuario.getApellidos());
         avatar.setHeight("120px");
         avatar.setWidth("120px");
-        avatar.getStyle().set("margin", "0 auto");
+        avatar.getStyle()
+            .set("margin", "0 auto")
+            .set("display", "block");
         
         // Nombre del usuario debajo del avatar
         H1 nombreUsuario = new H1(usuario.getNombre() + " " + usuario.getApellidos());
         nombreUsuario.getStyle()
             .set("color", "#2c3e50")
             .set("font-size", "1.5em")
-            .set("margin", "0.5em 0")
-            .set("font-weight", "600");
+            .set("margin", "0.5em auto")
+            .set("font-weight", "600")
+            .set("text-align", "center");
         
-        // Componente para subir nueva foto
-        MemoryBuffer buffer = new MemoryBuffer();
-        Upload upload = new Upload(buffer);
-        upload.setAcceptedFileTypes("image/jpeg", "image/png");
-        upload.setMaxFileSize(5 * 1024 * 1024); // 5MB
-        upload.setDropLabel(new Span("Sube o arrastra tu nueva foto de perfil aquí"));
-        upload.setUploadButton(new Button("Cambiar foto"));
+        // Información del tipo de usuario
+        Div tipoUsuarioDiv = new Div();
+        tipoUsuarioDiv.setText("Tipo de usuario: " + usuario.getTipoUsuario());
+        tipoUsuarioDiv.getStyle()
+            .set("color", "#7f8c8d")
+            .set("font-size", "1em")
+            .set("margin", "0.5em auto 1.5em auto")
+            .set("font-style", "italic")
+            .set("text-align", "center");
         
-        // Estilo para el componente de upload
-        upload.getStyle()
-            .set("border", "2px dashed #3498db")
-            .set("border-radius", "8px")
-            .set("padding", "1em")
-            .set("background-color", "rgba(52, 152, 219, 0.05)")
-            .set("max-width", "300px")
-            .set("margin", "1em auto");
-        
-        // Botón para eliminar la foto actual
-        Button eliminarFotoBtn = new Button("Eliminar foto");
-        eliminarFotoBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        eliminarFotoBtn.getStyle()
-            .set("margin-top", "0.5em");
-        
-        // Manejador para subir nueva foto
-        upload.addSucceededListener(event -> {
-            try {
-                // Convertir InputStream a byte[]
-                InputStream inputStream = buffer.getInputStream();
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                byte[] bufferBytes = new byte[4096];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(bufferBytes)) != -1) {
-                    outputStream.write(bufferBytes, 0, bytesRead);
-                }
-                byte[] fotoBytes = outputStream.toByteArray();
-                
-                // Enviar la foto al servidor
-                RestTemplate restTemplate = new RestTemplate();
-                String url = "/api/usuarios/" + usuario.getId() + "/foto";
-                
-                // Crear MultiValueMap para enviar la foto
-                org.springframework.util.MultiValueMap<String, Object> body = new org.springframework.util.LinkedMultiValueMap<>();
-                body.add("foto", new org.springframework.core.io.ByteArrayResource(fotoBytes) {
-                    @Override
-                    public String getFilename() {
-                        return "profile.jpg";
-                    }
-                });
-                
-                org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-                headers.setContentType(org.springframework.http.MediaType.MULTIPART_FORM_DATA);
-                
-                org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, Object>> requestEntity = 
-                    new org.springframework.http.HttpEntity<>(body, headers);
-                
-                restTemplate.postForEntity(url, requestEntity, String.class);
-                
-                // Actualizar la imagen del avatar con un timestamp para evitar caché
-                String timestamp = "?t=" + System.currentTimeMillis();
-                avatar.setImage("/api/usuarios/" + usuario.getId() + "/foto" + timestamp);
-                
-                // Forzar actualización del componente
-                avatar.getElement().executeJs("this.src = this.src.split('?')[0] + '" + timestamp + "';");
-                
-                Notification.show("Foto actualizada con éxito", 3000, Notification.Position.BOTTOM_CENTER);
-            } catch (Exception ex) {
-                Notification.show("Error al procesar la imagen: " + ex.getMessage(),
-                        3000, Notification.Position.MIDDLE);
-            }
-        });
-        
-        // Manejador para eliminar la foto
-        eliminarFotoBtn.addClickListener(e -> {
-            try {
-                // Enviar solicitud para eliminar la foto (establecer a la imagen por defecto)
-                RestTemplate restTemplate = new RestTemplate();
-                
-                // Usar directamente la ruta relativa para la API
-                String url = "/api/usuarios/" + usuario.getId() + "/foto/eliminar";
-                
-                // Realizar una solicitud DELETE para eliminar la foto
-                restTemplate.delete(url);
-                
-                // Actualizar la imagen del avatar (forzar recarga con timestamp)
-                String timestamp = "?t=" + System.currentTimeMillis();
-                avatar.setImage("/api/usuarios/" + usuario.getId() + "/foto" + timestamp);
-                
-                // Forzar actualización del componente
-                avatar.getElement().executeJs("this.src = this.src.split('?')[0] + '" + timestamp + "';");
-                
-                Notification.show("Foto eliminada", 3000, Notification.Position.BOTTOM_CENTER);
-            } catch (Exception ex) {
-                Notification.show("Error al eliminar la foto: " + ex.getMessage(),
-                        3000, Notification.Position.MIDDLE);
-            }
-        });
-        
-        avatarContainer.add(avatar, nombreUsuario, upload, eliminarFotoBtn);
+        avatarContainer.add(avatar, nombreUsuario, tipoUsuarioDiv);
         return avatarContainer;
     }
 
@@ -643,45 +459,7 @@ public class ConfigurationView extends VerticalLayout {
                     }
                 }
                 
-                // Si el usuario es un afectado, actualizar sus necesidades
-                if (usuario instanceof Afectado && necesidadesGroup != null) {
-                    Afectado afectado = (Afectado) usuario;
-                    
-                    // Obtener las necesidades seleccionadas del CheckboxGroup
-                    Set<String> necesidadesSeleccionadas = necesidadesGroup.getValue();
-                    
-                    // Limpiar la lista actual de necesidades
-                    if (afectado.getNecesidades() == null) {
-                        afectado.setNecesidades(new ArrayList<>());
-                    } else {
-                        afectado.getNecesidades().clear();
-                    }
-                    
-                    // Crear nuevas necesidades basadas en las selecciones
-                    for (String tipoNecesidadStr : necesidadesSeleccionadas) {
-                        try {
-                            // Convertir el string al enum TipoNecesidad
-                            Necesidad.TipoNecesidad tipoNecesidad = Necesidad.TipoNecesidad.valueOf(tipoNecesidadStr);
-                            
-                            // Crear una nueva necesidad con valores predeterminados
-                            Necesidad nuevaNecesidad = new Necesidad(
-                                tipoNecesidad,
-                                "Necesidad de " + tipoNecesidadStr,
-                                Necesidad.EstadoNecesidad.REGISTRADA,
-                                Necesidad.Urgencia.MEDIA,
-                                afectado.getDireccion(), // Usar la dirección del afectado
-                                LocalDateTime.now() // Fecha actual
-                            );
-                            
-                            // Agregar la necesidad a la lista del afectado
-                            afectado.getNecesidades().add(nuevaNecesidad);
-                        } catch (IllegalArgumentException e) {
-                            // Manejar el caso en que el string no coincida con ningún valor del enum
-                            Notification.show("Error al procesar la necesidad: " + tipoNecesidadStr, 
-                                3000, Notification.Position.BOTTOM_CENTER);
-                        }
-                    }
-                }
+                // Ya no actualizamos las necesidades aquí, se gestionan en la ventana específica de necesidades
                 
                 // Usar el servicio directamente en lugar de la API REST
                 Usuario usuarioActualizado = usuarioServicio.guardarUsuario(usuario);
@@ -708,5 +486,102 @@ public class ConfigurationView extends VerticalLayout {
                 .set("padding", "0.5rem 1.5rem");
         cancelarBtn.addClickListener(event -> UI.getCurrent().navigate("main"));
         return cancelarBtn;
+    }
+    
+    // Método para crear el panel informativo sobre la gestión de necesidades
+    private Component crearInfoNecesidades() {
+        // Contenedor principal con estilo mejorado
+        Div infoContainer = new Div();
+        infoContainer.getStyle()
+                .set("background-color", "#ffffff")
+                .set("border-radius", "12px")
+                .set("padding", "2rem")
+                .set("width", "100%")
+                .set("border", "1px solid rgba(52, 152, 219, 0.15)")
+                .set("transition", "all 0.3s ease")
+                .set("overflow", "hidden");
+        
+        // Título del panel con estilo mejorado
+        H1 title = new H1("Gestión de Necesidades");
+        title.getStyle()
+                .set("color", "#2c3e50")
+                .set("font-size", "1.8em")
+                .set("margin-top", "0.5rem")
+                .set("margin-bottom", "1.2rem")
+                .set("font-weight", "700")
+                .set("text-align", "center")
+                .set("letter-spacing", "0.5px");
+        
+        // Contenedor para la línea vertical y el mensaje (lado a lado)
+        HorizontalLayout contenidoLayout = new HorizontalLayout();
+        contenidoLayout.setWidthFull();
+        contenidoLayout.setSpacing(true);
+        contenidoLayout.setPadding(false);
+        contenidoLayout.setAlignItems(Alignment.CENTER);
+        
+        // Línea vertical decorativa mejorada (ahora a la izquierda del texto)
+        Div lineaVertical = new Div();
+        lineaVertical.getStyle()
+                .set("width", "4px")
+                .set("background", "linear-gradient(to bottom, #3498db, #2980b9)")
+                .set("height", "70px")
+                .set("border-radius", "4px")
+                .set("flex-shrink", "0");
+        
+        // Mensaje informativo con estilo mejorado
+        Div mensaje = new Div();
+        mensaje.setText("La gestión de necesidades ahora se realiza en una ventana específica. Por favor, utilice la opción 'Necesidades' en el menú principal para gestionar sus necesidades.");
+        mensaje.getStyle()
+                .set("color", "#34495e")
+                .set("font-size", "1.05em")
+                .set("line-height", "1.6")
+                .set("margin-left", "1rem")
+                .set("text-align", "center")
+                .set("font-weight", "400");
+        
+        // Añadir línea vertical y mensaje al contenedor horizontal
+        contenidoLayout.add(lineaVertical, mensaje);
+        
+        // Botón para ir a la vista de necesidades con estilo mejorado
+        Button irANecesidadesBtn = new Button("Ir a Necesidades");
+        irANecesidadesBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        irANecesidadesBtn.getStyle()
+                .set("background", "linear-gradient(135deg, #3498db, #2980b9)")
+                .set("color", "white")
+                .set("border-radius", "30px")
+                .set("font-weight", "600")
+                .set("box-shadow", "0 4px 10px rgba(52, 152, 219, 0.3)")
+                .set("transition", "all 0.2s ease-in-out")
+                .set("padding", "0.7rem 2rem")
+                .set("margin-top", "1.5rem")
+                .set("border", "none")
+                .set("cursor", "pointer");
+        
+        // Efecto hover para el botón
+        irANecesidadesBtn.getElement().addEventListener("mouseover", event -> 
+            irANecesidadesBtn.getStyle()
+                .set("transform", "translateY(-3px)")
+                .set("box-shadow", "0 6px 12px rgba(52, 152, 219, 0.4)"));
+        
+        irANecesidadesBtn.getElement().addEventListener("mouseout", event -> 
+            irANecesidadesBtn.getStyle()
+                .set("transform", "translateY(0)")
+                .set("box-shadow", "0 4px 10px rgba(52, 152, 219, 0.3)"));
+        
+        // Añadir evento de clic para navegar a la vista de necesidades
+        irANecesidadesBtn.addClickListener(event -> UI.getCurrent().navigate("necesidades"));
+        
+        // Contenedor para centrar el botón
+        Div buttonContainer = new Div(irANecesidadesBtn);
+        buttonContainer.getStyle()
+                .set("display", "flex")
+                .set("justify-content", "center")
+                .set("width", "100%")
+                .set("margin-top", "1rem");
+        
+        // Añadir componentes al contenedor principal
+        infoContainer.add(title, contenidoLayout, buttonContainer);
+        
+        return infoContainer;
     }
 }
