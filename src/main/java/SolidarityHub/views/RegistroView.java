@@ -66,8 +66,8 @@ public class RegistroView extends VerticalLayout {
 
     private Div camposVoluntario;
     private CheckboxGroup<String> habilidadesGroup;
-    private TimePicker horaInicioField;
-    private TimePicker horaFinField;
+    private CheckboxGroup<String> diasDisponiblesGroup;
+    private ComboBox<String> turnoDisponibilidadCombo;
 
     private byte[] fotoBytes;
     private MemoryBuffer buffer;
@@ -314,12 +314,11 @@ public class RegistroView extends VerticalLayout {
                 .set("padding", "1em")
                 .set("border-radius", "8px");
 
-        HorizontalLayout hlLayout = new HorizontalLayout();
-        CheckboxGroup<String> diasDisponiblesGroup = new CheckboxGroup<>();
+        diasDisponiblesGroup = new CheckboxGroup<>();
         diasDisponiblesGroup.setLabel("Días de la semana disponible:");
         diasDisponiblesGroup.setItems("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo");
-        diasDisponiblesGroup.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
-        ComboBox<String> turnoDisponibilidadCombo = new ComboBox<>("Turno de disponibilidad:");
+
+        turnoDisponibilidadCombo = new ComboBox<>("Turno de disponibilidad:");
         turnoDisponibilidadCombo.setItems("Mañana", "Tarde", "Día Entero");
         turnoDisponibilidadCombo.setPlaceholder("Selecciona un turno");
         turnoDisponibilidadCombo.setClearButtonVisible(true);
@@ -339,17 +338,7 @@ public class RegistroView extends VerticalLayout {
                 .set("padding", "1em")
                 .set("border-radius", "8px");
 
-        /*
-         * Stream.of(horaInicioField, horaFinField)
-         * .forEach(field -> {
-         * field.getStyle()
-         * .set("--lumo-primary-color", "#3498db");
-         * });
-         */
-
-        hlLayout.add(diasDisponiblesGroup, turnoDisponibilidadCombo);
-        hlLayout.setAlignItems(Alignment.CENTER);
-        vLayout.add(headerDiv, habilidadesGroup, hlLayout);
+        vLayout.add(headerDiv, habilidadesGroup, diasDisponiblesGroup, turnoDisponibilidadCombo);
         camposVoluntario.add(vLayout);
         return camposVoluntario;
     }
@@ -435,6 +424,11 @@ public class RegistroView extends VerticalLayout {
                 }
             }
         }
+        
+        List<String> diasDisponibles = null;
+        if (diasDisponiblesGroup.getValue() != null && !diasDisponiblesGroup.getValue().isEmpty()) {
+            diasDisponibles = new ArrayList<>(diasDisponiblesGroup.getValue());
+        }
 
         Usuario voluntario = fabricaUsuario.crearUsuario(
                 tipoUsuarioRadio.getValue(),
@@ -448,8 +442,8 @@ public class RegistroView extends VerticalLayout {
                 fotoBytes,
                 null,
                 listaHabilidades.isEmpty() ? null : listaHabilidades,
-                LocalTime.now(),
-                LocalTime.now());
+                diasDisponibles.isEmpty() ? null : diasDisponibles,
+                turnoDisponibilidadCombo.getValue().isEmpty() ? null : turnoDisponibilidadCombo.getValue());
 
         RestTemplate restTemplate = new RestTemplate();
         String url = "http://localhost:8080/api/usuarios/registrar";
@@ -471,8 +465,8 @@ public class RegistroView extends VerticalLayout {
                 fotoBytes,
                 null,
                 null,
-                LocalTime.now(),
-                LocalTime.now());
+                null,
+                null);
 
         RestTemplate restTemplate = new RestTemplate();
         String url = "http://localhost:8080/api/usuarios/registrar";
@@ -499,6 +493,8 @@ public class RegistroView extends VerticalLayout {
         passwordField.clear();
         confirmPasswordField.clear();
         habilidadesGroup.clear();
+        diasDisponiblesGroup.clear();
+        turnoDisponibilidadCombo.clear();
         // horaInicioField.clear();
         // horaFinField.clear();
         fotoBytes = null;
