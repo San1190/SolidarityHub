@@ -12,35 +12,23 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Hr;
-import com.vaadin.flow.component.html.Span;
+
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import SolidarityHub.models.Usuario;
-import SolidarityHub.models.Afectado;
 import SolidarityHub.models.Habilidad;
-import SolidarityHub.models.Necesidad;
+
 import SolidarityHub.services.UsuarioServicio;
-
-import org.checkerframework.checker.units.qual.s;
-import org.springframework.web.client.RestTemplate;
-
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.IOException;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.ArrayList;
-import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
 @Route(value = "configuracion", layout = MainLayout.class)

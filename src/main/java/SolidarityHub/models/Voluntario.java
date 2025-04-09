@@ -1,6 +1,5 @@
 package SolidarityHub.models;
 
-import java.time.LocalTime;
 import java.util.List;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;

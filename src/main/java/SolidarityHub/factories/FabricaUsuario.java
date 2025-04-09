@@ -2,7 +2,6 @@
 package SolidarityHub.factories;
 
 import SolidarityHub.models.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class FabricaUsuario extends FabricaGeneral {
