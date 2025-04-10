@@ -388,11 +388,7 @@ public class RegistroView extends VerticalLayout {
         FabricaUsuario fabricaUsuario = new FabricaUsuario();
 
         try {
-            if ("Voluntario".equals(tipoUsuarioRadio.getValue())) {
-                registroExitoso = registrarVoluntario(fabricaUsuario);
-            } else {
-                registroExitoso = registrarAfectado(fabricaUsuario);
-            }
+            registroExitoso = registroUsuario(fabricaUsuario);
 
             if (registroExitoso) {
                 Notification.show("¡Registro exitoso! Puede iniciar sesión ahora.",
@@ -408,25 +404,31 @@ public class RegistroView extends VerticalLayout {
         }
     }
 
-    private boolean registrarVoluntario(FabricaUsuario fabricaUsuario) {
-        List<Habilidad> listaHabilidades = new ArrayList<>();
-        if (habilidadesGroup.getValue() != null) {
-            for (String nombreHabilidad : habilidadesGroup.getValue()) {
-                for (Habilidad habilidad : Habilidad.values()) {
-                    if (habilidad.getNombre().equals(nombreHabilidad)) {
-                        listaHabilidades.add(habilidad);
-                        break;
+    private Boolean registroUsuario(FabricaUsuario fabricaUsuario) {
+        List<Habilidad> listaHabilidades = null;
+        List<String> diasDisponibles = null;
+        String turnoDisponibles = null;
+        if ("Voluntario".equals(tipoUsuarioRadio.getValue())) {
+            listaHabilidades = new ArrayList<>();
+            if (habilidadesGroup.getValue() != null) {
+                for (String nombreHabilidad : habilidadesGroup.getValue()) {
+                    for (Habilidad habilidad : Habilidad.values()) {
+                        if (habilidad.getNombre().equals(nombreHabilidad)) {
+                            listaHabilidades.add(habilidad);
+                            break;
+                        }
                     }
                 }
             }
-        }
-        
-        List<String> diasDisponibles = null;
-        if (diasDisponiblesGroup.getValue() != null && !diasDisponiblesGroup.getValue().isEmpty()) {
-            diasDisponibles = new ArrayList<>(diasDisponiblesGroup.getValue());
+            if (diasDisponiblesGroup.getValue() != null && !diasDisponiblesGroup.getValue().isEmpty()) {
+                diasDisponibles = new ArrayList<>(diasDisponiblesGroup.getValue());
+            }
+            if(!turnoDisponibilidadCombo.getValue().isEmpty()){
+                turnoDisponibles = turnoDisponibilidadCombo.getValue();
+            }
         }
 
-        Usuario voluntario = fabricaUsuario.crearUsuario(
+        Usuario usuario = fabricaUsuario.crearUsuario(
                 tipoUsuarioRadio.getValue(),
                 dniField.getValue(),
                 nombreField.getValue(),
@@ -437,38 +439,15 @@ public class RegistroView extends VerticalLayout {
                 direccionField.getValue(),
                 fotoBytes,
                 null,
-                listaHabilidades.isEmpty() ? null : listaHabilidades,
-                diasDisponibles.isEmpty() ? null : diasDisponibles,
-                turnoDisponibilidadCombo.getValue().isEmpty() ? null : turnoDisponibilidadCombo.getValue());
+                listaHabilidades,
+                diasDisponibles,
+                turnoDisponibles);
 
         RestTemplate restTemplate = new RestTemplate();
         String url = "http://localhost:8080/api/usuarios/registrar";
 
-        Usuario voluntarioRegistrado = restTemplate.postForObject(url, voluntario, Usuario.class);
-        return voluntarioRegistrado != null;
-    }
-
-    private boolean registrarAfectado(FabricaUsuario fabricaUsuario) {
-        Usuario afectado = fabricaUsuario.crearUsuario(
-                tipoUsuarioRadio.getValue(),
-                dniField.getValue(),
-                nombreField.getValue(),
-                apellidosField.getValue(),
-                emailField.getValue(),
-                passwordField.getValue(),
-                telefonoField.getValue(),
-                direccionField.getValue(),
-                fotoBytes,
-                null,
-                null,
-                null,
-                null);
-
-        RestTemplate restTemplate = new RestTemplate();
-        String url = "http://localhost:8080/api/usuarios/registrar";
-
-        Usuario afectadoRegistrado = restTemplate.postForObject(url, afectado, Usuario.class);
-        return usuarioControlador.crearUsuario(afectadoRegistrado) != null;
+        Usuario usuarioRegistrado = restTemplate.postForObject(url, usuario, Usuario.class);
+        return usuarioControlador.crearUsuario(usuarioRegistrado) != null;
     }
 
     private void mostrarError(String mensaje) {
