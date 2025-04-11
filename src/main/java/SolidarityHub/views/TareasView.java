@@ -1,6 +1,9 @@
 package SolidarityHub.views;
 
 import SolidarityHub.models.Tarea;
+import SolidarityHub.models.Usuario;
+import SolidarityHub.models.Voluntario;
+import SolidarityHub.models.Afectado;
 import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Tarea.EstadoTarea;
 
@@ -10,9 +13,16 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.Notification.Position;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
@@ -22,9 +32,11 @@ import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -35,22 +47,40 @@ public class TareasView extends VerticalLayout {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final String apiUrl = "http://localhost:8080/api/tareas";
-    private final Grid<Tarea> grid = new Grid<>(Tarea.class, false);
     private final Binder<Tarea> binder = new Binder<>(Tarea.class);
     private Dialog formDialog;
     private Tarea tareaActual;
+    private Usuario usuarioActual;
+    private HorizontalLayout tareasContainer;
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public TareasView() {
         setSizeFull();
         setPadding(true);
         setSpacing(true);
+        
+        // Obtener el usuario actual de la sesión
+        usuarioActual = (Usuario) VaadinSession.getCurrent().getAttribute("usuario");
 
         add(crearTitulo());
         add(crearFiltros());
-        add(crearBotonNuevo());
-        add(configurarGrid());
+        
+        // Solo mostrar el botón de nueva tarea si el usuario es un voluntario
+        if (usuarioActual instanceof Voluntario) {
+            add(crearBotonNuevo());
+        }
+        
+        // Crear el contenedor para las tarjetas de tareas
+        tareasContainer = new HorizontalLayout();
+        tareasContainer.setWidthFull();
+        tareasContainer.setWrapMode(HorizontalLayout.WrapMode.WRAP);
+        tareasContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
+        tareasContainer.getStyle().set("flex-wrap", "wrap");
+        tareasContainer.getStyle().set("gap", "16px");
+        
+        add(tareasContainer);
 
-        refreshGrid();
+        refreshTareas();
     }
 
     private Component crearTitulo() {
@@ -62,6 +92,7 @@ public class TareasView extends VerticalLayout {
     private Component crearFiltros() {
         HorizontalLayout layout = new HorizontalLayout();
         layout.setWidthFull();
+        layout.setAlignItems(FlexComponent.Alignment.BASELINE);
 
         ComboBox<EstadoTarea> filtroEstado = new ComboBox<>("Estado");
         filtroEstado.setItems(EstadoTarea.values());
@@ -80,10 +111,38 @@ public class TareasView extends VerticalLayout {
         Button limpiarButton = new Button("Limpiar", e -> {
             filtroEstado.clear();
             filtroTipo.clear();
-            refreshGrid();
+            refreshTareas();
         });
-
+        
         layout.add(filtroEstado, filtroTipo, filtrarButton, limpiarButton);
+        
+        // Añadir botones específicos según el tipo de usuario
+        if (usuarioActual instanceof Voluntario) {
+            Voluntario voluntario = (Voluntario) usuarioActual;
+            Long voluntarioId = voluntario.getId();
+            
+            // Botón para cargar tareas compatibles con las habilidades del voluntario actual
+            Button tareasCompatiblesButton = new Button("Mis Tareas Compatibles", e -> {
+                cargarTareasCompatiblesConVoluntario(voluntarioId);
+            });
+            tareasCompatiblesButton.getElement().getThemeList().add("primary");
+            
+            // Botón para cargar tareas ya asignadas al voluntario actual
+            Button misTareasButton = new Button("Mis Tareas Asignadas", e -> {
+                cargarTareasAsignadasAVoluntario(voluntarioId);
+            });
+            misTareasButton.getElement().getThemeList().add("secondary");
+            
+            layout.add(tareasCompatiblesButton, misTareasButton);
+        } else if (usuarioActual instanceof Afectado) {
+            // Para afectados, solo mostrar todas las tareas disponibles
+            Button todasLasTareasButton = new Button("Todas las Tareas", e -> {
+                refreshTareas();
+            });
+            todasLasTareasButton.getElement().getThemeList().add("primary");
+            layout.add(todasLasTareasButton);
+        }
+
         return layout;
     }
 
@@ -92,28 +151,333 @@ public class TareasView extends VerticalLayout {
         return nuevaTarea;
     }
 
-    private Component configurarGrid() {
-        grid.addColumn(Tarea::getNombre).setHeader("Nombre").setSortable(true);
-        grid.addColumn(Tarea::getDescripcion).setHeader("Descripción");
-        grid.addColumn(tarea -> tarea.getTipo() != null ? tarea.getTipo().name() : "").setHeader("Tipo").setSortable(true);
-        grid.addColumn(Tarea::getLocalizacion).setHeader("Localización");
-        grid.addColumn(Tarea::getNumeroVoluntariosNecesarios).setHeader("Voluntarios Necesarios");
-        grid.addColumn(tarea -> tarea.getFechaInicio() != null ? tarea.getFechaInicio().toString() : "").setHeader("Fecha Inicio");
-        grid.addColumn(tarea -> tarea.getFechaFin() != null ? tarea.getFechaFin().toString() : "").setHeader("Fecha Fin");
-        grid.addColumn(tarea -> tarea.getEstado() != null ? tarea.getEstado().name() : "").setHeader("Estado").setSortable(true);
-
-        grid.addComponentColumn(tarea -> {
-            HorizontalLayout buttons = new HorizontalLayout();
-            Button editButton = new Button("Editar", e -> abrirFormulario(tarea));
-            Button deleteButton = new Button("Eliminar", e -> eliminarTarea(tarea));
-            buttons.add(editButton, deleteButton);
-            return buttons;
-        }).setHeader("Acciones");
-
-        grid.setWidthFull();
-        grid.getColumns().forEach(col -> col.setAutoWidth(true));
-
-        return grid;
+    /**
+     * Crea una tarjeta para mostrar una tarea en estilo Pinterest
+     * @param tarea La tarea a mostrar
+     * @return El componente de la tarjeta
+     */
+    private Component crearTarjetaTarea(Tarea tarea) {
+        // Crear el contenedor principal de la tarjeta
+        Div tarjeta = new Div();
+        tarjeta.setWidth("300px");
+        tarjeta.getStyle()
+            .set("border-radius", "8px")
+            .set("box-shadow", "0 4px 8px rgba(0,0,0,0.1)")
+            .set("overflow", "hidden")
+            .set("background-color", "white")
+            .set("transition", "transform 0.3s ease")
+            .set("margin-bottom", "16px");
+        
+        // Añadir efecto hover
+        tarjeta.getElement().addEventListener("mouseover", e -> 
+            tarjeta.getStyle().set("transform", "translateY(-5px)"));
+        tarjeta.getElement().addEventListener("mouseout", e -> 
+            tarjeta.getStyle().set("transform", "translateY(0)"));
+        
+        // Contenedor para el contenido de la tarjeta
+        VerticalLayout contenido = new VerticalLayout();
+        contenido.setPadding(true);
+        contenido.setSpacing(true);
+        
+        // Barra superior con el estado de la tarea
+        HorizontalLayout estadoBar = new HorizontalLayout();
+        estadoBar.setWidthFull();
+        estadoBar.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        estadoBar.setAlignItems(FlexComponent.Alignment.CENTER);
+        
+        // Mostrar el estado con un color distintivo
+        Span estadoSpan = new Span(tarea.getEstado() != null ? tarea.getEstado().name() : "SIN ESTADO");
+        estadoSpan.getStyle()
+            .set("padding", "4px 8px")
+            .set("border-radius", "4px")
+            .set("font-size", "12px")
+            .set("font-weight", "bold");
+        
+        // Asignar color según el estado
+        if (tarea.getEstado() != null) {
+            switch (tarea.getEstado()) {
+                case PENDIENTE:
+                    estadoSpan.getStyle().set("background-color", "#FFF3CD").set("color", "#856404");
+                    break;
+                case EN_PROGRESO:
+                    estadoSpan.getStyle().set("background-color", "#D1ECF1").set("color", "#0C5460");
+                    break;
+                case COMPLETADA:
+                    estadoSpan.getStyle().set("background-color", "#D4EDDA").set("color", "#155724");
+                    break;
+                case CANCELADA:
+                    estadoSpan.getStyle().set("background-color", "#F8D7DA").set("color", "#721C24");
+                    break;
+                default:
+                    estadoSpan.getStyle().set("background-color", "#E2E3E5").set("color", "#383D41");
+            }
+        }
+        
+        // Mostrar el tipo de tarea
+        Span tipoSpan = new Span(tarea.getTipo() != null ? tarea.getTipo().name() : "SIN TIPO");
+        tipoSpan.getStyle()
+            .set("padding", "4px 8px")
+            .set("border-radius", "4px")
+            .set("font-size", "12px")
+            .set("background-color", "#E2E3E5")
+            .set("color", "#383D41");
+        
+        estadoBar.add(estadoSpan, tipoSpan);
+        
+        // Título de la tarea
+        H4 titulo = new H4(tarea.getNombre());
+        titulo.getStyle().set("margin", "0").set("margin-top", "8px");
+        
+        // Descripción de la tarea (limitada a 100 caracteres)
+        String descripcionCorta = tarea.getDescripcion();
+        if (descripcionCorta != null && descripcionCorta.length() > 100) {
+            descripcionCorta = descripcionCorta.substring(0, 97) + "...";
+        }
+        Paragraph descripcion = new Paragraph(descripcionCorta);
+        descripcion.getStyle().set("color", "#6c757d").set("margin", "8px 0");
+        
+        // Información adicional
+        Div infoContainer = new Div();
+        infoContainer.setWidthFull();
+        infoContainer.getStyle().set("margin-top", "8px");
+        
+        // Localización
+        HorizontalLayout localizacionLayout = new HorizontalLayout();
+        localizacionLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        localizacionLayout.setSpacing(false);
+        Icon locIcon = VaadinIcon.MAP_MARKER.create();
+        locIcon.setSize("14px");
+        locIcon.getStyle().set("color", "#6c757d");
+        Span localizacion = new Span(tarea.getLocalizacion());
+        localizacion.getStyle().set("font-size", "14px").set("color", "#6c757d");
+        localizacionLayout.add(locIcon, localizacion);
+        
+        // Fechas
+        HorizontalLayout fechasLayout = new HorizontalLayout();
+        fechasLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        fechasLayout.setSpacing(false);
+        Icon calendarIcon = VaadinIcon.CALENDAR.create();
+        calendarIcon.setSize("14px");
+        calendarIcon.getStyle().set("color", "#6c757d");
+        
+        String fechasTexto = "";
+        if (tarea.getFechaInicio() != null) {
+            fechasTexto = formatter.format(tarea.getFechaInicio());
+            if (tarea.getFechaFin() != null) {
+                fechasTexto += " - " + formatter.format(tarea.getFechaFin());
+            }
+        }
+        
+        Span fechas = new Span(fechasTexto);
+        fechas.getStyle().set("font-size", "14px").set("color", "#6c757d");
+        fechasLayout.add(calendarIcon, fechas);
+        
+        // Voluntarios necesarios
+        HorizontalLayout voluntariosLayout = new HorizontalLayout();
+        voluntariosLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        voluntariosLayout.setSpacing(false);
+        Icon peopleIcon = VaadinIcon.USERS.create();
+        peopleIcon.setSize("14px");
+        peopleIcon.getStyle().set("color", "#6c757d");
+        Span voluntarios = new Span("Voluntarios: " + tarea.getNumeroVoluntariosNecesarios());
+        voluntarios.getStyle().set("font-size", "14px").set("color", "#6c757d");
+        voluntariosLayout.add(peopleIcon, voluntarios);
+        
+        // Añadir la información al contenedor
+        VerticalLayout infoLayout = new VerticalLayout(localizacionLayout, fechasLayout, voluntariosLayout);
+        infoLayout.setSpacing(false);
+        infoLayout.setPadding(false);
+        infoContainer.add(infoLayout);
+        
+        // Botones de acción
+        HorizontalLayout botonesLayout = new HorizontalLayout();
+        botonesLayout.setWidthFull();
+        botonesLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        
+        Button verDetallesButton = new Button("Ver Detalles", e -> mostrarDetallesTarea(tarea));
+        verDetallesButton.getElement().getThemeList().add("primary");
+        
+        botonesLayout.add(verDetallesButton);
+        
+        // Añadir botones específicos según el tipo de usuario y el estado de la tarea
+        if (usuarioActual instanceof Voluntario) {
+            // Si es el creador o está asignado, mostrar botones de edición/eliminación
+            boolean esCreador = tarea.getCreador() != null && tarea.getCreador().getId().equals(usuarioActual.getId());
+            boolean estaAsignado = tarea.getVoluntariosAsignados() != null && 
+                                  tarea.getVoluntariosAsignados().stream()
+                                      .anyMatch(vol -> vol.getId().equals(usuarioActual.getId()));
+            
+            if (esCreador) {
+                Button editarButton = new Button("Editar", e -> abrirFormulario(tarea));
+                Button eliminarButton = new Button("Eliminar", e -> eliminarTarea(tarea));
+                eliminarButton.getElement().getThemeList().add("error");
+                botonesLayout.add(editarButton, eliminarButton);
+            } else if (!estaAsignado && tarea.getEstado() == EstadoTarea.PENDIENTE) {
+                // Si no está asignado y la tarea está pendiente, mostrar botón para postularse
+                Button postularseButton = new Button("Postularme", e -> {
+                    // Aquí iría la lógica para postularse a la tarea
+                    Notification.show("Funcionalidad de postulación no implementada", 3000, Position.BOTTOM_START);
+                });
+                postularseButton.getElement().getThemeList().add("success");
+                botonesLayout.add(postularseButton);
+            }
+        }
+        
+        // Añadir todos los componentes a la tarjeta
+        contenido.add(estadoBar, titulo, descripcion, infoContainer, botonesLayout);
+        tarjeta.add(contenido);
+        
+        return tarjeta;
+    }
+    
+    /**
+     * Muestra un diálogo con los detalles completos de una tarea
+     * @param tarea La tarea a mostrar
+     */
+    private void mostrarDetallesTarea(Tarea tarea) {
+        Dialog detallesDialog = new Dialog();
+        detallesDialog.setWidth("800px");
+        
+        VerticalLayout contenido = new VerticalLayout();
+        contenido.setPadding(true);
+        contenido.setSpacing(true);
+        
+        // Título con el nombre de la tarea
+        H3 titulo = new H3(tarea.getNombre());
+        
+        // Estado y tipo
+        HorizontalLayout infoBar = new HorizontalLayout();
+        infoBar.setWidthFull();
+        
+        Span estadoSpan = new Span("Estado: " + (tarea.getEstado() != null ? tarea.getEstado().name() : "No definido"));
+        estadoSpan.getStyle()
+            .set("padding", "4px 8px")
+            .set("border-radius", "4px")
+            .set("margin-right", "8px");
+        
+        // Asignar color según el estado
+        if (tarea.getEstado() != null) {
+            switch (tarea.getEstado()) {
+                case PENDIENTE:
+                    estadoSpan.getStyle().set("background-color", "#FFF3CD").set("color", "#856404");
+                    break;
+                case EN_PROGRESO:
+                    estadoSpan.getStyle().set("background-color", "#D1ECF1").set("color", "#0C5460");
+                    break;
+                case COMPLETADA:
+                    estadoSpan.getStyle().set("background-color", "#D4EDDA").set("color", "#155724");
+                    break;
+                case CANCELADA:
+                    estadoSpan.getStyle().set("background-color", "#F8D7DA").set("color", "#721C24");
+                    break;
+                default:
+                    estadoSpan.getStyle().set("background-color", "#E2E3E5").set("color", "#383D41");
+            }
+        }
+        
+        Span tipoSpan = new Span("Tipo: " + (tarea.getTipo() != null ? tarea.getTipo().name() : "No definido"));
+        tipoSpan.getStyle()
+            .set("padding", "4px 8px")
+            .set("border-radius", "4px")
+            .set("background-color", "#E2E3E5")
+            .set("color", "#383D41");
+        
+        infoBar.add(estadoSpan, tipoSpan);
+        
+        // Descripción completa
+        Div descripcionContainer = new Div();
+        descripcionContainer.setWidthFull();
+        descripcionContainer.getStyle()
+            .set("background-color", "#f8f9fa")
+            .set("padding", "16px")
+            .set("border-radius", "4px")
+            .set("margin", "16px 0");
+        
+        Paragraph descripcion = new Paragraph(tarea.getDescripcion());
+        descripcionContainer.add(descripcion);
+        
+        // Información detallada
+        FormLayout infoLayout = new FormLayout();
+        infoLayout.setWidthFull();
+        infoLayout.setResponsiveSteps(
+            new FormLayout.ResponsiveStep("0", 1),
+            new FormLayout.ResponsiveStep("500px", 2)
+        );
+        
+        // Localización
+        Span localizacion = new Span(tarea.getLocalizacion());
+        infoLayout.addFormItem(localizacion, "Localización");
+        
+        // Fechas
+        String fechaInicio = tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "No definida";
+        Span fechaInicioSpan = new Span(fechaInicio);
+        infoLayout.addFormItem(fechaInicioSpan, "Fecha de inicio");
+        
+        String fechaFin = tarea.getFechaFin() != null ? formatter.format(tarea.getFechaFin()) : "No definida";
+        Span fechaFinSpan = new Span(fechaFin);
+        infoLayout.addFormItem(fechaFinSpan, "Fecha de fin");
+        
+        // Voluntarios necesarios
+        Span voluntariosNecesarios = new Span(String.valueOf(tarea.getNumeroVoluntariosNecesarios()));
+        infoLayout.addFormItem(voluntariosNecesarios, "Voluntarios necesarios");
+        
+        // Creador
+        String creadorNombre = tarea.getCreador() != null ? 
+            tarea.getCreador().getNombre() + " " + tarea.getCreador().getApellidos() : "No asignado";
+        Span creador = new Span(creadorNombre);
+        infoLayout.addFormItem(creador, "Creador");
+        
+        // Voluntarios asignados
+        String voluntariosAsignados = "Sin asignar";
+        if (tarea.getVoluntariosAsignados() != null && !tarea.getVoluntariosAsignados().isEmpty()) {
+            voluntariosAsignados = tarea.getVoluntariosAsignados().stream()
+                .map(vol -> vol.getNombre() + " " + vol.getApellidos())
+                .collect(java.util.stream.Collectors.joining(", "));
+        }
+        Span voluntarios = new Span(voluntariosAsignados);
+        infoLayout.addFormItem(voluntarios, "Voluntarios asignados");
+        
+        // Botones de acción
+        HorizontalLayout botonesLayout = new HorizontalLayout();
+        botonesLayout.setWidthFull();
+        botonesLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        
+        // Añadir botones específicos según el tipo de usuario y el estado de la tarea
+        if (usuarioActual instanceof Voluntario) {
+            boolean esCreador = tarea.getCreador() != null && tarea.getCreador().getId().equals(usuarioActual.getId());
+            boolean estaAsignado = tarea.getVoluntariosAsignados() != null && 
+                                  tarea.getVoluntariosAsignados().stream()
+                                      .anyMatch(vol -> vol.getId().equals(usuarioActual.getId()));
+            
+            if (esCreador) {
+                Button editarButton = new Button("Editar", e -> {
+                    detallesDialog.close();
+                    abrirFormulario(tarea);
+                });
+                Button eliminarButton = new Button("Eliminar", e -> {
+                    detallesDialog.close();
+                    eliminarTarea(tarea);
+                });
+                eliminarButton.getElement().getThemeList().add("error");
+                botonesLayout.add(editarButton, eliminarButton);
+            } else if (!estaAsignado && tarea.getEstado() == EstadoTarea.PENDIENTE) {
+                Button postularseButton = new Button("Postularme", e -> {
+                    // Aquí iría la lógica para postularse a la tarea
+                    Notification.show("Funcionalidad de postulación no implementada", 3000, Position.BOTTOM_START);
+                });
+                postularseButton.getElement().getThemeList().add("success");
+                botonesLayout.add(postularseButton);
+            }
+        }
+        
+        Button cerrarButton = new Button("Cerrar", e -> detallesDialog.close());
+        botonesLayout.add(cerrarButton);
+        
+        // Añadir todos los componentes al diálogo
+        contenido.add(titulo, infoBar, descripcionContainer, infoLayout, botonesLayout);
+        detallesDialog.add(contenido);
+        
+        detallesDialog.open();
     }
 
     private void abrirFormulario(Tarea tarea) {
@@ -181,6 +545,12 @@ public class TareasView extends VerticalLayout {
         if (binder.isValid()) {
             try {
                 binder.writeBean(tareaActual);
+                
+                // Obtener el usuario actual de la sesión
+                if (tareaActual.getId() == null && tareaActual.getCreador() == null) {
+                    tareaActual.setCreador(usuarioActual);
+                }
+                
                 if (tareaActual.getId() == null) {
                     // Crear nueva tarea
                     restTemplate.postForObject(apiUrl + "/crear", tareaActual, Tarea.class);
@@ -191,7 +561,7 @@ public class TareasView extends VerticalLayout {
                     Notification.show("Tarea actualizada correctamente", 3000, Position.BOTTOM_START);
                 }
                 formDialog.close();
-                refreshGrid();
+                refreshTareas();
             } catch (Exception ex) {
                 Notification.show("Error al guardar la tarea: " + ex.getMessage(), 3000, Position.BOTTOM_START);
             }
@@ -212,7 +582,7 @@ public class TareasView extends VerticalLayout {
                 restTemplate.delete(apiUrl + "/" + tarea.getId());
                 Notification.show("Tarea eliminada correctamente", 3000, Position.BOTTOM_START);
                 confirmDialog.close();
-                refreshGrid();
+                refreshTareas();
             } catch (Exception ex) {
                 Notification.show("Error al eliminar la tarea: " + ex.getMessage(), 3000, Position.BOTTOM_START);
             }
@@ -225,21 +595,47 @@ public class TareasView extends VerticalLayout {
         confirmDialog.open();
     }
 
-    private void refreshGrid() {
+    private void refreshTareas() {
         try {
             // Usar un tipo más específico para la deserialización
             Tarea[] tareasArray = restTemplate.getForObject(apiUrl, Tarea[].class);
             if (tareasArray != null) {
                 List<Tarea> tareas = Arrays.asList(tareasArray);
-                grid.setItems(tareas);
+                mostrarTareas(tareas);
             } else {
-                grid.setItems(Collections.emptyList());
+                mostrarTareas(Collections.emptyList());
                 System.err.println("La respuesta del servidor fue nula al cargar tareas");
             }
         } catch (Exception ex) {
             Notification.show("Error al cargar las tareas: " + ex.getMessage(), 3000, Position.BOTTOM_START);
             System.err.println("Error completo al cargar tareas: " + ex);
             ex.printStackTrace();
+        }
+    }
+    
+    /**
+     * Muestra las tareas en el contenedor de tarjetas
+     * @param tareas Lista de tareas a mostrar
+     */
+    private void mostrarTareas(List<Tarea> tareas) {
+        // Limpiar el contenedor
+        tareasContainer.removeAll();
+        
+        if (tareas.isEmpty()) {
+            Div mensajeVacio = new Div();
+            mensajeVacio.setText("No hay tareas disponibles");
+            mensajeVacio.getStyle()
+                .set("padding", "20px")
+                .set("text-align", "center")
+                .set("width", "100%")
+                .set("color", "#6c757d");
+            tareasContainer.add(mensajeVacio);
+            return;
+        }
+        
+        // Crear una tarjeta para cada tarea
+        for (Tarea tarea : tareas) {
+            tareasContainer.add(crearTarjetaTarea(tarea));
         }
     }
 
@@ -261,14 +657,70 @@ public class TareasView extends VerticalLayout {
             Tarea[] tareasArray = restTemplate.getForObject(url, Tarea[].class);
             if (tareasArray != null) {
                 List<Tarea> tareas = Arrays.asList(tareasArray);
-                grid.setItems(tareas);
+                mostrarTareas(tareas);
             } else {
-                grid.setItems(Collections.emptyList());
+                mostrarTareas(Collections.emptyList());
                 System.err.println("La respuesta del servidor fue nula al filtrar tareas");
             }
         } catch (Exception ex) {
             Notification.show("Error al filtrar las tareas: " + ex.getMessage(), 3000, Position.BOTTOM_START);
             System.err.println("Error completo al filtrar tareas: " + ex);
+            ex.printStackTrace();
+        }
+    }
+    
+    /**
+     * Método para cargar las tareas compatibles con las habilidades de un voluntario específico
+     * @param voluntarioId ID del voluntario
+     */
+    private void cargarTareasCompatiblesConVoluntario(Long voluntarioId) {
+        try {
+            String url = apiUrl + "/compatibles/voluntario/" + voluntarioId;
+            
+            // Usar un tipo más específico para la deserialización
+            Tarea[] tareasArray = restTemplate.getForObject(url, Tarea[].class);
+            if (tareasArray != null) {
+                List<Tarea> tareas = Arrays.asList(tareasArray);
+                mostrarTareas(tareas);
+                Notification.show("Se han cargado " + tareas.size() + " tareas compatibles con tus habilidades", 
+                                 3000, Position.BOTTOM_START);
+            } else {
+                mostrarTareas(Collections.emptyList());
+                Notification.show("No se encontraron tareas compatibles con tus habilidades", 
+                                 3000, Position.BOTTOM_START);
+                System.err.println("La respuesta del servidor fue nula al cargar tareas compatibles");
+            }
+        } catch (Exception ex) {
+            Notification.show("Error al cargar las tareas compatibles: " + ex.getMessage(), 3000, Position.BOTTOM_START);
+            System.err.println("Error completo al cargar tareas compatibles: " + ex);
+            ex.printStackTrace();
+        }
+    }
+    
+    /**
+     * Método para cargar las tareas asignadas a un voluntario específico
+     * @param voluntarioId ID del voluntario
+     */
+    private void cargarTareasAsignadasAVoluntario(Long voluntarioId) {
+        try {
+            String url = apiUrl + "/voluntario/" + voluntarioId;
+            
+            // Usar un tipo más específico para la deserialización
+            Tarea[] tareasArray = restTemplate.getForObject(url, Tarea[].class);
+            if (tareasArray != null) {
+                List<Tarea> tareas = Arrays.asList(tareasArray);
+                mostrarTareas(tareas);
+                Notification.show("Se han cargado " + tareas.size() + " tareas asignadas a ti", 
+                                 3000, Position.BOTTOM_START);
+            } else {
+                mostrarTareas(Collections.emptyList());
+                Notification.show("No tienes tareas asignadas actualmente", 
+                                 3000, Position.BOTTOM_START);
+                System.err.println("La respuesta del servidor fue nula al cargar tareas asignadas");
+            }
+        } catch (Exception ex) {
+            Notification.show("Error al cargar las tareas asignadas: " + ex.getMessage(), 3000, Position.BOTTOM_START);
+            System.err.println("Error completo al cargar tareas asignadas: " + ex);
             ex.printStackTrace();
         }
     }

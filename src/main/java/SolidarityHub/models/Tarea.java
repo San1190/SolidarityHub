@@ -30,6 +30,10 @@ public class Tarea {
     @Enumerated(EnumType.STRING)
     private EstadoTarea estado;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creador_id")
+    private Usuario creador;
+    
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "tarea_afectados",
@@ -53,7 +57,7 @@ public class Tarea {
     public Tarea(String nombre, String descripcion, Necesidad.TipoNecesidad tipo, 
                 String localizacion, int numeroVoluntariosNecesarios, 
                 LocalDateTime fechaInicio, LocalDateTime fechaFin, 
-                EstadoTarea estado, List<Afectado> afectados, 
+                EstadoTarea estado, Usuario creador, List<Afectado> afectados, 
                 List<Voluntario> voluntariosAsignados) {
         this.nombre = nombre;
         this.descripcion = descripcion;
@@ -63,6 +67,7 @@ public class Tarea {
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
         this.estado = estado;
+        this.creador = creador;
         this.afectados = afectados;
         this.voluntariosAsignados = voluntariosAsignados;
     }
@@ -96,6 +101,9 @@ public class Tarea {
     
     public EstadoTarea getEstado() { return estado; }
     public void setEstado(EstadoTarea estado) { this.estado = estado; }
+    
+    public Usuario getCreador() { return creador; }
+    public void setCreador(Usuario creador) { this.creador = creador; }
     
     public List<Afectado> getAfectados() { return afectados; }
     public void setAfectados(List<Afectado> afectados) { this.afectados = afectados; }

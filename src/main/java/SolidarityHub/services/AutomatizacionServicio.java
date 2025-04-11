@@ -1,10 +1,13 @@
 package SolidarityHub.services;
 
 import SolidarityHub.models.Afectado;
+import SolidarityHub.models.Habilidad;
 import SolidarityHub.models.Necesidad;
 import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Tarea.EstadoTarea;
 import SolidarityHub.models.Usuario;
+import SolidarityHub.models.Voluntario;
+import SolidarityHub.repository.UsuarioRepositorio;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,14 +18,18 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
+import java.util.Map;
+import java.util.HashMap;
 
 @Service
 public class AutomatizacionServicio implements ApplicationListener<ContextRefreshedEvent> {
 
     private final TareaServicio tareaServicio;
+    private final UsuarioRepositorio usuarioRepositorio;
 
-    public AutomatizacionServicio(TareaServicio tareaServicio) {
+    public AutomatizacionServicio(TareaServicio tareaServicio, UsuarioRepositorio usuarioRepositorio) {
         this.tareaServicio = tareaServicio;
+        this.usuarioRepositorio = usuarioRepositorio;
     }
 
     /**
@@ -158,11 +165,109 @@ public class AutomatizacionServicio implements ApplicationListener<ContextRefres
                 // Guardar la tarea
                 Tarea tareaGuardada = tareaServicio.guardarTarea(nuevaTarea);
                 System.out.println("Tarea creada con éxito. ID: " + tareaGuardada.getId());
+                
+                // Asignar voluntarios automáticamente
+                asignarVoluntariosAutomaticamente(tareaGuardada);
             } else {
                 System.out.println("No se creó tarea porque ya existe una similar.");
             }
         } catch (Exception e) {
             System.err.println("Error al crear tarea desde necesidad: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Método para asignar automáticamente voluntarios a una tarea basado en sus habilidades
+     * @param tarea La tarea a la que se asignarán voluntarios
+     */
+    @Transactional
+    public void asignarVoluntariosAutomaticamente(Tarea tarea) {
+        try {
+            if (tarea == null || tarea.getTipo() == null) {
+                System.out.println("Error: La tarea no tiene los datos requeridos para asignar voluntarios");
+                return;
+            }
+            
+            System.out.println("Asignando voluntarios automáticamente a la tarea: " + tarea.getNombre());
+            
+            // Mapeo entre tipos de necesidad y habilidades requeridas
+            Map<Necesidad.TipoNecesidad, Habilidad> mapeoHabilidades = new HashMap<>();
+            mapeoHabilidades.put(Necesidad.TipoNecesidad.PRIMEROS_AUXILIOS, Habilidad.PRIMEROS_AUXILIOS);
+            mapeoHabilidades.put(Necesidad.TipoNecesidad.ALIMENTACION, Habilidad.COCINA);
+            mapeoHabilidades.put(Necesidad.TipoNecesidad.ALIMENTACION_BEBE, Habilidad.COCINA);
+            mapeoHabilidades.put(Necesidad.TipoNecesidad.SERVICIO_LIMPIEZA, Habilidad.LIMPIEZA);
+            mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_PSICOLOGICA, Habilidad.AYUDA_PSICOLOGICA);
+            mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_CARPINTERIA, Habilidad.CARPINTERIA);
+            mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD, Habilidad.ELECTICISTA);
+            mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_FONTANERIA, Habilidad.FONTANERIA);
+            
+            // Obtener la habilidad requerida para esta tarea
+            Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
+            
+            if (habilidadRequerida != null) {
+                // Obtener todos los voluntarios
+                List<Usuario> usuarios = usuarioRepositorio.findAll();
+                List<Voluntario> voluntariosCompatibles = new ArrayList<>();
+                
+                // Filtrar solo voluntarios con la habilidad requerida
+                for (Usuario usuario : usuarios) {
+                    if (usuario instanceof Voluntario) {
+                        Voluntario voluntario = (Voluntario) usuario;
+                        if (voluntario.getHabilidades() != null && voluntario.getHabilidades().contains(habilidadRequerida)) {
+                            voluntariosCompatibles.add(voluntario);
+                        }
+                    }
+                }
+                
+                System.out.println("Encontrados " + voluntariosCompatibles.size() + " voluntarios con la habilidad " + habilidadRequerida);
+                
+                // Asignar voluntarios hasta alcanzar el número necesario
+                int voluntariosNecesarios = tarea.getNumeroVoluntariosNecesarios();
+                int voluntariosAsignados = 0;
+                
+                List<Voluntario> asignados = new ArrayList<>();
+                for (Voluntario voluntario : voluntariosCompatibles) {
+                    if (voluntariosAsignados < voluntariosNecesarios) {
+                        asignados.add(voluntario);
+                        voluntariosAsignados++;
+                        System.out.println("Asignado voluntario: " + voluntario.getNombre());
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Actualizar la tarea con los voluntarios asignados
+                tarea.setVoluntariosAsignados(asignados);
+                tareaServicio.actualizarTarea(tarea);
+                
+                System.out.println("Se han asignado " + voluntariosAsignados + " voluntarios a la tarea");
+            } else {
+                System.out.println("No se encontró una habilidad correspondiente para el tipo de necesidad: " + tarea.getTipo());
+            }
+        } catch (Exception e) {
+            System.err.println("Error al asignar voluntarios automáticamente: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Método para emparejar todas las tareas existentes con voluntarios
+     * Útil para ejecutar manualmente o al iniciar la aplicación
+     */
+    @Transactional
+    public void emparejarTodasLasTareas() {
+        try {
+            List<Tarea> tareas = tareaServicio.listarTareas();
+            System.out.println("Emparejando " + tareas.size() + " tareas con voluntarios");
+            
+            for (Tarea tarea : tareas) {
+                if (tarea.getVoluntariosAsignados() == null || tarea.getVoluntariosAsignados().isEmpty()) {
+                    asignarVoluntariosAutomaticamente(tarea);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al emparejar todas las tareas: " + e.getMessage());
             e.printStackTrace();
         }
     }
