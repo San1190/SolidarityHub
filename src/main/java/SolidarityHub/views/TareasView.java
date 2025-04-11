@@ -25,6 +25,8 @@ import com.vaadin.flow.router.Route;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Route(value = "tareas", layout = MainLayout.class)
@@ -225,10 +227,19 @@ public class TareasView extends VerticalLayout {
 
     private void refreshGrid() {
         try {
-            List<Tarea> tareas = restTemplate.getForObject(apiUrl, List.class);
-            grid.setItems(tareas);
+            // Usar un tipo más específico para la deserialización
+            Tarea[] tareasArray = restTemplate.getForObject(apiUrl, Tarea[].class);
+            if (tareasArray != null) {
+                List<Tarea> tareas = Arrays.asList(tareasArray);
+                grid.setItems(tareas);
+            } else {
+                grid.setItems(Collections.emptyList());
+                System.err.println("La respuesta del servidor fue nula al cargar tareas");
+            }
         } catch (Exception ex) {
             Notification.show("Error al cargar las tareas: " + ex.getMessage(), 3000, Position.BOTTOM_START);
+            System.err.println("Error completo al cargar tareas: " + ex);
+            ex.printStackTrace();
         }
     }
 
@@ -246,10 +257,19 @@ public class TareasView extends VerticalLayout {
                 url += hasParams ? "&tipo=" + tipo : "?tipo=" + tipo;
             }
 
-            List<Tarea> tareas = restTemplate.getForObject(url, List.class);
-            grid.setItems(tareas);
+            // Usar un tipo más específico para la deserialización
+            Tarea[] tareasArray = restTemplate.getForObject(url, Tarea[].class);
+            if (tareasArray != null) {
+                List<Tarea> tareas = Arrays.asList(tareasArray);
+                grid.setItems(tareas);
+            } else {
+                grid.setItems(Collections.emptyList());
+                System.err.println("La respuesta del servidor fue nula al filtrar tareas");
+            }
         } catch (Exception ex) {
             Notification.show("Error al filtrar las tareas: " + ex.getMessage(), 3000, Position.BOTTOM_START);
+            System.err.println("Error completo al filtrar tareas: " + ex);
+            ex.printStackTrace();
         }
     }
 }
