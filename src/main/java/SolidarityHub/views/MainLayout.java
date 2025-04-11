@@ -49,8 +49,9 @@ public class MainLayout extends AppLayout implements RouterLayout {
         SideNavItem mainItem = new SideNavItem("Main", "main", VaadinIcon.MAP_MARKER.create());
         
         SideNavItem necesidadesItem = new SideNavItem("Necesidades", "necesidades", VaadinIcon.HEART.create());
-            
         
+        SideNavItem tareasItem = new SideNavItem("Tareas", "tareas", VaadinIcon.TASKS.create());
+            
         SideNavItem configItem = new SideNavItem("Configuración", "configuracion", VaadinIcon.COG.create());
         //comprobar si el usuario es afectado para añadir una pestaña llamada necesidades 
         
@@ -73,13 +74,15 @@ public class MainLayout extends AppLayout implements RouterLayout {
             configItem.getElement().getThemeList().add("primary");
         } else if ("necesidades".equals(currentRoute)) {
             necesidadesItem.getElement().getThemeList().add("primary");
+        } else if ("tareas".equals(currentRoute)) {
+            tareasItem.getElement().getThemeList().add("primary");
         }
 
         nav.addItem(mainItem);
         if (usuario.getTipoUsuario().equals("afectado")) {
-            nav.addItem(necesidadesItem);
+             nav.addItem(necesidadesItem);
         }
-        nav.addItem(configItem, logoutItem);
+        nav.addItem(tareasItem, configItem, logoutItem);
 
         Scroller scroller = new Scroller(nav);
         scroller.setClassName(LumoUtility.Padding.SMALL);

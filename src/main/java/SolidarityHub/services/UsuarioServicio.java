@@ -5,6 +5,7 @@ import SolidarityHub.repository.UsuarioRepositorio;
 import org.springframework.stereotype.Service;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.context.ApplicationEventPublisher;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -12,9 +13,11 @@ import java.util.Optional;
 @Service
 public class UsuarioServicio {
     private final UsuarioRepositorio usuarioRepositorio;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public UsuarioServicio(UsuarioRepositorio usuarioRepositorio) {
+    public UsuarioServicio(UsuarioRepositorio usuarioRepositorio, ApplicationEventPublisher eventPublisher) {
         this.usuarioRepositorio = usuarioRepositorio;
+        this.eventPublisher = eventPublisher;
     }
 
     // 🔹 Método corregido para buscar usuario por email y tipo (usando Class)
@@ -53,7 +56,16 @@ public class UsuarioServicio {
             throw new RuntimeException("Ya existe un usuario del tipo '" + usuario.getClass().getSimpleName() + "' con este email.");
         }
 
-        return usuarioRepositorio.save(usuario);
+        // Guardar el usuario en la base de datos
+        Usuario usuarioGuardado = usuarioRepositorio.save(usuario);
+        
+        // Publicar un evento para que otros servicios puedan reaccionar
+        // Solo publicamos el evento si es un usuario nuevo (no tiene ID previo)
+        if (usuario.getId() == null || usuarioExistente.isEmpty()) {
+            eventPublisher.publishEvent(usuarioGuardado);
+        }
+        
+        return usuarioGuardado;
     }
 
     // 🔹 Eliminar usuario por ID
