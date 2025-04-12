@@ -73,7 +73,7 @@ public class TareasView extends VerticalLayout {
         // Crear el contenedor para las tarjetas de tareas
         tareasContainer = new HorizontalLayout();
         tareasContainer.setWidthFull();
-        tareasContainer.setWrapMode(HorizontalLayout.WrapMode.WRAP);
+tareasContainer.getStyle().set("flex-wrap", "wrap");
         tareasContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
         tareasContainer.getStyle().set("flex-wrap", "wrap");
         tareasContainer.getStyle().set("gap", "16px");
@@ -151,6 +151,142 @@ public class TareasView extends VerticalLayout {
         return nuevaTarea;
     }
 
+    private void abrirFormularioTarea(Tarea tarea) {
+        tareaActual = tarea;
+        formDialog = new Dialog();
+        formDialog.setWidth("800px");
+
+        VerticalLayout formLayout = new VerticalLayout();
+        formLayout.setPadding(true);
+        formLayout.setSpacing(true);
+
+        // Título del formulario
+        H3 titulo = new H3(tarea.getId() == null ? "Nueva Tarea" : "Editar Tarea");
+        formLayout.add(titulo);
+
+        // Campos del formulario
+        FormLayout campos = new FormLayout();
+        campos.setResponsiveSteps(
+            new FormLayout.ResponsiveStep("0", 1),
+            new FormLayout.ResponsiveStep("500px", 2)
+        );
+
+        // Campo: Nombre
+        TextField nombreField = new TextField("Nombre");
+        nombreField.setRequired(true);
+        nombreField.setWidthFull();
+        binder.forField(nombreField)
+            .asRequired("El nombre es requerido")
+            .bind(Tarea::getNombre, Tarea::setNombre);
+
+        // Campo: Descripción
+        TextArea descripcionField = new TextArea("Descripción");
+        descripcionField.setRequired(true);
+        descripcionField.setWidthFull();
+        descripcionField.setHeight("150px");
+        binder.forField(descripcionField)
+            .asRequired("La descripción es requerida")
+            .bind(Tarea::getDescripcion, Tarea::setDescripcion);
+
+        // Campo: Tipo de necesidad
+        ComboBox<TipoNecesidad> tipoField = new ComboBox<>("Tipo de necesidad");
+        tipoField.setItems(TipoNecesidad.values());
+        tipoField.setRequired(true);
+        binder.forField(tipoField)
+            .asRequired("El tipo de necesidad es requerido")
+            .bind(Tarea::getTipo, Tarea::setTipo);
+
+        // Campo: Estado
+        ComboBox<EstadoTarea> estadoField = new ComboBox<>("Estado");
+        estadoField.setItems(EstadoTarea.values());
+        estadoField.setRequired(true);
+        binder.forField(estadoField)
+            .asRequired("El estado es requerido")
+            .bind(Tarea::getEstado, Tarea::setEstado);
+
+        // Campo: Localización
+        TextField localizacionField = new TextField("Localización");
+        localizacionField.setRequired(true);
+        binder.forField(localizacionField)
+            .asRequired("La localización es requerida")
+            .bind(Tarea::getLocalizacion, Tarea::setLocalizacion);
+
+        // Campo: Número de voluntarios
+        IntegerField voluntariosField = new IntegerField("Número de voluntarios necesarios");
+        voluntariosField.setMin(1);
+        voluntariosField.setValue(1);
+        voluntariosField.setRequired(true);
+        binder.forField(voluntariosField)
+            .asRequired("El número de voluntarios es requerido")
+            .bind(Tarea::getNumeroVoluntariosNecesarios, Tarea::setNumeroVoluntariosNecesarios);
+
+        // Campos de fecha
+        DateTimePicker fechaInicioField = new DateTimePicker("Fecha de inicio");
+fechaInicioField.setRequiredIndicatorVisible(true);
+        binder.forField(fechaInicioField)
+            .asRequired("La fecha de inicio es requerida")
+            .bind(Tarea::getFechaInicio, Tarea::setFechaInicio);
+
+        DateTimePicker fechaFinField = new DateTimePicker("Fecha de fin");
+fechaFinField.setRequiredIndicatorVisible(true);
+        binder.forField(fechaFinField)
+            .asRequired("La fecha de fin es requerida")
+            .bind(Tarea::getFechaFin, Tarea::setFechaFin);
+
+        // Añadir campos al formulario
+        campos.add(
+            nombreField, descripcionField,
+            tipoField, estadoField,
+            localizacionField, voluntariosField,
+            fechaInicioField, fechaFinField
+        );
+
+        formLayout.add(campos);
+
+        // Botones de acción
+        HorizontalLayout botonesLayout = new HorizontalLayout();
+        botonesLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        botonesLayout.setWidthFull();
+
+        Button cancelarButton = new Button("Cancelar", e -> formDialog.close());
+
+        Button guardarButton = new Button("Guardar", e -> {
+            try {
+                // Si es una nueva tarea, establecer el creador
+                if (tareaActual.getId() == null && usuarioActual instanceof Voluntario) {
+                    tareaActual.setCreador((Voluntario) usuarioActual);
+                }
+
+                // Validar y actualizar el objeto tarea
+                if (binder.writeBeanIfValid(tareaActual)) {
+                    if (tareaActual.getId() == null) {
+                        // Crear nueva tarea
+                        restTemplate.postForObject(apiUrl, tareaActual, Tarea.class);
+                        Notification.show("Tarea creada correctamente", 3000, Position.BOTTOM_START);
+                    } else {
+                        // Actualizar tarea existente
+                        restTemplate.put(apiUrl + "/" + tareaActual.getId(), tareaActual);
+                        Notification.show("Tarea actualizada correctamente", 3000, Position.BOTTOM_START);
+                    }
+                    formDialog.close();
+                    refreshTareas();
+                } else {
+                    Notification.show("Por favor, complete todos los campos requeridos", 3000, Position.BOTTOM_START);
+                }
+            } catch (Exception ex) {
+                Notification.show("Error al guardar la tarea: " + ex.getMessage(), 3000, Position.BOTTOM_START);
+            }
+        });
+        guardarButton.getElement().getThemeList().add("primary");
+
+        botonesLayout.add(cancelarButton, guardarButton);
+        formLayout.add(botonesLayout);
+
+        formDialog.add(formLayout);
+        binder.readBean(tareaActual);
+        formDialog.open();
+    }
+
     /**
      * Crea una tarjeta para mostrar una tarea en estilo Pinterest
      * @param tarea La tarea a mostrar
@@ -196,23 +332,22 @@ public class TareasView extends VerticalLayout {
         // Asignar color según el estado
         if (tarea.getEstado() != null) {
             switch (tarea.getEstado()) {
-                case PENDIENTE:
+                case PREPARADA:
                     estadoSpan.getStyle().set("background-color", "#FFF3CD").set("color", "#856404");
                     break;
-                case EN_PROGRESO:
+                case EN_CURSO:
                     estadoSpan.getStyle().set("background-color", "#D1ECF1").set("color", "#0C5460");
                     break;
-                case COMPLETADA:
+                case FINALIZADA:
                     estadoSpan.getStyle().set("background-color", "#D4EDDA").set("color", "#155724");
-                    break;
-                case CANCELADA:
-                    estadoSpan.getStyle().set("background-color", "#F8D7DA").set("color", "#721C24");
                     break;
                 default:
                     estadoSpan.getStyle().set("background-color", "#E2E3E5").set("color", "#383D41");
             }
-        }
-        
+        } else {
+            // Estilo para cuando el estado es nulo
+            estadoSpan.getStyle().set("background-color", "#E2E3E5").set("color", "#383D41");
+        } 
         // Mostrar el tipo de tarea
         Span tipoSpan = new Span(tarea.getTipo() != null ? tarea.getTipo().name() : "SIN TIPO");
         tipoSpan.getStyle()
@@ -312,7 +447,7 @@ public class TareasView extends VerticalLayout {
                 Button eliminarButton = new Button("Eliminar", e -> eliminarTarea(tarea));
                 eliminarButton.getElement().getThemeList().add("error");
                 botonesLayout.add(editarButton, eliminarButton);
-            } else if (!estaAsignado && tarea.getEstado() == EstadoTarea.PENDIENTE) {
+            } else if (!estaAsignado && tarea.getEstado() == EstadoTarea.PREPARADA) {
                 // Si no está asignado y la tarea está pendiente, mostrar botón para postularse
                 Button postularseButton = new Button("Postularme", e -> {
                     // Aquí iría la lógica para postularse a la tarea
@@ -358,21 +493,21 @@ public class TareasView extends VerticalLayout {
         // Asignar color según el estado
         if (tarea.getEstado() != null) {
             switch (tarea.getEstado()) {
-                case PENDIENTE:
+                case PREPARADA:
                     estadoSpan.getStyle().set("background-color", "#FFF3CD").set("color", "#856404");
                     break;
-                case EN_PROGRESO:
+                case EN_CURSO:
                     estadoSpan.getStyle().set("background-color", "#D1ECF1").set("color", "#0C5460");
                     break;
-                case COMPLETADA:
+                case FINALIZADA:
                     estadoSpan.getStyle().set("background-color", "#D4EDDA").set("color", "#155724");
-                    break;
-                case CANCELADA:
-                    estadoSpan.getStyle().set("background-color", "#F8D7DA").set("color", "#721C24");
                     break;
                 default:
                     estadoSpan.getStyle().set("background-color", "#E2E3E5").set("color", "#383D41");
             }
+        } else {
+            // Estilo para cuando el estado es nulo
+            estadoSpan.getStyle().set("background-color", "#E2E3E5").set("color", "#383D41");
         }
         
         Span tipoSpan = new Span("Tipo: " + (tarea.getTipo() != null ? tarea.getTipo().name() : "No definido"));
@@ -460,7 +595,7 @@ public class TareasView extends VerticalLayout {
                 });
                 eliminarButton.getElement().getThemeList().add("error");
                 botonesLayout.add(editarButton, eliminarButton);
-            } else if (!estaAsignado && tarea.getEstado() == EstadoTarea.PENDIENTE) {
+            } else if (!estaAsignado && tarea.getEstado() == EstadoTarea.PREPARADA) {
                 Button postularseButton = new Button("Postularme", e -> {
                     // Aquí iría la lógica para postularse a la tarea
                     Notification.show("Funcionalidad de postulación no implementada", 3000, Position.BOTTOM_START);
@@ -601,6 +736,20 @@ public class TareasView extends VerticalLayout {
             Tarea[] tareasArray = restTemplate.getForObject(apiUrl, Tarea[].class);
             if (tareasArray != null) {
                 List<Tarea> tareas = Arrays.asList(tareasArray);
+                
+                // Validar y asegurar que no hay tareas con campos críticos nulos
+                for (Tarea tarea : tareas) {
+                    // Asegurar que el estado nunca sea nulo
+                    if (tarea.getEstado() == null) {
+                        tarea.setEstado(EstadoTarea.PREPARADA); // Valor por defecto
+                    }
+                    
+                    // Asegurar que otros campos críticos no sean nulos
+                    if (tarea.getNombre() == null) tarea.setNombre("Sin nombre");
+                    if (tarea.getDescripcion() == null) tarea.setDescripcion("Sin descripción");
+                    if (tarea.getLocalizacion() == null) tarea.setLocalizacion("Sin localización");
+                }
+                
                 mostrarTareas(tareas);
             } else {
                 mostrarTareas(Collections.emptyList());
@@ -610,6 +759,8 @@ public class TareasView extends VerticalLayout {
             Notification.show("Error al cargar las tareas: " + ex.getMessage(), 3000, Position.BOTTOM_START);
             System.err.println("Error completo al cargar tareas: " + ex);
             ex.printStackTrace();
+            // Mostrar una lista vacía para evitar que la interfaz se rompa
+            mostrarTareas(Collections.emptyList());
         }
     }
     
@@ -657,6 +808,20 @@ public class TareasView extends VerticalLayout {
             Tarea[] tareasArray = restTemplate.getForObject(url, Tarea[].class);
             if (tareasArray != null) {
                 List<Tarea> tareas = Arrays.asList(tareasArray);
+                
+                // Validar y asegurar que no hay tareas con campos críticos nulos
+                for (Tarea tarea : tareas) {
+                    // Asegurar que el estado nunca sea nulo
+                    if (tarea.getEstado() == null) {
+                        tarea.setEstado(EstadoTarea.PREPARADA); // Valor por defecto
+                    }
+                    
+                    // Asegurar que otros campos críticos no sean nulos
+                    if (tarea.getNombre() == null) tarea.setNombre("Sin nombre");
+                    if (tarea.getDescripcion() == null) tarea.setDescripcion("Sin descripción");
+                    if (tarea.getLocalizacion() == null) tarea.setLocalizacion("Sin localización");
+                }
+                
                 mostrarTareas(tareas);
             } else {
                 mostrarTareas(Collections.emptyList());
@@ -666,6 +831,8 @@ public class TareasView extends VerticalLayout {
             Notification.show("Error al filtrar las tareas: " + ex.getMessage(), 3000, Position.BOTTOM_START);
             System.err.println("Error completo al filtrar tareas: " + ex);
             ex.printStackTrace();
+            // Mostrar una lista vacía para evitar que la interfaz se rompa
+            mostrarTareas(Collections.emptyList());
         }
     }
     
@@ -681,6 +848,20 @@ public class TareasView extends VerticalLayout {
             Tarea[] tareasArray = restTemplate.getForObject(url, Tarea[].class);
             if (tareasArray != null) {
                 List<Tarea> tareas = Arrays.asList(tareasArray);
+                
+                // Validar y asegurar que no hay tareas con campos críticos nulos
+                for (Tarea tarea : tareas) {
+                    // Asegurar que el estado nunca sea nulo
+                    if (tarea.getEstado() == null) {
+                        tarea.setEstado(EstadoTarea.PREPARADA); // Valor por defecto
+                    }
+                    
+                    // Asegurar que otros campos críticos no sean nulos
+                    if (tarea.getNombre() == null) tarea.setNombre("Sin nombre");
+                    if (tarea.getDescripcion() == null) tarea.setDescripcion("Sin descripción");
+                    if (tarea.getLocalizacion() == null) tarea.setLocalizacion("Sin localización");
+                }
+                
                 mostrarTareas(tareas);
                 Notification.show("Se han cargado " + tareas.size() + " tareas compatibles con tus habilidades", 
                                  3000, Position.BOTTOM_START);
@@ -694,6 +875,8 @@ public class TareasView extends VerticalLayout {
             Notification.show("Error al cargar las tareas compatibles: " + ex.getMessage(), 3000, Position.BOTTOM_START);
             System.err.println("Error completo al cargar tareas compatibles: " + ex);
             ex.printStackTrace();
+            // Mostrar una lista vacía para evitar que la interfaz se rompa
+            mostrarTareas(Collections.emptyList());
         }
     }
     
@@ -709,6 +892,20 @@ public class TareasView extends VerticalLayout {
             Tarea[] tareasArray = restTemplate.getForObject(url, Tarea[].class);
             if (tareasArray != null) {
                 List<Tarea> tareas = Arrays.asList(tareasArray);
+                
+                // Validar y asegurar que no hay tareas con campos críticos nulos
+                for (Tarea tarea : tareas) {
+                    // Asegurar que el estado nunca sea nulo
+                    if (tarea.getEstado() == null) {
+                        tarea.setEstado(EstadoTarea.PREPARADA); // Valor por defecto
+                    }
+                    
+                    // Asegurar que otros campos críticos no sean nulos
+                    if (tarea.getNombre() == null) tarea.setNombre("Sin nombre");
+                    if (tarea.getDescripcion() == null) tarea.setDescripcion("Sin descripción");
+                    if (tarea.getLocalizacion() == null) tarea.setLocalizacion("Sin localización");
+                }
+                
                 mostrarTareas(tareas);
                 Notification.show("Se han cargado " + tareas.size() + " tareas asignadas a ti", 
                                  3000, Position.BOTTOM_START);
@@ -722,6 +919,8 @@ public class TareasView extends VerticalLayout {
             Notification.show("Error al cargar las tareas asignadas: " + ex.getMessage(), 3000, Position.BOTTOM_START);
             System.err.println("Error completo al cargar tareas asignadas: " + ex);
             ex.printStackTrace();
+            // Mostrar una lista vacía para evitar que la interfaz se rompa
+            mostrarTareas(Collections.emptyList());
         }
     }
 }
