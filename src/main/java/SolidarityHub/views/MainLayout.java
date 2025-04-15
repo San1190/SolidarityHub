@@ -1,6 +1,7 @@
 package SolidarityHub.views;
 
 import SolidarityHub.models.Usuario;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.html.H1;
@@ -51,14 +52,12 @@ public class MainLayout extends AppLayout implements RouterLayout {
         SideNavItem necesidadesItem = new SideNavItem("Necesidades", "necesidades", VaadinIcon.HEART.create());
         
         SideNavItem tareasItem = new SideNavItem("Tareas", "tareas", VaadinIcon.TASKS.create());
+        
+        SideNavItem recursosItem = new SideNavItem("Inventario", "inventario", VaadinIcon.PACKAGE.create());
             
         SideNavItem configItem = new SideNavItem("Configuración", "configuracion", VaadinIcon.COG.create());
         //comprobar si el usuario es afectado para añadir una pestaña llamada necesidades 
-        
-        // configItem.setVisible(usuario.getRol().equals("admin") ||
-        // usuario.getRol().equals("coordinador"));
-
-        
+   
         SideNavItem logoutItem = new SideNavItem("Cerrar Sesión", "", VaadinIcon.SIGN_OUT.create());
         logoutItem.getElement().addEventListener("click", event -> {
         VaadinSession.getCurrent().close();
@@ -76,13 +75,15 @@ public class MainLayout extends AppLayout implements RouterLayout {
             necesidadesItem.getElement().getThemeList().add("primary");
         } else if ("tareas".equals(currentRoute)) {
             tareasItem.getElement().getThemeList().add("primary");
+        } else if ("recursos".equals(currentRoute)) {
+            recursosItem.getElement().getThemeList().add("primary");
         }
 
         nav.addItem(mainItem);
         if (usuario.getTipoUsuario().equals("afectado")) {
              nav.addItem(necesidadesItem);
         }
-        nav.addItem(tareasItem, configItem, logoutItem);
+        nav.addItem(tareasItem, recursosItem, configItem, logoutItem);
 
         Scroller scroller = new Scroller(nav);
         scroller.setClassName(LumoUtility.Padding.SMALL);

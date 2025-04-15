@@ -32,6 +32,6 @@ public class Recursos {
     public void setTipoRecurso(TipoRecurso tipoRecurso) { this.tipoRecurso = tipoRecurso; }
 
     public String getDescripcion() { return descripcion; }
-    public void setDescripciion(String descripcion) { this.descripcion = descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
     
 }
