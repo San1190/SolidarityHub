@@ -77,12 +77,15 @@ public class MainLayout extends AppLayout implements RouterLayout {
             tareasItem.getElement().getThemeList().add("primary");
         } else if ("recursos".equals(currentRoute)) {
             recursosItem.getElement().getThemeList().add("primary");
+        } else if ("recursos".equals(currentRoute)) {
+            recursosItem.getElement().getThemeList().add("primary");
         }
 
         nav.addItem(mainItem);
         if (usuario.getTipoUsuario().equals("afectado")) {
              nav.addItem(necesidadesItem);
         }
+        nav.addItem(tareasItem, recursosItem, configItem, logoutItem);
         nav.addItem(tareasItem, recursosItem, configItem, logoutItem);
 
         Scroller scroller = new Scroller(nav);
