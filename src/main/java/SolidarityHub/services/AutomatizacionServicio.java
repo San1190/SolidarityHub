@@ -3,6 +3,8 @@ package SolidarityHub.services;
 import SolidarityHub.models.Afectado;
 import SolidarityHub.models.Habilidad;
 import SolidarityHub.models.Necesidad;
+import SolidarityHub.models.Recursos;
+import SolidarityHub.models.Recursos.EstadoRecurso;
 import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Tarea.EstadoTarea;
 import SolidarityHub.models.Usuario;
@@ -26,10 +28,12 @@ public class AutomatizacionServicio implements ApplicationListener<ContextRefres
 
     private final TareaServicio tareaServicio;
     private final UsuarioRepositorio usuarioRepositorio;
+    private final RecursoServicio recursoServicio;
 
-    public AutomatizacionServicio(TareaServicio tareaServicio, UsuarioRepositorio usuarioRepositorio) {
+    public AutomatizacionServicio(TareaServicio tareaServicio, UsuarioRepositorio usuarioRepositorio, RecursoServicio recursoServicio) {
         this.tareaServicio = tareaServicio;
         this.usuarioRepositorio = usuarioRepositorio;
+        this.recursoServicio = recursoServicio;
     }
 
     /**
@@ -48,6 +52,7 @@ public class AutomatizacionServicio implements ApplicationListener<ContextRefres
     @EventListener(Necesidad.class)
     @Transactional
     public void handleNecesidadEvent(Necesidad necesidad) {
+        // Primero procesamos la necesidad para crear una tarea
         try {
             if (necesidad == null) {
                 System.err.println("Error: Se recibió un evento de Necesidad con valor nulo");
@@ -63,6 +68,59 @@ public class AutomatizacionServicio implements ApplicationListener<ContextRefres
             crearTareaDesdeNecesidad(necesidad);
         } catch (Exception e) {
             System.err.println("Error al procesar evento de Necesidad: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Asigna automáticamente recursos disponibles a una tarea según su tipo de necesidad
+     * @param tarea La tarea a la que se asignarán recursos
+     */
+    @Transactional
+    public void asignarRecursosAutomaticamente(Tarea tarea) {
+        try {
+            if (tarea == null || tarea.getTipo() == null) {
+                System.err.println("Error: La tarea no tiene tipo definido para asignar recursos");
+                return;
+            }
+            
+            System.out.println("Buscando recursos disponibles para la tarea: " + tarea.getNombre());
+            
+            // Convertir el tipo de necesidad de la tarea al tipo de recurso correspondiente
+            String tipoNecesidadStr = tarea.getTipo().name();
+            Recursos.TipoRecurso tipoRecursoNecesario = null;
+            
+            try {
+                tipoRecursoNecesario = Recursos.TipoRecurso.valueOf(tipoNecesidadStr);
+            } catch (IllegalArgumentException e) {
+                System.err.println("No existe un tipo de recurso equivalente para la necesidad: " + tipoNecesidadStr);
+                return;
+            }
+            
+            // Buscar recursos disponibles del tipo necesario
+            List<Recursos> recursosDisponibles = recursoServicio.filtrarPorTipo(tipoRecursoNecesario).stream()
+                .filter(r -> r.getEstado() == EstadoRecurso.DISPONIBLE)
+                .toList();
+            
+            System.out.println("Recursos disponibles encontrados: " + recursosDisponibles.size());
+            
+            if (recursosDisponibles.isEmpty()) {
+                System.out.println("No hay recursos disponibles del tipo: " + tipoRecursoNecesario);
+                return;
+            }
+            
+            // Asignar el primer recurso disponible a la tarea
+            Recursos recursoParaAsignar = recursosDisponibles.get(0);
+            recursoParaAsignar.setEstado(EstadoRecurso.ASIGNADO);
+            recursoParaAsignar.setTareaAsignada(tarea);
+            
+            recursoServicio.actualizarRecurso(recursoParaAsignar);
+            
+            System.out.println("Recurso asignado automáticamente a la tarea: " + 
+                              recursoParaAsignar.getDescripcion() + " -> " + tarea.getNombre());
+            
+        } catch (Exception e) {
+            System.err.println("Error al asignar recursos automáticamente: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -130,11 +188,13 @@ public class AutomatizacionServicio implements ApplicationListener<ContextRefres
             System.out.println("Tareas existentes del mismo tipo: " + tareasExistentes.size());
             
             boolean tareaExiste = false;
+            Tarea tareaAsociada = null;
             for (Tarea tarea : tareasExistentes) {
                 // Verificar si ya existe una tarea con descripción similar
                 if (tarea.getDescripcion() != null && 
                     tarea.getDescripcion().contains(necesidad.getDescripcion())) {
                     tareaExiste = true;
+                    tareaAsociada = tarea;
                     System.out.println("Ya existe una tarea similar: " + tarea.getDescripcion());
                     break;
                 }
@@ -168,10 +228,15 @@ public class AutomatizacionServicio implements ApplicationListener<ContextRefres
                 
                 // Asignar voluntarios automáticamente
                 asignarVoluntariosAutomaticamente(tareaGuardada);
+            } else if (tareaAsociada != null) {
+                // Si la tarea ya existe, verificamos si necesita recursos
+                asignarRecursosAutomaticamente(tareaAsociada);
+            
             } else {
                 System.out.println("No se creó tarea porque ya existe una similar.");
             }
         } catch (Exception e) {
+
             System.err.println("Error al crear tarea desde necesidad: " + e.getMessage());
             e.printStackTrace();
         }

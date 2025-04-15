@@ -11,12 +11,22 @@ public class Recursos {
         AYUDA_PSICOLOGICA, AYUDA_CARPINTERIA, AYUDA_ELECTRICIDAD, AYUDA_FONTANERIA, MATERIAL_HIGENE
     }
 
+    public enum EstadoRecurso {
+        DISPONIBLE, ASIGNADO, NO_DISPONIBLE
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private TipoRecurso tipoRecurso;
     private String descripcion;
+    private int cantidad;
+    private EstadoRecurso estado = EstadoRecurso.DISPONIBLE;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tarea_id")
+    private Tarea tareaAsignada;
 
     public Recursos() {}
 
@@ -32,6 +42,14 @@ public class Recursos {
     public void setTipoRecurso(TipoRecurso tipoRecurso) { this.tipoRecurso = tipoRecurso; }
 
     public String getDescripcion() { return descripcion; }
-    public void setDescripciion(String descripcion) { this.descripcion = descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
     
+    public int getCantidad() { return cantidad; }
+    public void setCantidad(int cantidad) { this.cantidad = cantidad; }
+    
+    public EstadoRecurso getEstado() { return estado; }
+    public void setEstado(EstadoRecurso estado) { this.estado = estado; }
+    
+    public Tarea getTareaAsignada() { return tareaAsignada; }
+    public void setTareaAsignada(Tarea tareaAsignada) { this.tareaAsignada = tareaAsignada; }
 }

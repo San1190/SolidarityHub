@@ -6,6 +6,8 @@ import SolidarityHub.models.Voluntario;
 import SolidarityHub.models.Afectado;
 import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Tarea.EstadoTarea;
+import SolidarityHub.models.Recursos;
+import SolidarityHub.models.Recursos.TipoRecurso;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -40,6 +42,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Route(value = "tareas", layout = MainLayout.class)
 @PageTitle("Tareas | SolidarityHub")
@@ -458,8 +462,75 @@ fechaFinField.setRequiredIndicatorVisible(true);
             }
         }
         
+        // Añadir barra de progreso de recursos
+        Div progressBarContainer = new Div();
+        progressBarContainer.setWidthFull();
+        progressBarContainer.getStyle()
+            .set("margin-top", "12px")
+            .set("margin-bottom", "8px");
+        
+        // Obtener los recursos asignados a esta tarea
+        List<Recursos> recursosAsignados = obtenerRecursosAsignados(tarea);
+        
+        if (!recursosAsignados.isEmpty()) {
+            // Agrupar recursos por tipo
+            Map<TipoRecurso, Long> recursosPorTipo = recursosAsignados.stream()
+                .collect(Collectors.groupingBy(Recursos::getTipoRecurso, Collectors.counting()));
+            
+            // Crear una barra de progreso para cada tipo de recurso
+            for (Map.Entry<TipoRecurso, Long> entry : recursosPorTipo.entrySet()) {
+                String tipoRecurso = entry.getKey().name();
+                long cantidad = entry.getValue();
+                
+                // Contenedor para la etiqueta y la barra
+                HorizontalLayout progressLayout = new HorizontalLayout();
+                progressLayout.setWidthFull();
+                progressLayout.setSpacing(false);
+                progressLayout.setPadding(false);
+                progressLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+                
+                // Etiqueta del tipo de recurso
+                Span tipoLabel = new Span(tipoRecurso + ": " + cantidad);
+                tipoLabel.getStyle()
+                    .set("font-size", "12px")
+                    .set("min-width", "120px");
+                
+                // Barra de progreso
+                Div progressBar = new Div();
+                progressBar.setWidthFull();
+                progressBar.setHeight("8px");
+                progressBar.getStyle()
+                    .set("background-color", "#e9ecef")
+                    .set("border-radius", "4px")
+                    .set("overflow", "hidden");
+                
+                // Parte llena de la barra
+                Div progressFill = new Div();
+                progressFill.setHeight("100%");
+                // Ancho basado en la cantidad (máximo 100%)
+                int widthPercent = Math.min((int)(cantidad * 20), 100); // 20% por cada recurso, máximo 100%
+                progressFill.setWidth(widthPercent + "%");
+                progressFill.getStyle()
+                    .set("background-color", getColorForResourceType(entry.getKey()))
+                    .set("border-radius", "4px");
+                
+                progressBar.add(progressFill);
+                progressLayout.add(tipoLabel, progressBar);
+                progressBarContainer.add(progressLayout);
+            }
+        } else {
+            // Si no hay recursos asignados, mostrar un mensaje
+            Span noRecursosLabel = new Span("No hay recursos asignados");
+            noRecursosLabel.getStyle()
+                .set("font-size", "12px")
+                .set("color", "#6c757d")
+                .set("display", "block")
+                .set("text-align", "center");
+            progressBarContainer.add(noRecursosLabel);
+        }
+        
         // Añadir todos los componentes a la tarjeta
-        contenido.add(estadoBar, titulo, descripcion, infoContainer, botonesLayout);
+        contenido.add(estadoBar, titulo, descripcion, infoContainer, progressBarContainer, botonesLayout);
         tarjeta.add(contenido);
         
         return tarjeta;
@@ -469,6 +540,61 @@ fechaFinField.setRequiredIndicatorVisible(true);
      * Muestra un diálogo con los detalles completos de una tarea
      * @param tarea La tarea a mostrar
      */
+    /**
+     * Obtiene los recursos asignados a una tarea
+     * @param tarea La tarea para la que se buscan los recursos
+     * @return Lista de recursos asignados a la tarea
+     */
+    private List<Recursos> obtenerRecursosAsignados(Tarea tarea) {
+        // En un caso real, esto debería obtenerse del servicio de recursos
+        // Aquí simulamos la obtención de recursos para la demostración
+        try {
+            return restTemplate.getForObject(
+                "http://localhost:8080/api/tareas/" + tarea.getId() + "/recursos", 
+                List.class
+            );
+        } catch (Exception e) {
+            // Si hay un error, devolver una lista vacía
+            return Collections.emptyList();
+        }
+    }
+    
+    /**
+     * Devuelve un color para cada tipo de recurso
+     * @param tipoRecurso El tipo de recurso
+     * @return Un color en formato hexadecimal
+     */
+    private String getColorForResourceType(TipoRecurso tipoRecurso) {
+        switch (tipoRecurso) {
+            case PRIMEROS_AUXILIOS:
+                return "#dc3545"; // Rojo
+            case MEDICAMENTOS:
+                return "#fd7e14"; // Naranja
+            case ALIMENTACION:
+                return "#28a745"; // Verde
+            case ALIMENTACION_BEBE:
+                return "#20c997"; // Verde azulado
+            case REFUGIO:
+                return "#6610f2"; // Púrpura
+            case ROPA:
+                return "#e83e8c"; // Rosa
+            case SERVICIO_LIMPIEZA:
+                return "#17a2b8"; // Cian
+            case AYUDA_PSICOLOGICA:
+                return "#6f42c1"; // Violeta
+            case AYUDA_CARPINTERIA:
+                return "#795548"; // Marrón
+            case AYUDA_ELECTRICIDAD:
+                return "#ffc107"; // Amarillo
+            case AYUDA_FONTANERIA:
+                return "#007bff"; // Azul
+            case MATERIAL_HIGENE:
+                return "#87ceeb"; // Azul cielo
+            default:
+                return "#6c757d"; // Gris
+        }
+    }
+    
     private void mostrarDetallesTarea(Tarea tarea) {
         Dialog detallesDialog = new Dialog();
         detallesDialog.setWidth("800px");
