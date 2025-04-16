@@ -34,7 +34,7 @@ build/
 .vscode/
 
 ### Docker ###
-docker-compose.yml
+docker-compose.dev.yml
 
 ### Others ###
 credenciales.txt
