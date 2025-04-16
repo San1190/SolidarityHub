@@ -1,0 +1,34 @@
+services:
+  mysql:
+    image: mysql:latest
+    container_name: solidarityhub_mysql-dev
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: solidarityhub_db
+    volumes:
+      - mysql_data_solidarity_hub:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  maven:
+    image: maven:3.9-eclipse-temurin-23
+    container_name: solidarityhub_maven-dev
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - '8080:8080'
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/solidarityhub_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    command: mvn clean spring-boot:run
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data_solidarity_hub:
