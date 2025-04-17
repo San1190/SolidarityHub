@@ -6,54 +6,59 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-@Route("main")
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.theme.lumo.LumoUtility;
+
+@Route(value= "main" , layout = MainLayout.class)
 @PageTitle("Main | SolidarityHub")
-public class MainView extends MainLayout {
+public class MainView extends VerticalLayout {
 
         private Image logo;
 
         public MainView(UsuarioServicio usuarioServicio) {
-                // Con el super() ya se configura el navbar y drawer en MainLayout
-                // Aquí agregamos el contenido específico de MainView.
-                Div content = new Div();
-                content.setSizeFull();
-                setContent(content);
+                setSizeFull();
+                setSpacing(false);
+                setPadding(true);
+                setAlignItems(Alignment.CENTER);
 
-                // haz que ponga la info de usuario en el div content
+                Div card = new Div();
+                card.addClassName(LumoUtility.Background.BASE);
+                card.addClassName(LumoUtility.BoxShadow.SMALL);
+                card.addClassName(LumoUtility.BorderRadius.LARGE);
+                card.addClassName(LumoUtility.Padding.LARGE);
+                card.setMaxWidth("600px");
+                card.setWidth("100%");
+
                 H3 title = new H3("Bienvenido/a a SolidarityHub");
-                title.getStyle().set("font-size", "48px").set("font-weight", "bold").set("text-align", "center")
-                                .set("color", "green").set("margin-bottom", "5rem").set("margin-top", "2rem");
+                title.addClassName(LumoUtility.FontSize.XXXLARGE);
+                title.addClassName(LumoUtility.TextColor.SUCCESS);
+                title.addClassName(LumoUtility.TextAlignment.CENTER);
+                title.addClassName(LumoUtility.Margin.Bottom.LARGE);
 
-                // Agregar contenido al cuadro
-                H3 nombre = new H3("Nombre: " + usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getNombre());
-                nombre.getStyle().set("font-size", "18px").set("font-weight", "bold").set("text-align", "center");
+                var usuario = usuarioServicio.obtenerUsuarioPorId(1L); // Obtener usuario actual
 
-                H3 apellidos = new H3(
-                                "Apellidos: " + usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getApellidos());
-                apellidos.getStyle().set("font-size", "18px").set("font-weight", "bold").set("text-align", "center");
+                H3 nombre = new H3("Nombre: " + usuario.getNombre() + " " + usuario.getApellidos());
+                nombre.addClassName(LumoUtility.FontSize.MEDIUM);
+                nombre.addClassName(LumoUtility.TextAlignment.CENTER);
+                nombre.addClassName(LumoUtility.Margin.Bottom.SMALL);
 
-                H3 email = new H3("Email: " + usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getEmail());
-                email.getStyle().set("font-size", "18px").set("font-weight", "bold").set("text-align", "center");
+                H3 email = new H3("Email: " + usuario.getEmail());
+                email.addClassName(LumoUtility.FontSize.MEDIUM);
+                email.addClassName(LumoUtility.TextAlignment.CENTER);
+                email.addClassName(LumoUtility.Margin.Bottom.SMALL);
 
-                H3 telefono = new H3("Teléfono: " + usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getTelefono());
-                telefono.getStyle().set("font-size", "18px").set("font-weight", "bold").set("text-align", "center");
+                H3 telefono = new H3("Teléfono: " + usuario.getTelefono());
+                telefono.addClassName(LumoUtility.FontSize.MEDIUM);
+                telefono.addClassName(LumoUtility.TextAlignment.CENTER);
+                telefono.addClassName(LumoUtility.Margin.Bottom.SMALL);
 
-                H3 contraseña = new H3(
-                                "Contraseña: " + usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getPassword());
-                contraseña.getStyle().set("font-size", "18px").set("font-weight", "bold").set("text-align", "center");
+                H3 rol = new H3("Rol: " + usuario.getTipoUsuario());
+                rol.addClassName(LumoUtility.FontSize.MEDIUM);
+                rol.addClassName(LumoUtility.TextAlignment.CENTER);
+                rol.addClassName(LumoUtility.Margin.Bottom.LARGE);
 
-                H3 direccion = new H3(
-                                "Dirección: " + usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getDireccion());
-                direccion.getStyle().set("font-size", "18px").set("font-weight", "bold").set("text-align", "center");
-
-                H3 dni = new H3("DNI: " + usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getDni());
-                dni.getStyle().set("font-size", "18px").set("font-weight", "bold").set("text-align", "center");
-
-                H3 rol = new H3("Rol: " + usuarioServicio.obtenerUsuarioPorId(usuario.getId()).getTipoUsuario());
-                rol.getStyle().set("font-size", "18px").set("font-weight", "bold").set("text-align", "center");
-
-                content.add(title, nombre, apellidos, email, telefono, contraseña, direccion, dni, rol, crearLogo());
-
+                card.add(title, nombre, email, telefono, rol, crearLogo());
+                add(card);
         }
 
         private Image crearLogo() {

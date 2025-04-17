@@ -27,9 +27,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.web.client.RestTemplate;
 
-@Route("necesidades")
+@Route(value = "necesidades", layout = MainLayout.class) 
 @PageTitle("Necesidades | SolidarityHub")
-public class NecesidadesView extends MainLayout {
+public class NecesidadesView extends VerticalLayout {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final String apiUrl = "http://localhost:8080/api/necesidades"; // URL base de la API REST
@@ -37,25 +37,21 @@ public class NecesidadesView extends MainLayout {
     private final Binder<Necesidad> binder = new Binder<>(Necesidad.class);
 
     public NecesidadesView() {
-        // Layout principal
-        VerticalLayout mainLayout = new VerticalLayout();
-        mainLayout.setSizeFull();
-        mainLayout.setPadding(true);
-        mainLayout.setSpacing(true);
-        mainLayout.setHeight("auto");
+        setSizeFull();
+        setPadding(true);
+        setSpacing(true);
+        setHeight("auto");
 
-        mainLayout.add(crearTitulo());
+        add(crearTitulo());
 
         // Layout para el formulario
         FormLayout formLayout = createFormLayout();
-        mainLayout.add(formLayout);
+        add(formLayout);
 
         // Layout para el grid
         VerticalLayout gridLayout = createGridLayout();
-        mainLayout.add(gridLayout);
+        add(gridLayout);
 
-        // Asignar el contenido principal al AppLayout
-        setContent(mainLayout);
         refreshGrid();
     }
 

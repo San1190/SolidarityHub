@@ -16,12 +16,21 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.router.RouterLayout;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.icon.Icon;
+import SolidarityHub.components.NotificacionesComponent;
+import SolidarityHub.services.NotificacionServicio;
 
 public class MainLayout extends AppLayout implements RouterLayout {
 
     protected Usuario usuario;
+    private NotificacionServicio notificacionServicio;
+    private Dialog notificacionesDialog;
+    private NotificacionesComponent notificacionesComponent;
 
-    public MainLayout() {
+    public MainLayout(NotificacionServicio notificacionServicio) {
+        this.notificacionServicio = notificacionServicio;
         this.usuario = (Usuario) VaadinSession.getCurrent().getAttribute("usuario");
         if (usuario == null) {
             UI.getCurrent().navigate("/");
@@ -35,7 +44,15 @@ public class MainLayout extends AppLayout implements RouterLayout {
         Avatar avatar = new Avatar(usuario.getNombre() + " " + usuario.getApellidos());
         avatar.setImage("/api/usuarios/" + usuario.getId() + "/foto");
 
-        HorizontalLayout navbar = new HorizontalLayout(toggle, title, avatar);
+        Button notificacionesBtn = new Button(new Icon(VaadinIcon.BELL));
+        notificacionesBtn.addClickListener(e -> mostrarNotificaciones());
+
+        HorizontalLayout navbar = new HorizontalLayout(toggle, title, notificacionesBtn, avatar);
+
+        notificacionesDialog = new Dialog();
+        notificacionesDialog.setWidth("400px");
+        notificacionesComponent = new NotificacionesComponent(notificacionServicio);
+        notificacionesDialog.add(notificacionesComponent);
         navbar.setWidthFull();
         navbar.setPadding(true);
         navbar.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -92,5 +109,10 @@ public class MainLayout extends AppLayout implements RouterLayout {
         scroller.setClassName(LumoUtility.Padding.SMALL);
 
         addToDrawer(scroller);
+    }
+
+    private void mostrarNotificaciones() {
+        notificacionesComponent.actualizarNotificaciones();
+        notificacionesDialog.open();
     }
 }

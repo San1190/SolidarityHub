@@ -2,7 +2,6 @@ package SolidarityHub.models;
 
 import jakarta.persistence.*;
 import java.util.List;
-
 @Entity
 public class Recursos {
 
@@ -27,7 +26,6 @@ public class Recursos {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tarea_id")
     private Tarea tareaAsignada;
-
     public Recursos() {}
 
     public Recursos(TipoRecurso tipoRecurso, String descripcion) {

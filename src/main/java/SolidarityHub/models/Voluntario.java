@@ -17,17 +17,18 @@ public class Voluntario extends Usuario {
     
     private String turnoDisponibilidad; // Por ejemplo: "Mañana", "Tarde", "Día Entero"
     
+    private Double radioAccion; // Radio de acción en kilómetros para asignación de tareas
     
 
     public Voluntario() {}
 
     public Voluntario(String dni, String nombre, String apellidos, String email, String password, String telefono, String direccion, byte[] foto,
-                      List<Habilidad> habilidades, List<String> diasDisponibles, String turnoDisponibilidad) {
+                      List<Habilidad> habilidades, List<String> diasDisponibles, String turnoDisponibilidad, Double radioAccion) {
         super(dni, nombre, apellidos, email, password, telefono, direccion, foto);
         this.habilidades = habilidades;
         this.diasDisponibles = diasDisponibles;
         this.turnoDisponibilidad = turnoDisponibilidad;
-        
+        this.radioAccion = radioAccion;
     }
 
     @Override
@@ -58,5 +59,11 @@ public class Voluntario extends Usuario {
         this.turnoDisponibilidad = turnoDisponibilidad;
     }
 
- 
+    public Double getRadioAccion() {
+        return radioAccion;
+    }
+
+    public void setRadioAccion(Double radioAccion) {
+        this.radioAccion = radioAccion;
+    }
 }
