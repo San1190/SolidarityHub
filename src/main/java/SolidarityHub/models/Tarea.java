@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 public class Tarea {
@@ -49,6 +50,10 @@ public class Tarea {
         inverseJoinColumns = @JoinColumn(name = "voluntario_id")
     )
     private List<Voluntario> voluntariosAsignados;
+    
+    @OneToMany(mappedBy = "tareaAsignada", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"tareaAsignada", "hibernateLazyInitializer", "handler"})
+    private List<Recursos> recursosAsignados;
     
     // Constructor vacío requerido por JPA
     public Tarea() {}
@@ -111,5 +116,10 @@ public class Tarea {
     public List<Voluntario> getVoluntariosAsignados() { return voluntariosAsignados; }
     public void setVoluntariosAsignados(List<Voluntario> voluntariosAsignados) { 
         this.voluntariosAsignados = voluntariosAsignados; 
+    }
+    
+    public List<Recursos> getRecursosAsignados() { return recursosAsignados; }
+    public void setRecursosAsignados(List<Recursos> recursosAsignados) { 
+        this.recursosAsignados = recursosAsignados; 
     }
 }

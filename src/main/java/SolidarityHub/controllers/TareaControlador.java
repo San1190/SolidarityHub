@@ -5,11 +5,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import SolidarityHub.models.Habilidad;
+import SolidarityHub.models.Recursos;
 import SolidarityHub.models.Tarea;
+import SolidarityHub.models.Usuario;
 import SolidarityHub.models.Voluntario;
 import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Tarea.EstadoTarea;
+import SolidarityHub.services.AsignacionTareaServicio;
 import SolidarityHub.services.AutomatizacionServicio;
+import SolidarityHub.services.RecursoServicio;
 import SolidarityHub.services.TareaServicio;
 import SolidarityHub.services.UsuarioServicio;
 
@@ -27,11 +31,18 @@ public class TareaControlador {
     private final TareaServicio tareaServicio;
     private final UsuarioServicio usuarioServicio;
     private final AutomatizacionServicio automatizacionServicio;
+    private final AsignacionTareaServicio asignacionTareaServicio;
+    private final RecursoServicio recursoServicio;
 
-    public TareaControlador(TareaServicio tareaServicio, UsuarioServicio usuarioServicio, AutomatizacionServicio automatizacionServicio) {
+    public TareaControlador(TareaServicio tareaServicio, UsuarioServicio usuarioServicio, 
+                           AutomatizacionServicio automatizacionServicio,
+                           AsignacionTareaServicio asignacionTareaServicio,
+                           RecursoServicio recursoServicio) {
         this.tareaServicio = tareaServicio;
         this.usuarioServicio = usuarioServicio;
         this.automatizacionServicio = automatizacionServicio;
+        this.asignacionTareaServicio = asignacionTareaServicio;
+        this.recursoServicio = recursoServicio;
     }
 
     @GetMapping
@@ -41,7 +52,41 @@ public class TareaControlador {
 
     @PostMapping("/crear")
     public Tarea crearTarea(@RequestBody Tarea tarea) {
-        return tareaServicio.guardarTarea(tarea);
+        // Verificar que el creador esté establecido
+        if (tarea.getCreador() == null) {
+            throw new IllegalArgumentException("El creador de la tarea no puede ser nulo");
+        }
+        
+        // Verificar que el creador existe en la base de datos
+        Usuario creador = usuarioServicio.obtenerUsuarioPorId(tarea.getCreador().getId());
+        if (creador == null) {
+            throw new IllegalArgumentException("El creador especificado no existe");
+        }
+        
+        // Establecer el creador verificado
+        tarea.setCreador(creador);
+        
+        // Inicializar la lista de voluntarios asignados si es nula
+        if (tarea.getVoluntariosAsignados() == null) {
+            tarea.setVoluntariosAsignados(new ArrayList<>());
+        }
+        
+        // Guardar la tarea con su creador
+        Tarea tareaNueva = tareaServicio.guardarTarea(tarea);
+        
+        // Si se desea asignación automática, intentar asignar voluntarios
+        if (tareaNueva.getEstado() == EstadoTarea.PREPARADA) {
+            // Asignar voluntarios automáticamente (radio de 10km como ejemplo)
+            asignacionTareaServicio.asignarVoluntariosAutomaticamente(tareaNueva, 10.0);
+            
+            // Asignar recursos automáticamente
+            asignarRecursosAutomaticamente(tareaNueva);
+            
+            // Actualizar la tarea con los voluntarios asignados
+            tareaNueva = tareaServicio.actualizarTarea(tareaNueva);
+        }
+        
+        return tareaNueva;
     }
 
     @GetMapping("/{id}")
@@ -54,12 +99,129 @@ public class TareaControlador {
         }
     }
     
+    /**
+     * Método privado para asignar recursos automáticamente a una tarea
+     * @param tarea La tarea a la que se asignarán recursos
+     */
+    private void asignarRecursosAutomaticamente(Tarea tarea) {
+        if (tarea == null || tarea.getTipo() == null) {
+            return;
+        }
+        
+        // Convertir el tipo de necesidad al tipo de recurso correspondiente
+        Recursos.TipoRecurso tipoRecursoNecesario = null;
+        try {
+            tipoRecursoNecesario = Recursos.TipoRecurso.valueOf(tarea.getTipo().name());
+        } catch (IllegalArgumentException e) {
+            // Si no hay correspondencia exacta, no se puede asignar automáticamente
+            return;
+        }
+        
+        // Buscar recursos disponibles del tipo necesario
+        List<Recursos> recursosDisponibles = recursoServicio.filtrarPorTipo(tipoRecursoNecesario).stream()
+                .filter(r -> r.getEstado() == Recursos.EstadoRecurso.DISPONIBLE)
+                .collect(Collectors.toList());
+        
+        // Asignar hasta 3 recursos a la tarea (o menos si no hay suficientes)
+        int recursosAsignar = Math.min(recursosDisponibles.size(), 3);
+        for (int i = 0; i < recursosAsignar; i++) {
+            Recursos recurso = recursosDisponibles.get(i);
+            recurso.setEstado(Recursos.EstadoRecurso.ASIGNADO);
+            recurso.setTareaAsignada(tarea);
+            recursoServicio.actualizarRecurso(recurso);
+        }
+    }
+    
+    /**
+     * Endpoint para asignar manualmente un voluntario a una tarea
+     */
+    @PostMapping("/{tareaId}/asignar-voluntario/{voluntarioId}")
+    public ResponseEntity<Tarea> asignarVoluntarioManualmente(
+            @PathVariable Long tareaId, 
+            @PathVariable Long voluntarioId) {
+        
+        Optional<Tarea> tareaOpt = tareaServicio.obtenerTareaPorId(tareaId);
+        if (!tareaOpt.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        
+        Tarea tarea = tareaOpt.get();
+        Object usuario = usuarioServicio.obtenerUsuarioPorId(voluntarioId);
+        
+        if (usuario == null || !(usuario instanceof Voluntario)) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        
+        Voluntario voluntario = (Voluntario) usuario;
+        
+        // Añadir el voluntario a la lista de asignados si no está ya
+        if (tarea.getVoluntariosAsignados() == null) {
+            tarea.setVoluntariosAsignados(new ArrayList<>());
+        }
+        
+        if (!tarea.getVoluntariosAsignados().contains(voluntario)) {
+            tarea.getVoluntariosAsignados().add(voluntario);
+            tarea = tareaServicio.actualizarTarea(tarea);
+        }
+        
+        return new ResponseEntity<>(tarea, HttpStatus.OK);
+    }
+    
+    /**
+     * Endpoint para asignar manualmente un recurso a una tarea
+     */
+    @PostMapping("/{tareaId}/asignar-recurso/{recursoId}")
+    public ResponseEntity<Tarea> asignarRecursoManualmente(
+            @PathVariable Long tareaId, 
+            @PathVariable Long recursoId) {
+        
+        Optional<Tarea> tareaOpt = tareaServicio.obtenerTareaPorId(tareaId);
+        if (!tareaOpt.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        
+        Optional<Recursos> recursoOpt = recursoServicio.obtenerRecursoPorId(recursoId);
+        if (!recursoOpt.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        
+        Tarea tarea = tareaOpt.get();
+        Recursos recurso = recursoOpt.get();
+        
+        // Asignar el recurso a la tarea
+        recurso.setEstado(Recursos.EstadoRecurso.ASIGNADO);
+        recurso.setTareaAsignada(tarea);
+        recursoServicio.actualizarRecurso(recurso);
+        
+        return new ResponseEntity<>(tarea, HttpStatus.OK);
+    }
+    
     @PutMapping("/{id}")
     public ResponseEntity<Tarea> actualizarTarea(@PathVariable Long id, @RequestBody Tarea tarea) {
         Optional<Tarea> tareaExistente = tareaServicio.obtenerTareaPorId(id);
         if (tareaExistente.isPresent()) {
+            // Mantener el creador original
+            if (tarea.getCreador() == null) {
+                tarea.setCreador(tareaExistente.get().getCreador());
+            }
+            
             tarea.setId(id);
-            return new ResponseEntity<>(tareaServicio.actualizarTarea(tarea), HttpStatus.OK);
+            Tarea tareaActualizada = tareaServicio.actualizarTarea(tarea);
+            
+            // Si la tarea cambió a estado PREPARADA, intentar asignación automática
+            if (tareaActualizada.getEstado() == EstadoTarea.PREPARADA && 
+                (tareaExistente.get().getEstado() != EstadoTarea.PREPARADA || 
+                 tareaActualizada.getVoluntariosAsignados() == null || 
+                 tareaActualizada.getVoluntariosAsignados().isEmpty())) {
+                
+                // Asignar voluntarios automáticamente
+                asignacionTareaServicio.asignarVoluntariosAutomaticamente(tareaActualizada, 10.0);
+                
+                // Asignar recursos automáticamente
+                asignarRecursosAutomaticamente(tareaActualizada);
+            }
+            
+            return new ResponseEntity<>(tareaActualizada, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

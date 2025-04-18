@@ -2,6 +2,7 @@ package SolidarityHub.models;
 
 import jakarta.persistence.*;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity
 public class Recursos {
 
@@ -25,6 +26,7 @@ public class Recursos {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tarea_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "afectados", "voluntariosAsignados", "creador", "recursosAsignados"})
     private Tarea tareaAsignada;
     public Recursos() {}
 

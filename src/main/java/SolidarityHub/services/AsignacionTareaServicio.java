@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import SolidarityHub.repository.UsuarioRepositorio;
 
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,6 +21,9 @@ public class AsignacionTareaServicio {
 
     @Autowired
     private NotificacionServicio notificacionServicio;
+    
+    @Autowired
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     private static final double EARTH_RADIUS = 6371; // Radio de la Tierra en kilómetros
 
@@ -49,9 +53,23 @@ public class AsignacionTareaServicio {
             })
             .collect(Collectors.toList());
 
-        // Notificar a los voluntarios compatibles
-        for (Voluntario voluntario : voluntariosCompatibles) {
-            notificacionServicio.notificarAsignacionTarea(tarea, voluntario);
+        // Inicializar la lista de voluntarios asignados si es nula
+        if (tarea.getVoluntariosAsignados() == null) {
+            tarea.setVoluntariosAsignados(new ArrayList<>());
+        }
+        
+        // Asignar los voluntarios compatibles a la tarea
+        // Limitar el número de voluntarios asignados al número necesario
+        int voluntariosNecesarios = tarea.getNumeroVoluntariosNecesarios();
+        int voluntariosAAsignar = Math.min(voluntariosCompatibles.size(), voluntariosNecesarios);
+        
+        for (int i = 0; i < voluntariosAAsignar; i++) {
+            Voluntario voluntario = voluntariosCompatibles.get(i);
+            if (!tarea.getVoluntariosAsignados().contains(voluntario)) {
+                tarea.getVoluntariosAsignados().add(voluntario);
+                // Publicar evento usando el patrón Observer
+                eventPublisher.publishEvent(new SolidarityHub.events.NuevaTareaAsignadaEvent(this, tarea, voluntario));
+            }
         }
     }
 

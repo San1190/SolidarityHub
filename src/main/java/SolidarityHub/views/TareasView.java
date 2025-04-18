@@ -422,8 +422,21 @@ fechaFinField.setRequiredIndicatorVisible(true);
         voluntarios.getStyle().set("font-size", "14px").set("color", "#6c757d");
         voluntariosLayout.add(peopleIcon, voluntarios);
         
+        // Creador de la tarea
+        HorizontalLayout creadorLayout = new HorizontalLayout();
+        creadorLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        creadorLayout.setSpacing(false);
+        Icon creadorIcon = VaadinIcon.USER.create();
+        creadorIcon.setSize("14px");
+        creadorIcon.getStyle().set("color", "#6c757d");
+        String nombreCreador = tarea.getCreador() != null ? 
+            tarea.getCreador().getNombre() + " " + tarea.getCreador().getApellidos() : "No asignado";
+        Span creador = new Span("Creador: " + nombreCreador);
+        creador.getStyle().set("font-size", "14px").set("color", "#6c757d");
+        creadorLayout.add(creadorIcon, creador);
+        
         // Añadir la información al contenedor
-        VerticalLayout infoLayout = new VerticalLayout(localizacionLayout, fechasLayout, voluntariosLayout);
+        VerticalLayout infoLayout = new VerticalLayout(localizacionLayout, fechasLayout, voluntariosLayout, creadorLayout);
         infoLayout.setSpacing(false);
         infoLayout.setPadding(false);
         infoContainer.add(infoLayout);
