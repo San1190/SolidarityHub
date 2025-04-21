@@ -86,6 +86,26 @@ public class LoginView extends VerticalLayout {
 
         // Añadir card al layout principal
         add(formCard);
+        emailField.focus();
+        emailField.getElement()
+                .addEventListener("keydown", e -> {
+                    String key = e.getEventData().getString("event.key");
+                    if ("Enter".equals(key)) {
+                        contraseñaField.focus();
+                    }
+                })
+                .addEventData("event.key");
+
+        contraseñaField.getElement()
+                .addEventListener("keydown", e -> {
+                    String key = e.getEventData().getString("event.key");
+                    if ("Enter".equals(key)) {
+                        if (!emailField.isEmpty() && !contraseñaField.isEmpty()) {
+                            iniciarSesionBtn.click();
+                        }
+                    }
+                })
+                .addEventData("event.key");
     }
 
     private Component crearLogo() {
@@ -172,7 +192,7 @@ public class LoginView extends VerticalLayout {
     private Component crearIniciarSesionBtn() {
         // Botón: Iniciar Sesión
         iniciarSesionBtn = new Button("Iniciar Sesión", _ -> {
-            // Comprobar si los campos están vacíos
+
             if (emailField.getValue().isEmpty() || contraseñaField.getValue().isEmpty()) {
                 mostrarError("Por favor ingrese todos los campos.");
                 return;
@@ -184,15 +204,14 @@ public class LoginView extends VerticalLayout {
 
             if ("Voluntario".equals(tipoUsuarioSeleccionado)) {
                 usuario = new Voluntario();
-                ((Voluntario) usuario).setEmail(emailField.getValue());
-                ((Voluntario) usuario).setPassword(contraseñaField.getValue());
+                usuario.setEmail(emailField.getValue());
+                usuario.setPassword(contraseñaField.getValue());
             } else {
                 usuario = new Afectado();
-                ((Afectado) usuario).setEmail(emailField.getValue());
-                ((Afectado) usuario).setPassword(contraseñaField.getValue());
+                usuario.setEmail(emailField.getValue());
+                usuario.setPassword(contraseñaField.getValue());
             }
 
-            // Autenticar usuario
             autenticarUsuario(usuario);
         });
 

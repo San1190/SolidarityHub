@@ -1,9 +1,9 @@
 package SolidarityHub.views;
 
 import SolidarityHub.models.Usuario;
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -39,20 +39,28 @@ public class MainLayout extends AppLayout implements RouterLayout {
 
         // NAVBAR
         DrawerToggle toggle = new DrawerToggle();
-        H1 title = new H1("SolidarityHub");
-        title.getStyle().set("margin", "0").setColor("green");
+        H1 titulo = new H1("SolidarityHub");
+        titulo.getStyle().set("margin", "0").setColor("green");
         Avatar avatar = new Avatar(usuario.getNombre() + " " + usuario.getApellidos());
         avatar.setImage("/api/usuarios/" + usuario.getId() + "/foto");
 
         Button notificacionesBtn = new Button(new Icon(VaadinIcon.BELL));
         notificacionesBtn.addClickListener(e -> mostrarNotificaciones());
 
-        HorizontalLayout navbar = new HorizontalLayout(toggle, title, notificacionesBtn, avatar);
+        HorizontalLayout navbar = new HorizontalLayout();
+        Div divisorIzq = new Div();
+        Div divisorDer = new Div();
+
+        divisorIzq.setWidthFull();
+        divisorDer.setWidthFull();
+
+        navbar.setFlexGrow(1, divisorIzq, divisorDer);
 
         notificacionesDialog = new Dialog();
         notificacionesDialog.setWidth("400px");
         notificacionesComponent = new NotificacionesComponent(notificacionServicio);
         notificacionesDialog.add(notificacionesComponent);
+        navbar.add(toggle, divisorIzq, titulo, divisorDer, notificacionesBtn, avatar);
         navbar.setWidthFull();
         navbar.setPadding(true);
         navbar.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -92,8 +100,6 @@ public class MainLayout extends AppLayout implements RouterLayout {
             necesidadesItem.getElement().getThemeList().add("primary");
         } else if ("tareas".equals(currentRoute)) {
             tareasItem.getElement().getThemeList().add("primary");
-        } else if ("recursos".equals(currentRoute)) {
-            recursosItem.getElement().getThemeList().add("primary");
         } else if ("recursos".equals(currentRoute)) {
             recursosItem.getElement().getThemeList().add("primary");
         }

@@ -24,6 +24,7 @@ import org.springframework.http.HttpMethod;
 import com.vaadin.flow.server.VaadinSession;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import org.springframework.web.client.RestTemplate;
 
@@ -32,7 +33,7 @@ import org.springframework.web.client.RestTemplate;
 public class NecesidadesView extends VerticalLayout {
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private final String apiUrl = "http://localhost:8080/api/necesidades"; // URL base de la API REST
+    private final String apiUrl = "http://localhost:8080/api/necesidades";
     private final Grid<Necesidad> grid = new Grid<>(Necesidad.class, false);
     private final Binder<Necesidad> binder = new Binder<>(Necesidad.class);
 
@@ -44,11 +45,9 @@ public class NecesidadesView extends VerticalLayout {
 
         add(crearTitulo());
 
-        // Layout para el formulario
         FormLayout formLayout = createFormLayout();
         add(formLayout);
 
-        // Layout para el grid
         VerticalLayout gridLayout = createGridLayout();
         add(gridLayout);
 
@@ -103,7 +102,7 @@ public class NecesidadesView extends VerticalLayout {
         saveButton.getStyle().set("background-color", "#3498db").set("color", "white");
         HorizontalLayout botonLayout = new HorizontalLayout(saveButton);
         botonLayout.setWidthFull();
-        botonLayout.setJustifyContentMode(JustifyContentMode.START);
+        botonLayout.setJustifyContentMode(JustifyContentMode.END);
 
         // Añadir campos al formulario
         formLayout.add(tipoNecesidadField, descripcionField, urgenciaField, ubicacionField, botonLayout);
@@ -113,13 +112,13 @@ public class NecesidadesView extends VerticalLayout {
     private VerticalLayout createGridLayout() {
         VerticalLayout gridLayout = new VerticalLayout();
         gridLayout.setSizeFull();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-        // Configurar el grid
-        grid.addColumn(necesidad -> necesidad.getTipoNecesidad().name()).setHeader("Tipo de Necesidad");
-        grid.addColumn(Necesidad::getDescripcion).setHeader("Descripción");
-        grid.addColumn(necesidad -> necesidad.getUrgencia().name()).setHeader("Urgencia");
+        grid.addColumn(necesidad -> necesidad.getTipoNecesidad().name()).setHeader("Tipo de Necesidad").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(Necesidad::getDescripcion).setHeader("Descripción").setFlexGrow(1);
         grid.addColumn(Necesidad::getUbicacion).setHeader("Ubicación");
-        grid.addColumn(necesidad -> necesidad.getFechaCreacion().toString()).setHeader("Fecha de Creación");
+        grid.addColumn(necesidad -> necesidad.getUrgencia().name()).setHeader("Urgencia").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(necesidad -> necesidad.getFechaCreacion().format(formatter)).setHeader("Fecha de Creación").setAutoWidth(true).setFlexGrow(0);
 
         gridLayout.add(grid);
         return gridLayout;

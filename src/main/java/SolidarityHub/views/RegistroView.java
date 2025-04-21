@@ -199,8 +199,8 @@ public class RegistroView extends VerticalLayout {
 
         emailField = new EmailField("Email");
         emailField.setRequired(true);
-        emailField.setPattern(".*@.*"); // Must contain '@'
-        emailField.setErrorMessage("Email debe contener '@' y no puede estar vacío.");
+        emailField.setPattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+        emailField.setErrorMessage("Introduce un email válido (ej. usuario@dominio.com)");
 
         passwordField = new PasswordField("Contraseña");
         passwordField.setRequired(true);
