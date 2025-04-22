@@ -27,6 +27,11 @@ public class AsignacionTareaServicio {
 
     private static final double EARTH_RADIUS = 6371; // Radio de la Tierra en kilómetros
 
+    /**
+     * Asigna automáticamente voluntarios a una tarea basándose en proximidad, disponibilidad y habilidades
+     * @param tarea La tarea a la que se asignarán voluntarios
+     * @param radioMaximo El radio máximo de distancia para considerar voluntarios (en km)
+     */
     public void asignarVoluntariosAutomaticamente(Tarea tarea, double radioMaximo) {
         // Obtener todos los voluntarios disponibles
         List<Voluntario> voluntarios = usuarioRepositorio.findAll().stream()
@@ -34,8 +39,7 @@ public class AsignacionTareaServicio {
         .map(u -> (Voluntario) u)
         .collect(Collectors.toList());
 
-
-        // Filtrar voluntarios por proximidad y disponibilidad
+        // Filtrar voluntarios por proximidad, disponibilidad y habilidades compatibles
         List<Voluntario> voluntariosCompatibles = voluntarios.stream()
             .filter(voluntario -> {
                 // Verificar si el voluntario está dentro del radio permitido
@@ -48,8 +52,11 @@ public class AsignacionTareaServicio {
 
                 // Verificar disponibilidad de horario
                 boolean horarioCompatible = verificarDisponibilidadHorario(voluntario, tarea);
+                
+                // Verificar si el voluntario tiene las habilidades necesarias para la tarea
+                boolean habilidadesCompatibles = verificarHabilidadesCompatibles(voluntario, tarea);
 
-                return distancia <= radioMaximo && horarioCompatible;
+                return distancia <= radioMaximo && horarioCompatible && habilidadesCompatibles;
             })
             .collect(Collectors.toList());
 
@@ -67,18 +74,59 @@ public class AsignacionTareaServicio {
             Voluntario voluntario = voluntariosCompatibles.get(i);
             if (!tarea.getVoluntariosAsignados().contains(voluntario)) {
                 tarea.getVoluntariosAsignados().add(voluntario);
+                
+                // Enviar notificación al voluntario
+                notificacionServicio.notificarAsignacionTarea(tarea, voluntario);
+                
                 // Publicar evento usando el patrón Observer
                 eventPublisher.publishEvent(new SolidarityHub.events.NuevaTareaAsignadaEvent(this, tarea, voluntario));
+                
+                System.out.println("Notificación enviada al voluntario " + voluntario.getNombre() + 
+                                  " para la tarea '" + tarea.getNombre() + "'");
             }
         }
     }
 
+    /**
+     * Verifica si un voluntario está disponible en el horario de la tarea
+     * @param voluntario El voluntario a verificar
+     * @param tarea La tarea a verificar
+     * @return true si el voluntario está disponible, false en caso contrario
+     */
     private boolean verificarDisponibilidadHorario(Voluntario voluntario, Tarea tarea) {
+        // Si la tarea no tiene fecha de inicio, no podemos verificar disponibilidad
+        if (tarea.getFechaInicio() == null) {
+            return true; // Asumimos disponibilidad por defecto
+        }
+        
         // Obtener el día de la semana de la tarea
         String diaTarea = tarea.getFechaInicio().getDayOfWeek().toString();
         
         // Verificar si el voluntario está disponible ese día
-        return voluntario.getDiasDisponibles().contains(diaTarea);
+        boolean diaDisponible = voluntario.getDiasDisponibles() != null && 
+                               voluntario.getDiasDisponibles().contains(diaTarea);
+        
+        // Si el voluntario tiene turno de disponibilidad, verificar si coincide con la hora de la tarea
+        boolean turnoCompatible = true;
+        if (voluntario.getTurnoDisponibilidad() != null && !voluntario.getTurnoDisponibilidad().isEmpty()) {
+            int horaInicio = tarea.getFechaInicio().getHour();
+            
+            switch (voluntario.getTurnoDisponibilidad().toUpperCase()) {
+                case "MAÑANA":
+                    turnoCompatible = horaInicio >= 8 && horaInicio < 14;
+                    break;
+                case "TARDE":
+                    turnoCompatible = horaInicio >= 14 && horaInicio < 20;
+                    break;
+                case "NOCHE":
+                    turnoCompatible = horaInicio >= 20 || horaInicio < 8;
+                    break;
+                default:
+                    turnoCompatible = true; // Si no tiene un turno específico, asumimos disponibilidad
+            }
+        }
+        
+        return diaDisponible && turnoCompatible;
     }
 
     private double calcularDistancia(double lat1, double lon1, double lat2, double lon2) {
@@ -103,5 +151,32 @@ public class AsignacionTareaServicio {
         // Formato esperado: "latitud,longitud"
         String[] coordenadas = ubicacion.split(",");
         return Double.parseDouble(coordenadas[1].trim());
+    }
+    
+    /**
+     * Verifica si un voluntario tiene las habilidades necesarias para una tarea
+     * @param voluntario El voluntario a verificar
+     * @param tarea La tarea a verificar
+     * @return true si el voluntario tiene las habilidades necesarias, false en caso contrario
+     */
+    private boolean verificarHabilidadesCompatibles(Voluntario voluntario, Tarea tarea) {
+        // Si la tarea no requiere habilidades específicas, cualquier voluntario es compatible
+        if (tarea.getHabilidadesRequeridas() == null || tarea.getHabilidadesRequeridas().isEmpty()) {
+            return true;
+        }
+        
+        // Si el voluntario no tiene habilidades, no es compatible con tareas que requieren habilidades
+        if (voluntario.getHabilidades() == null || voluntario.getHabilidades().isEmpty()) {
+            return false;
+        }
+        
+        // Verificar si el voluntario tiene al menos una de las habilidades requeridas
+        return voluntario.getHabilidades().stream()
+                .anyMatch(habilidadVoluntario -> 
+                    tarea.getHabilidadesRequeridas().stream()
+                        .anyMatch(habilidadRequerida -> 
+                            habilidadVoluntario.getNombre().equalsIgnoreCase(habilidadRequerida.getNombre())
+                        )
+                );
     }
 }

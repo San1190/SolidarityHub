@@ -7,14 +7,12 @@ import SolidarityHub.models.Usuario;
 import SolidarityHub.models.Voluntario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import SolidarityHub.repository.NotificacionRepositorio;
 import SolidarityHub.repository.TareaRepositorio;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Optional;
+import SolidarityHub.services.NotificacionBroadcaster;
 
 @Service
 public class NotificacionServicio {
@@ -22,9 +20,6 @@ public class NotificacionServicio {
     @Autowired
     private NotificacionRepositorio notificacionRepository;
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
-    
     @Autowired
     private ApplicationEventPublisher eventPublisher;
     
@@ -35,12 +30,8 @@ public class NotificacionServicio {
         Notificacion notificacion = new Notificacion(titulo, mensaje, usuario, tarea);
         notificacion = notificacionRepository.save(notificacion);
 
-        // Enviar notificación en tiempo real al usuario
-        messagingTemplate.convertAndSendToUser(
-            usuario.getId().toString(),
-            "/queue/notifications",
-            notificacion
-        );
+        // Enviar notificación en tiempo real al usuario usando el broadcaster
+        NotificacionBroadcaster.broadcast(usuario.getId(), "nueva_notificacion");
 
         return notificacion;
     }
@@ -77,18 +68,8 @@ public class NotificacionServicio {
         // Crear notificación en la base de datos
         Notificacion notificacion = crearNotificacion(titulo, mensaje, voluntario, tarea);
         
-        // Enviar datos adicionales para permitir confirmación/rechazo
-        Map<String, Object> notificacionData = new HashMap<>();
-        notificacionData.put("notificacion", notificacion);
-        notificacionData.put("accion", "ASIGNACION_TAREA");
-        notificacionData.put("tareaId", tarea.getId());
-        
-        // Enviar notificación en tiempo real con datos para confirmación
-        messagingTemplate.convertAndSendToUser(
-            voluntario.getId().toString(),
-            "/queue/notifications",
-            notificacionData
-        );
+        // Enviar notificación en tiempo real usando el broadcaster
+        NotificacionBroadcaster.broadcast(voluntario.getId(), "asignacion_tarea");
         
         return notificacion;
     }
