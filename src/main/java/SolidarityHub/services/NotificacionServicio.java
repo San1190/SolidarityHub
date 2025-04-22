@@ -61,7 +61,13 @@ public class NotificacionServicio {
         }
     }
 
-    public void notificarAsignacionTarea(Tarea tarea, Voluntario voluntario) {
+    /**
+     * Notifica a un voluntario que se le ha asignado una nueva tarea
+     * @param tarea La tarea asignada
+     * @param voluntario El voluntario al que se le asigna la tarea
+     * @return La notificación creada
+     */
+    public Notificacion notificarAsignacionTarea(Tarea tarea, Voluntario voluntario) {
         String titulo = "Nueva tarea disponible";
         String mensaje = String.format("Se te ha asignado la tarea '%s' que coincide con tu perfil. ¿Deseas aceptarla?", tarea.getNombre());
         
@@ -83,6 +89,8 @@ public class NotificacionServicio {
             "/queue/notifications",
             notificacionData
         );
+        
+        return notificacion;
     }
 
     public void eliminarNotificacion(Long notificacionId) {

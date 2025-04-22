@@ -1,9 +1,11 @@
 package SolidarityHub.components;
 
 import SolidarityHub.models.Notificacion;
+import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Usuario;
 import SolidarityHub.services.NotificacionServicio;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -88,24 +90,84 @@ public class NotificacionesComponent extends VerticalLayout {
         HorizontalLayout acciones = new HorizontalLayout();
         acciones.setSpacing(true);
 
-        Button aceptarBtn = new Button("Aceptar", new Icon(VaadinIcon.CHECK));
-        aceptarBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_SMALL);
-        aceptarBtn.addClickListener(e -> {
-            // Lógica para aceptar la tarea
-            notificacionServicio.marcarComoLeida(notificacion.getId());
-            actualizarNotificaciones();
-            Notification.show("Has aceptado la tarea", 3000, Notification.Position.BOTTOM_CENTER);
-        });
+        // Verificar si es una notificación relacionada con una tarea
+        Tarea tarea = notificacion.getTarea();
+        boolean esTareaAsignada = tarea != null && 
+                                 notificacion.getTitulo().contains("Nueva tarea disponible");
+        boolean esRecordatorio = tarea != null && 
+                               notificacion.getTitulo().contains("Recordatorio");
 
-        Button rechazarBtn = new Button("Rechazar", new Icon(VaadinIcon.CLOSE_SMALL));
-        rechazarBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
-        rechazarBtn.addClickListener(e -> {
-            notificacionServicio.eliminarNotificacion(notificacion.getId());
-            actualizarNotificaciones();
-            Notification.show("Has rechazado la tarea", 3000, Notification.Position.BOTTOM_CENTER);
-        });
+        if (esTareaAsignada) {
+            // Botones para aceptar o rechazar la tarea
+            Button aceptarBtn = new Button("Aceptar", new Icon(VaadinIcon.CHECK));
+            aceptarBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_SMALL);
+            aceptarBtn.addClickListener(e -> {
+                // Lógica para aceptar la tarea
+                boolean resultado = notificacionServicio.responderAsignacionTarea(
+                        tarea.getId(), usuarioActual.getId(), true);
+                if (resultado) {
+                    notificacionServicio.marcarComoLeida(notificacion.getId());
+                    actualizarNotificaciones();
+                    Notification.show("Has aceptado la tarea: " + tarea.getNombre(), 
+                                     3000, Notification.Position.BOTTOM_CENTER);
+                } else {
+                    Notification.show("No se pudo aceptar la tarea", 
+                                     3000, Notification.Position.BOTTOM_CENTER);
+                }
+            });
 
-        acciones.add(aceptarBtn, rechazarBtn);
+            Button rechazarBtn = new Button("Rechazar", new Icon(VaadinIcon.CLOSE_SMALL));
+            rechazarBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
+            rechazarBtn.addClickListener(e -> {
+                // Lógica para rechazar la tarea
+                boolean resultado = notificacionServicio.responderAsignacionTarea(
+                        tarea.getId(), usuarioActual.getId(), false);
+                if (resultado) {
+                    notificacionServicio.eliminarNotificacion(notificacion.getId());
+                    actualizarNotificaciones();
+                    Notification.show("Has rechazado la tarea: " + tarea.getNombre(), 
+                                     3000, Notification.Position.BOTTOM_CENTER);
+                } else {
+                    Notification.show("No se pudo rechazar la tarea", 
+                                     3000, Notification.Position.BOTTOM_CENTER);
+                }
+            });
+
+            acciones.add(aceptarBtn, rechazarBtn);
+        } else if (esRecordatorio) {
+            // Para recordatorios, mostrar botón para ver detalles
+            Button verDetallesBtn = new Button("Ver detalles", new Icon(VaadinIcon.INFO_CIRCLE));
+            verDetallesBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+            verDetallesBtn.addClickListener(e -> {
+                notificacionServicio.marcarComoLeida(notificacion.getId());
+                actualizarNotificaciones();
+                // Navegar a la vista de tareas
+                UI.getCurrent().navigate("tareas");
+            });
+            
+            Button marcarLeidaBtn = new Button("Entendido", new Icon(VaadinIcon.CHECK));
+            marcarLeidaBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_SMALL);
+            marcarLeidaBtn.addClickListener(e -> {
+                notificacionServicio.marcarComoLeida(notificacion.getId());
+                actualizarNotificaciones();
+                Notification.show("Notificación marcada como leída", 
+                                 3000, Notification.Position.BOTTOM_CENTER);
+            });
+            
+            acciones.add(verDetallesBtn, marcarLeidaBtn);
+        } else {
+            // Para otras notificaciones, solo mostrar botón para marcar como leída
+            Button marcarLeidaBtn = new Button("Entendido", new Icon(VaadinIcon.CHECK));
+            marcarLeidaBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_SMALL);
+            marcarLeidaBtn.addClickListener(e -> {
+                notificacionServicio.marcarComoLeida(notificacion.getId());
+                actualizarNotificaciones();
+                Notification.show("Notificación marcada como leída", 
+                                 3000, Notification.Position.BOTTOM_CENTER);
+            });
+            
+            acciones.add(marcarLeidaBtn);
+        }
 
         tarjeta.add(encabezado, mensaje, acciones);
         add(tarjeta);

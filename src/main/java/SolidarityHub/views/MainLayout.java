@@ -78,6 +78,8 @@ public class MainLayout extends AppLayout implements RouterLayout {
         
         SideNavItem tareasItem = new SideNavItem("Tareas", "tareas", VaadinIcon.TASKS.create());
         
+        SideNavItem tareasAsignadasItem = new SideNavItem("Tareas Asignadas", "tareas-asignadas", VaadinIcon.CLIPBOARD_USER.create());
+        
         SideNavItem recursosItem = new SideNavItem("Inventario", "inventario", VaadinIcon.PACKAGE.create());
             
         SideNavItem configItem = new SideNavItem("Configuración", "configuracion", VaadinIcon.COG.create());
@@ -100,6 +102,8 @@ public class MainLayout extends AppLayout implements RouterLayout {
             necesidadesItem.getElement().getThemeList().add("primary");
         } else if ("tareas".equals(currentRoute)) {
             tareasItem.getElement().getThemeList().add("primary");
+        } else if ("tareas-asignadas".equals(currentRoute)) {
+            tareasAsignadasItem.getElement().getThemeList().add("primary");
         } else if ("recursos".equals(currentRoute)) {
             recursosItem.getElement().getThemeList().add("primary");
         }
@@ -108,8 +112,13 @@ public class MainLayout extends AppLayout implements RouterLayout {
         if (usuario.getTipoUsuario().equals("afectado")) {
              nav.addItem(necesidadesItem);
         }
-        nav.addItem(tareasItem, recursosItem, configItem, logoutItem);
-        nav.addItem(tareasItem, recursosItem, configItem, logoutItem);
+        nav.addItem(tareasItem);
+        
+        if (usuario.getTipoUsuario().equals("voluntario")) {
+             nav.addItem(tareasAsignadasItem);
+        }
+        
+        nav.addItem(recursosItem, configItem, logoutItem);
 
         Scroller scroller = new Scroller(nav);
         scroller.setClassName(LumoUtility.Padding.SMALL);
