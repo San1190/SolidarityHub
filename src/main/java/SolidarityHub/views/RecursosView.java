@@ -43,54 +43,55 @@ public class RecursosView extends VerticalLayout {
             UI.getCurrent().navigate("/");
             return;
         }
-        
+
         setSizeFull();
         setPadding(true);
         setSpacing(true);
-        
+        setHeight("auto");
+
         add(crearTitulo());
-        
+
         // Layout para el formulario
         FormLayout formLayout = createFormLayout();
         add(formLayout);
-        
+
         // Layout para el grid
         VerticalLayout gridLayout = createGridLayout();
         add(gridLayout);
-        
+
         refreshGrid();
     }
-    
+
     private Component crearTitulo() {
         H3 titulo = new H3("Gestión de Inventario");
         titulo.getStyle().set("text-align", "center").set("color", "#3498db");
         return titulo;
     }
-    
+
     private FormLayout createFormLayout() {
         FormLayout formLayout = new FormLayout();
         formLayout.setWidth("100%");
         formLayout.setMaxWidth("800px");
-        
+
         // Campos del formulario
         ComboBox<TipoRecurso> tipoRecursoField = new ComboBox<>("Tipo de Recurso");
         tipoRecursoField.setItems(TipoRecurso.values());
         tipoRecursoField.setItemLabelGenerator(Enum::name);
         binder.forField(tipoRecursoField).asRequired("El tipo de recurso es obligatorio")
                 .bind(Recursos::getTipoRecurso, Recursos::setTipoRecurso);
-        
+
         TextArea descripcionField = new TextArea("Descripción");
         descripcionField.setWidthFull();
         descripcionField.setHeight("100px");
         binder.forField(descripcionField).asRequired("La descripción es obligatoria")
                 .bind(Recursos::getDescripcion, (recursos, value) -> recursos.setDescripcion(value));
-        
+
         // Botón para guardar
         Button saveButton = new Button("Guardar", event -> {
             if (binder.isValid()) {
                 Recursos nuevoRecurso = new Recursos();
                 binder.writeBeanIfValid(nuevoRecurso);
-                
+
                 // Guardar el recurso a través de la API REST
                 restTemplate.postForObject(apiUrl + "/crear", nuevoRecurso, Recursos.class);
                 Notification.show("Recurso guardado correctamente");
@@ -101,34 +102,41 @@ public class RecursosView extends VerticalLayout {
             }
         });
         saveButton.getStyle().set("background-color", "#3498db").set("color", "white");
-        HorizontalLayout botonLayout = new HorizontalLayout(saveButton);
+
+        Button cancelButton = new Button("Cancelar", event -> {
+            // Limpiar el formulario
+            binder.readBean(new Recursos());
+        });
+
+        HorizontalLayout botonLayout = new HorizontalLayout(saveButton, cancelButton);
         botonLayout.setWidthFull();
         botonLayout.setJustifyContentMode(JustifyContentMode.START);
-        
+
         // Añadir campos al formulario
         formLayout.add(tipoRecursoField, descripcionField, botonLayout);
         return formLayout;
     }
-    
+
     private VerticalLayout createGridLayout() {
         VerticalLayout gridLayout = new VerticalLayout();
         gridLayout.setSizeFull();
-        
+
         // Configurar el grid
         grid.addColumn(recursos -> recursos.getTipoRecurso().name()).setHeader("Tipo de Recurso");
         grid.addColumn(Recursos::getDescripcion).setHeader("Descripción");
         grid.addColumn(Recursos::getId).setHeader("ID");
-        
+
         // Añadir botones de acción para cada fila
         grid.addComponentColumn(recurso -> {
             HorizontalLayout actions = new HorizontalLayout();
-            
+
             Button editButton = new Button("Editar", e -> {
                 // Cargar el recurso en el formulario para edición
                 binder.readBean(recurso);
                 Notification.show("Editando recurso: " + recurso.getDescripcion());
             });
-            
+            editButton.getElement().getThemeList().add("primary");
+
             Button deleteButton = new Button("Eliminar", e -> {
                 try {
                     // Eliminar el recurso a través de la API REST
@@ -139,15 +147,15 @@ public class RecursosView extends VerticalLayout {
                     Notification.show("Error al eliminar el recurso: " + ex.getMessage());
                 }
             });
-            
+
             actions.add(editButton, deleteButton);
             return actions;
         }).setHeader("Acciones");
-        
+
         gridLayout.add(grid);
         return gridLayout;
     }
-    
+
     private void refreshGrid() {
         try {
             // Obtener los recursos a través de la API REST
@@ -157,7 +165,7 @@ public class RecursosView extends VerticalLayout {
                     null,
                     new ParameterizedTypeReference<List<Recursos>>() {
                     }).getBody();
-            
+
             if (recursos != null) {
                 grid.setItems(recursos);
             } else {
