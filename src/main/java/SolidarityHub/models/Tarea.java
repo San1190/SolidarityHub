@@ -6,6 +6,8 @@ import java.util.List;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import SolidarityHub.models.Necesidad.TipoNecesidad;
+
 @Entity
 public class Tarea {
 
@@ -55,15 +57,24 @@ public class Tarea {
     @JsonIgnoreProperties({"tareaAsignada", "hibernateLazyInitializer", "handler"})
     private List<Recursos> recursosAsignados;
     
+    // Nuevo campo para habilidades requeridas
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "tarea_habilidades_requeridas",
+        joinColumns = @JoinColumn(name = "tarea_id"),
+        inverseJoinColumns = @JoinColumn(name = "habilidad_id")
+    )
+    private List<Habilidad> habilidadesRequeridas;
+    
     // Constructor vacío requerido por JPA
     public Tarea() {}
-    
+
     // Constructor con todos los campos
     public Tarea(String nombre, String descripcion, Necesidad.TipoNecesidad tipo, 
                 String localizacion, int numeroVoluntariosNecesarios, 
                 LocalDateTime fechaInicio, LocalDateTime fechaFin, 
                 EstadoTarea estado, Usuario creador, List<Afectado> afectados, 
-                List<Voluntario> voluntariosAsignados) {
+                List<Voluntario> voluntariosAsignados, List<Habilidad> habilidadesRequeridas) {
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.tipo = tipo;
@@ -75,6 +86,7 @@ public class Tarea {
         this.creador = creador;
         this.afectados = afectados;
         this.voluntariosAsignados = voluntariosAsignados;
+        this.habilidadesRequeridas = habilidadesRequeridas;
     }
     
     // Getters y Setters
@@ -121,5 +133,27 @@ public class Tarea {
     public List<Recursos> getRecursosAsignados() { return recursosAsignados; }
     public void setRecursosAsignados(List<Recursos> recursosAsignados) { 
         this.recursosAsignados = recursosAsignados; 
+    }
+    
+    // Getter y Setter para habilidadesRequeridas
+    public List<Habilidad> getHabilidadesRequeridas() { return habilidadesRequeridas; }
+    public void setHabilidadesRequeridas(List<Habilidad> habilidadesRequeridas) {
+        this.habilidadesRequeridas = habilidadesRequeridas;
+    }
+
+    public TipoNecesidad getTipoNecesidad() {
+        return tipo;
+    }
+
+    public void setTipoNecesidad(TipoNecesidad tipo) {
+        this.tipo = tipo;
+    }
+
+    public EstadoTarea getEstadoTarea() {
+        return estado;
+    }
+
+    public void setEstadoTarea(EstadoTarea estado) {
+        this.estado = estado;
     }
 }

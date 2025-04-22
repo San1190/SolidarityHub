@@ -42,6 +42,11 @@ public class AsignacionTareaServicio {
         // Filtrar voluntarios por proximidad, disponibilidad y habilidades compatibles
         List<Voluntario> voluntariosCompatibles = voluntarios.stream()
             .filter(voluntario -> {
+                // Verificar nulidad de localizaciones antes de calcular distancia
+                if (tarea.getLocalizacion() == null || voluntario.getDireccion() == null) {
+                    return false; // No se puede calcular distancia si falta alguna ubicación
+                }
+
                 // Verificar si el voluntario está dentro del radio permitido
                 double distancia = calcularDistancia(
                     extraerLatitud(tarea.getLocalizacion()),
@@ -49,6 +54,11 @@ public class AsignacionTareaServicio {
                     extraerLatitud(voluntario.getDireccion()),
                     extraerLongitud(voluntario.getDireccion())
                 );
+                
+                // Si la distancia es inválida (p.ej., por error en coordenadas), descartar voluntario
+                if (distancia < 0) { 
+                    return false;
+                }
 
                 // Verificar disponibilidad de horario
                 boolean horarioCompatible = verificarDisponibilidadHorario(voluntario, tarea);
@@ -143,14 +153,32 @@ public class AsignacionTareaServicio {
 
     private double extraerLatitud(String ubicacion) {
         // Formato esperado: "latitud,longitud"
-        String[] coordenadas = ubicacion.split(",");
-        return Double.parseDouble(coordenadas[0].trim());
+        if (ubicacion == null || ubicacion.trim().isEmpty()) {
+            return -1; // Valor inválido para indicar error
+        }
+        try {
+            String[] coordenadas = ubicacion.split(",");
+            if (coordenadas.length < 1) return -1;
+            return Double.parseDouble(coordenadas[0].trim());
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+            System.err.println("Error al extraer latitud de: " + ubicacion + " - " + e.getMessage());
+            return -1; // Valor inválido para indicar error
+        }
     }
 
     private double extraerLongitud(String ubicacion) {
         // Formato esperado: "latitud,longitud"
-        String[] coordenadas = ubicacion.split(",");
-        return Double.parseDouble(coordenadas[1].trim());
+         if (ubicacion == null || ubicacion.trim().isEmpty()) {
+            return -1; // Valor inválido para indicar error
+        }
+        try {
+            String[] coordenadas = ubicacion.split(",");
+            if (coordenadas.length < 2) return -1;
+            return Double.parseDouble(coordenadas[1].trim());
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+            System.err.println("Error al extraer longitud de: " + ubicacion + " - " + e.getMessage());
+            return -1; // Valor inválido para indicar error
+        }
     }
     
     /**
@@ -172,8 +200,10 @@ public class AsignacionTareaServicio {
         
         // Verificar si el voluntario tiene al menos una de las habilidades requeridas
         return voluntario.getHabilidades().stream()
+                .filter(habilidadVoluntario -> habilidadVoluntario != null && habilidadVoluntario.getNombre() != null) // Filtrar habilidades nulas o sin nombre
                 .anyMatch(habilidadVoluntario -> 
                     tarea.getHabilidadesRequeridas().stream()
+                        .filter(habilidadRequerida -> habilidadRequerida != null && habilidadRequerida.getNombre() != null) // Filtrar habilidades requeridas nulas o sin nombre
                         .anyMatch(habilidadRequerida -> 
                             habilidadVoluntario.getNombre().equalsIgnoreCase(habilidadRequerida.getNombre())
                         )

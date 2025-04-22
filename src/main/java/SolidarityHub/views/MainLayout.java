@@ -6,7 +6,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
-import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -41,7 +41,7 @@ public class MainLayout extends AppLayout implements RouterLayout {
     private NotificacionServicio notificacionServicio;
     private Dialog notificacionesDialog;
     private NotificacionesComponent notificacionesComponent;
-    private Badge notificacionesBadge;
+   private  Span notificacionesBadge;
     private Registration broadcasterRegistration;
 
     public MainLayout(NotificacionServicio notificacionServicio) {
@@ -64,13 +64,20 @@ public class MainLayout extends AppLayout implements RouterLayout {
         notificacionesBtn.addClickListener(e -> mostrarNotificaciones());
         
         // Badge para mostrar el número de notificaciones no leídas
-        notificacionesBadge = new Badge();
-        notificacionesBadge.getElement().getThemeList().add("error");
+        // Badge simulado con Span
+       notificacionesBadge = new Span();
         notificacionesBadge.getStyle()
-                .set("position", "absolute")
-                .set("transform", "translate(50%, -50%)")
-                .set("top", "0")
-                .set("right", "0");
+        .set("background-color", "red")
+        .set("color", "white")
+        .set("border-radius", "999px")
+        .set("padding", "2px 6px")
+        .set("font-size", "0.75em")
+        .set("position", "absolute")
+        .set("transform", "translate(50%, -50%)")
+        .set("top", "0")
+        .set("right", "0")
+        .set("display", "none"); // se oculta inicialmente
+
         
         // Contenedor para el botón y el badge
         Div notificacionesContainer = new Div(notificacionesBtn, notificacionesBadge);
@@ -162,15 +169,16 @@ public class MainLayout extends AppLayout implements RouterLayout {
         if (usuario != null) {
             List<Notificacion> notificacionesNoLeidas = notificacionServicio.obtenerNotificacionesNoLeidas(usuario);
             int cantidad = notificacionesNoLeidas.size();
-            
+    
             if (cantidad > 0) {
                 notificacionesBadge.setText(String.valueOf(cantidad));
-                notificacionesBadge.setVisible(true);
+                notificacionesBadge.getStyle().set("display", "inline");
             } else {
-                notificacionesBadge.setVisible(false);
+                notificacionesBadge.getStyle().set("display", "none");
             }
         }
     }
+    
     
     @Override
     protected void onAttach(AttachEvent attachEvent) {

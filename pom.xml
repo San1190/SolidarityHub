@@ -44,6 +44,7 @@
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-spring-boot-starter</artifactId>
+            <version>${vaadin.version}</version> <!-- Asegúrate de que la versión sea la correcta -->
         </dependency>
 
         <!-- MySQL Connector -->
