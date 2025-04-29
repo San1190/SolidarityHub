@@ -34,18 +34,10 @@ public class NotificacionControlador {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         
-        List<Notificacion> notificaciones = notificacionServicio.obtenerNotificacionesNoLeidas(usuario);
+        List<Notificacion> notificaciones = notificacionServicio.findByVoluntarioAndEstado(usuario, Notificacion.EstadoNotificacion.PENDIENTE);
         return new ResponseEntity<>(notificaciones, HttpStatus.OK);
     }
 
-    /**
-     * Marcar una notificación como leída
-     */
-    @PutMapping("/{notificacionId}/leer")
-    public ResponseEntity<Void> marcarComoLeida(@PathVariable Long notificacionId) {
-        notificacionServicio.marcarComoLeida(notificacionId);
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
 
     /**
      * Endpoint para que un voluntario confirme o rechace una tarea asignada
@@ -56,14 +48,27 @@ public class NotificacionControlador {
         
         Long tareaId = Long.valueOf(request.get("tareaId").toString());
         Long voluntarioId = Long.valueOf(request.get("voluntarioId").toString());
-        boolean aceptada = Boolean.valueOf(request.get("aceptada").toString());
+        String accion = request.get("accion").toString().toUpperCase();
         
-        boolean resultado = notificacionServicio.responderAsignacionTarea(tareaId, voluntarioId, aceptada);
+        // Determinar el estado de la notificación según la acción
+        Notificacion.EstadoNotificacion estado;
+        if ("ACEPTAR".equals(accion)) {
+            estado = Notificacion.EstadoNotificacion.ACEPTADA;
+        } else if ("RECHAZAR".equals(accion)) {
+            estado = Notificacion.EstadoNotificacion.RECHAZADA;
+        } else {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Acción no válida. Use 'ACEPTAR' o 'RECHAZAR'");
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+        
+        boolean resultado = notificacionServicio.responderAsignacionTarea(tareaId, voluntarioId, estado);
         
         Map<String, Object> response = new HashMap<>();
         response.put("success", resultado);
         response.put("message", resultado ? 
-                (aceptada ? "Tarea aceptada correctamente" : "Tarea rechazada correctamente") : 
+                (estado == Notificacion.EstadoNotificacion.ACEPTADA ? "Tarea aceptada correctamente" : "Tarea rechazada correctamente") : 
                 "No se pudo procesar la respuesta");
         
         return new ResponseEntity<>(response, resultado ? HttpStatus.OK : HttpStatus.BAD_REQUEST);

@@ -1,18 +1,16 @@
-package SolidarityHub.components;
+package SolidarityHub.views;
 
 import SolidarityHub.models.Notificacion;
 import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Usuario;
 import SolidarityHub.models.Voluntario;
-import SolidarityHub.services.NotificacionServicio;
-import SolidarityHub.services.TareaServicio;
-import SolidarityHub.views.TareasView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
@@ -23,32 +21,47 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.shared.Registration;
 
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Map;
 
-public class NotificacionesComponent extends VerticalLayout {
+@Route(value = "notificaciones", layout = MainLayout.class)
+@PageTitle("Notificaciones | SolidarityHub")
+public class NotificacionesView extends VerticalLayout {
 
-    private final NotificacionServicio notificacionServicio;
     private final Usuario usuarioActual;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private Registration broadcasterRegistration;
+   
     private Dialog detallesTareaDialog;
     private List<Notificacion> notificaciones;
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final String apiUrl = "http://localhost:8080/api/notificaciones";
     
-    @Autowired
-    private TareaServicio tareaServicio;
-
-    public NotificacionesComponent(NotificacionServicio notificacionServicio) {
-        this.notificacionServicio = notificacionServicio;
+    public NotificacionesView() {
         this.usuarioActual = (Usuario) VaadinSession.getCurrent().getAttribute("usuario");
 
+        // Configuración del layout principal
+        setSizeFull();
         setSpacing(true);
         setPadding(true);
-        setWidth("400px");
+        
+        // Añadir título a la vista
+        H3 titulo = new H3("Mis Notificaciones");
+        titulo.getStyle().set("margin-top", "0");
+        add(titulo);
         
         // Inicializar el diálogo de detalles de tarea
         detallesTareaDialog = new Dialog();
@@ -56,19 +69,37 @@ public class NotificacionesComponent extends VerticalLayout {
         detallesTareaDialog.setCloseOnEsc(true);
         detallesTareaDialog.setCloseOnOutsideClick(true);
 
-        actualizarNotificaciones();
+        // Cargar las notificaciones
+        cargarNotificaciones();
     }
 
-    public void actualizarNotificaciones() {
-        removeAll();
+    private void cargarNotificaciones() {
+        // Eliminar contenido anterior excepto el título
+        getChildren().forEach(component -> {
+            if (!(component instanceof H3)) {
+                remove(component);
+            }
+        });
+        
+        // Obtener notificaciones del usuario actual
+        notificaciones = notificacionServicio.findByVoluntarioAndEstado(
+                usuarioActual, Notificacion.EstadoNotificacion.PENDIENTE);
 
-        notificaciones = notificacionServicio.findByVoluntarioAndEstado(usuarioActual, Notificacion.EstadoNotificacion.PENDIENTE);
-
+        // Contenedor para las tarjetas de notificaciones
+        VerticalLayout contenedorNotificaciones = new VerticalLayout();
+        contenedorNotificaciones.setSpacing(true);
+        contenedorNotificaciones.setPadding(false);
+        contenedorNotificaciones.setWidthFull();
+        
         if (notificaciones.isEmpty()) {
-            add(crearMensajeVacio());
+            contenedorNotificaciones.add(crearMensajeVacio());
         } else {
-            notificaciones.forEach(this::crearTarjetaNotificacion);
+            notificaciones.forEach(notificacion -> {
+                contenedorNotificaciones.add(crearTarjetaNotificacion(notificacion));
+            });
         }
+        
+        add(contenedorNotificaciones);
     }
 
     private Component crearMensajeVacio() {
@@ -81,7 +112,7 @@ public class NotificacionesComponent extends VerticalLayout {
         return mensajeVacio;
     }
 
-    private void crearTarjetaNotificacion(Notificacion notificacion) {
+    private Component crearTarjetaNotificacion(Notificacion notificacion) {
         Div tarjeta = new Div();
         tarjeta.getStyle()
                 .set("background-color", "var(--lumo-base-color)")
@@ -144,22 +175,11 @@ public class NotificacionesComponent extends VerticalLayout {
             aceptarBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_SMALL);
             aceptarBtn.addClickListener(e -> {
                 // Lógica para aceptar la tarea
-                boolean resultado = notificacionServicio.(
-                        tarea.getId(), usuarioActual.getId(),);
+                boolean resultado = notificacionServicio.responderAsignacionTarea(
+                        tarea.getId(), usuarioActual.getId(), Notificacion.EstadoNotificacion.ACEPTADA);
                 if (resultado) {
                     notificacionServicio.marcarComoLeida(notificacion.getId());
-                    actualizarNotificaciones();
-                    
-                    // Actualizar el contador de notificaciones en el MainLayout
-                    if (getParent().isPresent() && getParent().get().getParent().isPresent()) {
-                        Component parent = getParent().get().getParent().get();
-                        if (parent instanceof Dialog) {
-                            Dialog dialog = (Dialog) parent;
-                            if (dialog.getParent().isPresent() && dialog.getParent().get() instanceof SolidarityHub.views.MainLayout) {
-                                ((SolidarityHub.views.MainLayout) dialog.getParent().get()).actualizarContadorNotificaciones();
-                            }
-                        }
-                    }
+                    cargarNotificaciones();
                     
                     Notification notif = new Notification("Has aceptado la tarea: " + tarea.getNombre());
                     notif.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
@@ -183,21 +203,10 @@ public class NotificacionesComponent extends VerticalLayout {
             rechazarBtn.addClickListener(e -> {
                 // Lógica para rechazar la tarea
                 boolean resultado = notificacionServicio.responderAsignacionTarea(
-                        tarea.getId(), usuarioActual.getId(), false);
+                        tarea.getId(), usuarioActual.getId(), Notificacion.EstadoNotificacion.RECHAZADA);
                 if (resultado) {
                     notificacionServicio.eliminarNotificacion(notificacion.getId());
-                    actualizarNotificaciones();
-                    
-                    // Actualizar el contador de notificaciones en el MainLayout
-                    if (getParent().isPresent() && getParent().get().getParent().isPresent()) {
-                        Component parent = getParent().get().getParent().get();
-                        if (parent instanceof Dialog) {
-                            Dialog dialog = (Dialog) parent;
-                            if (dialog.getParent().isPresent() && dialog.getParent().get() instanceof SolidarityHub.views.MainLayout) {
-                                ((SolidarityHub.views.MainLayout) dialog.getParent().get()).actualizarContadorNotificaciones();
-                            }
-                        }
-                    }
+                    cargarNotificaciones();
                     
                     Notification notif = new Notification("Has rechazado la tarea: " + tarea.getNombre());
                     notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -219,46 +228,42 @@ public class NotificacionesComponent extends VerticalLayout {
             Button verDetallesBtn = new Button("Ver detalles", new Icon(VaadinIcon.INFO_CIRCLE));
             verDetallesBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
             verDetallesBtn.addClickListener(e -> {
-                notificacionServicio.marcarComoLeida(notificacion.getId());
-                actualizarNotificaciones();
-                
-                // Actualizar el contador de notificaciones en el MainLayout
-                if (getParent().isPresent() && getParent().get().getParent().isPresent()) {
-                    Component parent = getParent().get().getParent().get();
-                    if (parent instanceof Dialog) {
-                        Dialog dialog = (Dialog) parent;
-                        if (dialog.getParent().isPresent() && dialog.getParent().get() instanceof SolidarityHub.views.MainLayout) {
-                            ((SolidarityHub.views.MainLayout) dialog.getParent().get()).actualizarContadorNotificaciones();
-                        }
-                    }
+                try {
+                    // Marcar como leída usando API REST
+                    restTemplate.delete(apiUrl + "/" + notificacion.getId());
+                    cargarNotificaciones();
+                    
+                    // Navegar a la vista de tareas
+                    UI.getCurrent().navigate(TareasView.class);
+                } catch (Exception ex) {
+                    Notification notif = new Notification("Error al marcar como leída: " + ex.getMessage());
+                    notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    notif.setPosition(Notification.Position.BOTTOM_CENTER);
+                    notif.setDuration(3000);
+                    notif.open();
                 }
-                
-                // Navegar a la vista de tareas
-                UI.getCurrent().navigate(TareasView.class);
             });
             
             Button marcarLeidaBtn = new Button("Entendido", new Icon(VaadinIcon.CHECK));
             marcarLeidaBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_SMALL);
             marcarLeidaBtn.addClickListener(e -> {
-                notificacionServicio.marcarComoLeida(notificacion.getId());
-                actualizarNotificaciones();
-                
-                // Actualizar el contador de notificaciones en el MainLayout
-                if (getParent().isPresent() && getParent().get().getParent().isPresent()) {
-                    Component parent = getParent().get().getParent().get();
-                    if (parent instanceof Dialog) {
-                        Dialog dialog = (Dialog) parent;
-                        if (dialog.getParent().isPresent() && dialog.getParent().get() instanceof SolidarityHub.views.MainLayout) {
-                            ((SolidarityHub.views.MainLayout) dialog.getParent().get()).actualizarContadorNotificaciones();
-                        }
-                    }
+                try {
+                    // Marcar como leída usando API REST
+                    restTemplate.delete(apiUrl + "/" + notificacion.getId());
+                    cargarNotificaciones();
+                    
+                    Notification notif = new Notification("Notificación marcada como leída");
+                    notif.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    notif.setPosition(Notification.Position.BOTTOM_CENTER);
+                    notif.setDuration(3000);
+                    notif.open();
+                } catch (Exception ex) {
+                    Notification notif = new Notification("Error al marcar como leída: " + ex.getMessage());
+                    notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    notif.setPosition(Notification.Position.BOTTOM_CENTER);
+                    notif.setDuration(3000);
+                    notif.open();
                 }
-                
-                Notification notif = new Notification("Notificación marcada como leída");
-                notif.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                notif.setPosition(Notification.Position.BOTTOM_CENTER);
-                notif.setDuration(3000);
-                notif.open();
             });
             
             acciones.add(verDetallesBtn, marcarLeidaBtn);
@@ -267,32 +272,30 @@ public class NotificacionesComponent extends VerticalLayout {
             Button marcarLeidaBtn = new Button("Entendido", new Icon(VaadinIcon.CHECK));
             marcarLeidaBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_SMALL);
             marcarLeidaBtn.addClickListener(e -> {
-                notificacionServicio.marcarComoLeida(notificacion.getId());
-                actualizarNotificaciones();
-                
-                // Actualizar el contador de notificaciones en el MainLayout
-                if (getParent().isPresent() && getParent().get().getParent().isPresent()) {
-                    Component parent = getParent().get().getParent().get();
-                    if (parent instanceof Dialog) {
-                        Dialog dialog = (Dialog) parent;
-                        if (dialog.getParent().isPresent() && dialog.getParent().get() instanceof SolidarityHub.views.MainLayout) {
-                            ((SolidarityHub.views.MainLayout) dialog.getParent().get()).actualizarContadorNotificaciones();
-                        }
-                    }
+                try {
+                    // Marcar como leída usando API REST
+                    restTemplate.delete(apiUrl + "/" + notificacion.getId());
+                    cargarNotificaciones();
+                    
+                    Notification notif = new Notification("Notificación marcada como leída");
+                    notif.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    notif.setPosition(Notification.Position.BOTTOM_CENTER);
+                    notif.setDuration(3000);
+                    notif.open();
+                } catch (Exception ex) {
+                    Notification notif = new Notification("Error al marcar como leída: " + ex.getMessage());
+                    notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    notif.setPosition(Notification.Position.BOTTOM_CENTER);
+                    notif.setDuration(3000);
+                    notif.open();
                 }
-                
-                Notification notif = new Notification("Notificación marcada como leída");
-                notif.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                notif.setPosition(Notification.Position.BOTTOM_CENTER);
-                notif.setDuration(3000);
-                notif.open();
             });
             
             acciones.add(marcarLeidaBtn);
         }
 
         tarjeta.add(encabezado, mensaje, acciones);
-        add(tarjeta);
+        return tarjeta;
     }
     
     /**

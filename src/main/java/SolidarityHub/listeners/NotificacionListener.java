@@ -28,10 +28,14 @@ public class NotificacionListener {
 
         List<Voluntario> voluntarios = usuarioRepositorio.findByHabilidadesIn(habilidadesRequeridas);
 
-        voluntarios.forEach(voluntario ->
-                notificacionServicio.crearNotificacion(
-                        new Notificacion("Nueva tarea diponible", "", voluntario, tarea, Notificacion.EstadoNotificacion.PENDIENTE)
-                )
-        );
+        voluntarios.forEach(voluntario -> {
+            String mensaje = "Se ha creado una nueva tarea que coincide con tus habilidades: " + 
+                           tarea.getNombre() + ". " +
+                           "Puedes aceptar o rechazar esta tarea.";
+                
+            notificacionServicio.crearNotificacion(
+                    new Notificacion("Nueva tarea disponible", mensaje, voluntario, tarea, Notificacion.EstadoNotificacion.PENDIENTE)
+            );
+        });
     }
 }

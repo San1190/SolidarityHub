@@ -80,21 +80,7 @@ public class AsignacionTareaServicio {
         int voluntariosNecesarios = tarea.getNumeroVoluntariosNecesarios();
         int voluntariosAAsignar = Math.min(voluntariosCompatibles.size(), voluntariosNecesarios);
         
-        for (int i = 0; i < voluntariosAAsignar; i++) {
-            Voluntario voluntario = voluntariosCompatibles.get(i);
-            if (!tarea.getVoluntariosAsignados().contains(voluntario)) {
-                tarea.getVoluntariosAsignados().add(voluntario);
-                
-                // Enviar notificación al voluntario
-                notificacionServicio.notificarAsignacionTarea(tarea, voluntario);
-                
-                // Publicar evento usando el patrón Observer
-                eventPublisher.publishEvent(new TareaCreadaEvent(this, tarea, voluntario));
-                
-                System.out.println("Notificación enviada al voluntario " + voluntario.getNombre() + 
-                                  " para la tarea '" + tarea.getNombre() + "'");
-            }
-        }
+        
     }
 
     /**
