@@ -32,7 +32,7 @@ public class TareaEventListener {
      * @param event Evento de nueva tarea asignada
      */
     @EventListener
-    public void handleNuevaTareaAsignadaEvent(NuevaTareaAsignadaEvent event) {
+    public void handleNuevaTareaAsignadaEvent(TareaCreadaEvent event) {
         Tarea tarea = event.getTarea();
         Voluntario voluntario = event.getVoluntario();
         

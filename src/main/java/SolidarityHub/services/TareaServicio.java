@@ -1,5 +1,6 @@
 package SolidarityHub.services;
 
+import SolidarityHub.events.TareaCreadaEvent;
 import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Tarea.EstadoTarea;
@@ -11,12 +12,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
 public class TareaServicio {
     
     private final TareaRepositorio tareaRepositorio;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     public TareaServicio(TareaRepositorio tareaRepositorio) {
         this.tareaRepositorio = tareaRepositorio;
@@ -34,7 +40,9 @@ public class TareaServicio {
 
     // Método para guardar una tarea
     public Tarea guardarTarea(Tarea tarea) {
-        return tareaRepositorio.save(tarea);
+        Tarea tareaGuardada = tareaRepositorio.save(tarea);
+        eventPublisher.publishEvent(new TareaCreadaEvent(this, tareaGuardada));
+        return tareaGuardada;
     }
 
     // Método para actualizar una tarea

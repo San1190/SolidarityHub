@@ -1,7 +1,9 @@
 package SolidarityHub.repository;
 
+import java.util.List;
 import java.util.Optional;
 
+import SolidarityHub.models.Habilidad;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +20,7 @@ public interface UsuarioRepositorio extends JpaRepository<Usuario, Long> {
     // Consulta para cargar un Voluntario con sus colecciones (eager loading)
     @Query("SELECT v FROM Voluntario v LEFT JOIN FETCH v.diasDisponibles WHERE v.id = :id")
     Optional<Voluntario> findVoluntarioByIdWithDiasDisponibles(@Param("id") Long id);
+
+    @Query("SELECT v FROM Voluntario v WHERE EXISTS (SELECT 1 FROM v.habilidades h WHERE h IN :habilidades)")
+    List<Voluntario> findByHabilidadesIn(@Param("habilidades") List<Habilidad> habilidades);
 }

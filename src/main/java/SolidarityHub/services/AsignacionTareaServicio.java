@@ -1,10 +1,10 @@
 package SolidarityHub.services;
 
+import SolidarityHub.events.TareaCreadaEvent;
 import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Voluntario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.data.jpa.repository.JpaRepository;
 import SolidarityHub.repository.UsuarioRepositorio;
 
 
@@ -89,7 +89,7 @@ public class AsignacionTareaServicio {
                 notificacionServicio.notificarAsignacionTarea(tarea, voluntario);
                 
                 // Publicar evento usando el patrón Observer
-                eventPublisher.publishEvent(new SolidarityHub.events.NuevaTareaAsignadaEvent(this, tarea, voluntario));
+                eventPublisher.publishEvent(new TareaCreadaEvent(this, tarea, voluntario));
                 
                 System.out.println("Notificación enviada al voluntario " + voluntario.getNombre() + 
                                   " para la tarea '" + tarea.getNombre() + "'");

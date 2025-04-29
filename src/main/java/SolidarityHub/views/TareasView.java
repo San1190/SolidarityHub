@@ -10,6 +10,7 @@ import SolidarityHub.models.Recursos;
 import SolidarityHub.models.Recursos.TipoRecurso;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ShortcutEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -55,7 +56,7 @@ public class TareasView extends VerticalLayout {
     private Dialog formDialog;
     private Tarea tareaActual;
     private Usuario usuarioActual;
-    private HorizontalLayout tareasContainer;
+    private VerticalLayout tareasContainer;
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public TareasView() {
@@ -76,7 +77,7 @@ public class TareasView extends VerticalLayout {
         }
 
         // Crear el contenedor para las tarjetas de tareas
-        tareasContainer = new HorizontalLayout();
+        tareasContainer = new VerticalLayout();
         tareasContainer.setWidthFull();
         tareasContainer.getStyle().set("flex-wrap", "wrap");
         tareasContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
@@ -310,8 +311,9 @@ public class TareasView extends VerticalLayout {
     private Component crearTarjetaTarea(Tarea tarea) {
         // Crear el contenedor principal de la tarjeta
         Div tarjeta = new Div();
-        tarjeta.setWidth("300px");
+        tarjeta.setWidthFull();
         tarjeta.getStyle()
+                .set("justifyContentMode", "AUTO")
                 .set("border-radius", "8px")
                 .set("box-shadow", "0 4px 8px rgba(0,0,0,0.1)")
                 .set("overflow", "hidden")
@@ -325,15 +327,26 @@ public class TareasView extends VerticalLayout {
         tarjeta.getElement().addEventListener("mouseout", e -> tarjeta.getStyle().set("transform", "translateY(0)"));
 
         // Contenedor para el contenido de la tarjeta
-        VerticalLayout contenido = new VerticalLayout();
+        VerticalLayout estructura = new VerticalLayout();
+        estructura.setWidthFull();
+        estructura.setSpacing(true);
+        estructura.setPadding(true);
+
+        H4 titulo = new H4(tarea.getNombre());
+titulo.getStyle().set("margin", "0").set("margin-top", "8px").setWidth("700px");
+
+        HorizontalLayout contenido = new HorizontalLayout();
         contenido.setPadding(true);
         contenido.setSpacing(true);
+        contenido.setAlignItems(FlexComponent.Alignment.CENTER);
+        contenido.setWidthFull();
 
-        // Barra superior con el estado de la tarea
-        HorizontalLayout estadoBar = new HorizontalLayout();
-        estadoBar.setWidthFull();
-        estadoBar.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        estadoBar.setAlignItems(FlexComponent.Alignment.CENTER);
+        HorizontalLayout layoutTitulo = new HorizontalLayout();
+        Div divisortitulo = new Div();
+        divisortitulo.setWidthFull();
+        layoutTitulo.setWidthFull();
+        layoutTitulo.setFlexGrow(1, divisortitulo);
+        layoutTitulo.setSpacing(true);
 
         // Mostrar el estado con un color distintivo
         Span estadoSpan = new Span(tarea.getEstado() != null ? tarea.getEstado().name() : "SIN ESTADO");
@@ -359,10 +372,9 @@ public class TareasView extends VerticalLayout {
                     estadoSpan.getStyle().set("background-color", "#E2E3E5").set("color", "#383D41");
             }
         } else {
-            // Estilo para cuando el estado es nulo
             estadoSpan.getStyle().set("background-color", "#E2E3E5").set("color", "#383D41");
         }
-        // Mostrar el tipo de tarea
+
         Span tipoSpan = new Span(tarea.getTipo() != null ? tarea.getTipo().name() : "SIN TIPO");
         tipoSpan.getStyle()
                 .set("padding", "4px 8px")
@@ -371,11 +383,7 @@ public class TareasView extends VerticalLayout {
                 .set("background-color", "#E2E3E5")
                 .set("color", "#383D41");
 
-        estadoBar.add(estadoSpan, tipoSpan);
-
-        // Título de la tarea
-        H4 titulo = new H4(tarea.getNombre());
-        titulo.getStyle().set("margin", "0").set("margin-top", "8px");
+        layoutTitulo.add(titulo, divisortitulo,estadoSpan, tipoSpan);
 
         // Descripción de la tarea (limitada a 100 caracteres)
         String descripcionCorta = tarea.getDescripcion();
@@ -454,7 +462,7 @@ public class TareasView extends VerticalLayout {
         infoContainer.add(infoLayout);
 
         // Botones de acción
-        HorizontalLayout botonesLayout = new HorizontalLayout();
+        VerticalLayout botonesLayout = new VerticalLayout();
         botonesLayout.setWidthFull();
         botonesLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
@@ -555,8 +563,9 @@ public class TareasView extends VerticalLayout {
         }
 
         // Añadir todos los componentes a la tarjeta
-        contenido.add(estadoBar, titulo, descripcion, infoContainer, progressBarContainer, botonesLayout);
-        tarjeta.add(contenido);
+        contenido.add(descripcion, infoContainer, progressBarContainer, botonesLayout);
+        estructura.add(layoutTitulo, contenido);
+        tarjeta.add(estructura);
 
         return tarjeta;
     }

@@ -10,10 +10,14 @@ public class Notificacion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    public enum EstadoNotificacion {
+        PENDIENTE, ACEPTADA, RECHAZADA
+    }
+
     private String titulo;
     private String mensaje;
     private LocalDateTime fechaCreacion;
-    private boolean leida;
+    private EstadoNotificacion estado;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
@@ -26,17 +30,17 @@ public class Notificacion {
     // Constructor vacío requerido por JPA
     public Notificacion() {
         this.fechaCreacion = LocalDateTime.now();
-        this.leida = false;
+        estado = EstadoNotificacion.PENDIENTE;
     }
 
     // Constructor con parámetros
-    public Notificacion(String titulo, String mensaje, Usuario usuario, Tarea tarea) {
+    public Notificacion(String titulo, String mensaje, Usuario usuario, Tarea tarea, EstadoNotificacion estado) {
         this.titulo = titulo;
         this.mensaje = mensaje;
         this.usuario = usuario;
         this.tarea = tarea;
         this.fechaCreacion = LocalDateTime.now();
-        this.leida = false;
+        this.estado = estado;
     }
 
     // Getters y Setters
@@ -72,14 +76,6 @@ public class Notificacion {
         this.fechaCreacion = fechaCreacion;
     }
 
-    public boolean isLeida() {
-        return leida;
-    }
-
-    public void setLeida(boolean leida) {
-        this.leida = leida;
-    }
-
     public Usuario getUsuario() {
         return usuario;
     }
@@ -95,4 +91,8 @@ public class Notificacion {
     public void setTarea(Tarea tarea) {
         this.tarea = tarea;
     }
+
+    public EstadoNotificacion getEstado() {return estado;}
+
+    public void setEstado(EstadoNotificacion estado) {this.estado = estado;}
 }

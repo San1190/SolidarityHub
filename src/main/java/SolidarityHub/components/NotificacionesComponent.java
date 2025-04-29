@@ -37,6 +37,7 @@ public class NotificacionesComponent extends VerticalLayout {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private Registration broadcasterRegistration;
     private Dialog detallesTareaDialog;
+    private List<Notificacion> notificaciones;
     
     @Autowired
     private TareaServicio tareaServicio;
@@ -61,7 +62,7 @@ public class NotificacionesComponent extends VerticalLayout {
     public void actualizarNotificaciones() {
         removeAll();
 
-        List<Notificacion> notificaciones = notificacionServicio.obtenerNotificacionesNoLeidas(usuarioActual);
+        notificaciones = notificacionServicio.findByVoluntarioAndEstado(usuarioActual, Notificacion.EstadoNotificacion.PENDIENTE);
 
         if (notificaciones.isEmpty()) {
             add(crearMensajeVacio());
@@ -143,8 +144,8 @@ public class NotificacionesComponent extends VerticalLayout {
             aceptarBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_SMALL);
             aceptarBtn.addClickListener(e -> {
                 // Lógica para aceptar la tarea
-                boolean resultado = notificacionServicio.responderAsignacionTarea(
-                        tarea.getId(), usuarioActual.getId(), true);
+                boolean resultado = notificacionServicio.(
+                        tarea.getId(), usuarioActual.getId(),);
                 if (resultado) {
                     notificacionServicio.marcarComoLeida(notificacion.getId());
                     actualizarNotificaciones();
