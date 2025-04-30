@@ -41,7 +41,7 @@ public class TareaServicio {
     // Método para guardar una tarea
     public Tarea guardarTarea(Tarea tarea) {
         Tarea tareaGuardada = tareaRepositorio.save(tarea);
-        eventPublisher.publishEvent(new TareaCreadaEvent(this, tareaGuardada));
+        eventPublisher.publishEvent(tareaGuardada);
         return tareaGuardada;
     }
 

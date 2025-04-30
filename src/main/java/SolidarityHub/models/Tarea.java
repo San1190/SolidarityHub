@@ -57,14 +57,15 @@ public class Tarea {
     @JsonIgnoreProperties({"tareaAsignada", "hibernateLazyInitializer", "handler"})
     private List<Recursos> recursosAsignados;
     
-    // Nuevo campo para habilidades requeridas
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
         name = "tarea_habilidades_requeridas",
-        joinColumns = @JoinColumn(name = "tarea_id"),
-        inverseJoinColumns = @JoinColumn(name = "habilidad_id")
+        joinColumns = @JoinColumn(name = "tarea_id")
     )
+    @Enumerated(EnumType.STRING) // Guarda el nombre del enum, como "COCINA", "MEDICINA", etc.
+    @Column(name = "habilidad")
     private List<Habilidad> habilidadesRequeridas;
+    
     
     // Constructor vacío requerido por JPA
     public Tarea() {}

@@ -3,7 +3,6 @@ package SolidarityHub.views;
 import SolidarityHub.models.Notificacion;
 import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Usuario;
-import SolidarityHub.models.Voluntario;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -24,7 +23,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
-import com.vaadin.flow.shared.Registration;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -81,25 +79,42 @@ public class NotificacionesView extends VerticalLayout {
             }
         });
         
-        // Obtener notificaciones del usuario actual
-        notificaciones = notificacionServicio.findByVoluntarioAndEstado(
-                usuarioActual, Notificacion.EstadoNotificacion.PENDIENTE);
-
-        // Contenedor para las tarjetas de notificaciones
-        VerticalLayout contenedorNotificaciones = new VerticalLayout();
-        contenedorNotificaciones.setSpacing(true);
-        contenedorNotificaciones.setPadding(false);
-        contenedorNotificaciones.setWidthFull();
-        
-        if (notificaciones.isEmpty()) {
-            contenedorNotificaciones.add(crearMensajeVacio());
-        } else {
-            notificaciones.forEach(notificacion -> {
-                contenedorNotificaciones.add(crearTarjetaNotificacion(notificacion));
-            });
+        try {
+            // Obtener notificaciones del usuario actual usando REST API
+            ResponseEntity<List<Notificacion>> response = restTemplate.exchange(
+                apiUrl + "/usuario/" + usuarioActual.getId(),
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Notificacion>>() {}
+            );
+            
+            notificaciones = response.getBody();
+            
+            // Contenedor para las tarjetas de notificaciones
+            VerticalLayout contenedorNotificaciones = new VerticalLayout();
+            contenedorNotificaciones.setSpacing(true);
+            contenedorNotificaciones.setPadding(false);
+            contenedorNotificaciones.setWidthFull();
+            
+            if (notificaciones == null || notificaciones.isEmpty()) {
+                contenedorNotificaciones.add(crearMensajeVacio());
+            } else {
+                notificaciones.forEach(notificacion -> {
+                    contenedorNotificaciones.add(crearTarjetaNotificacion(notificacion));
+                });
+            }
+            
+            add(contenedorNotificaciones);
+        } catch (Exception e) {
+            Notification notif = new Notification("Error al cargar notificaciones: " + e.getMessage());
+            notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notif.setPosition(Notification.Position.BOTTOM_CENTER);
+            notif.setDuration(3000);
+            notif.open();
+            
+            // Añadir mensaje de error
+            add(crearMensajeError());
         }
-        
-        add(contenedorNotificaciones);
     }
 
     private Component crearMensajeVacio() {
@@ -110,6 +125,16 @@ public class NotificacionesView extends VerticalLayout {
                 .set("text-align", "center")
                 .set("padding", "1em");
         return mensajeVacio;
+    }
+    
+    private Component crearMensajeError() {
+        Div mensajeError = new Div();
+        mensajeError.setText("Error al cargar las notificaciones. Inténtalo de nuevo más tarde.");
+        mensajeError.getStyle()
+                .set("color", "var(--lumo-error-text-color)")
+                .set("text-align", "center")
+                .set("padding", "1em");
+        return mensajeError;
     }
 
     private Component crearTarjetaNotificacion(Notificacion notificacion) {
@@ -124,7 +149,7 @@ public class NotificacionesView extends VerticalLayout {
         // Título y fecha
         HorizontalLayout encabezado = new HorizontalLayout();
         encabezado.setWidthFull();
-        encabezado.setJustifyContentMode(JustifyContentMode.BETWEEN);
+        encabezado.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         Span titulo = new Span(notificacion.getTitulo());
         titulo.getStyle().set("font-weight", "bold");
@@ -174,23 +199,41 @@ public class NotificacionesView extends VerticalLayout {
             Button aceptarBtn = new Button("Aceptar", new Icon(VaadinIcon.CHECK));
             aceptarBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_SMALL);
             aceptarBtn.addClickListener(e -> {
-                // Lógica para aceptar la tarea
-                boolean resultado = notificacionServicio.responderAsignacionTarea(
-                        tarea.getId(), usuarioActual.getId(), Notificacion.EstadoNotificacion.ACEPTADA);
-                if (resultado) {
-                    notificacionServicio.marcarComoLeida(notificacion.getId());
-                    cargarNotificaciones();
+                // Lógica para aceptar la tarea usando REST API
+                Map<String, Object> requestBody = new HashMap<>();
+                requestBody.put("tareaId", tarea.getId());
+                requestBody.put("voluntarioId", usuarioActual.getId());
+                requestBody.put("accion", "ACEPTAR");
+                
+                try {
+                    ResponseEntity<Map> response = restTemplate.postForEntity(
+                        apiUrl + "/responder-tarea", 
+                        requestBody, 
+                        Map.class
+                    );
                     
-                    Notification notif = new Notification("Has aceptado la tarea: " + tarea.getNombre());
-                    notif.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                    notif.setPosition(Notification.Position.BOTTOM_CENTER);
-                    notif.setDuration(3000);
-                    notif.open();
-                    
-                    // Navegar a la vista de tareas
-                    UI.getCurrent().navigate(TareasView.class);
-                } else {
-                    Notification notif = new Notification("No se pudo aceptar la tarea");
+                    if (response.getStatusCode().is2xxSuccessful()) {
+                        // Eliminar la notificación
+                        restTemplate.delete(apiUrl + "/" + notificacion.getId());
+                        cargarNotificaciones();
+                        
+                        Notification notif = new Notification("Has aceptado la tarea: " + tarea.getNombre());
+                        notif.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                        notif.setPosition(Notification.Position.BOTTOM_CENTER);
+                        notif.setDuration(3000);
+                        notif.open();
+                        
+                        // Navegar a la vista de tareas
+                        UI.getCurrent().navigate(TareasView.class);
+                    } else {
+                        Notification notif = new Notification("No se pudo aceptar la tarea");
+                        notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                        notif.setPosition(Notification.Position.BOTTOM_CENTER);
+                        notif.setDuration(3000);
+                        notif.open();
+                    }
+                } catch (Exception ex) {
+                    Notification notif = new Notification("Error al aceptar la tarea: " + ex.getMessage());
                     notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
                     notif.setPosition(Notification.Position.BOTTOM_CENTER);
                     notif.setDuration(3000);
@@ -201,20 +244,38 @@ public class NotificacionesView extends VerticalLayout {
             Button rechazarBtn = new Button("Rechazar", new Icon(VaadinIcon.CLOSE_SMALL));
             rechazarBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
             rechazarBtn.addClickListener(e -> {
-                // Lógica para rechazar la tarea
-                boolean resultado = notificacionServicio.responderAsignacionTarea(
-                        tarea.getId(), usuarioActual.getId(), Notificacion.EstadoNotificacion.RECHAZADA);
-                if (resultado) {
-                    notificacionServicio.eliminarNotificacion(notificacion.getId());
-                    cargarNotificaciones();
+                // Lógica para rechazar la tarea usando REST API
+                Map<String, Object> requestBody = new HashMap<>();
+                requestBody.put("tareaId", tarea.getId());
+                requestBody.put("voluntarioId", usuarioActual.getId());
+                requestBody.put("accion", "RECHAZAR");
+                
+                try {
+                    ResponseEntity<Map> response = restTemplate.postForEntity(
+                        apiUrl + "/responder-tarea", 
+                        requestBody, 
+                        Map.class
+                    );
                     
-                    Notification notif = new Notification("Has rechazado la tarea: " + tarea.getNombre());
-                    notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
-                    notif.setPosition(Notification.Position.BOTTOM_CENTER);
-                    notif.setDuration(3000);
-                    notif.open();
-                } else {
-                    Notification notif = new Notification("No se pudo rechazar la tarea");
+                    if (response.getStatusCode().is2xxSuccessful()) {
+                        // Eliminar la notificación
+                        restTemplate.delete(apiUrl + "/" + notificacion.getId());
+                        cargarNotificaciones();
+                        
+                        Notification notif = new Notification("Has rechazado la tarea: " + tarea.getNombre());
+                        notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                        notif.setPosition(Notification.Position.BOTTOM_CENTER);
+                        notif.setDuration(3000);
+                        notif.open();
+                    } else {
+                        Notification notif = new Notification("No se pudo rechazar la tarea");
+                        notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                        notif.setPosition(Notification.Position.BOTTOM_CENTER);
+                        notif.setDuration(3000);
+                        notif.open();
+                    }
+                } catch (Exception ex) {
+                    Notification notif = new Notification("Error al rechazar la tarea: " + ex.getMessage());
                     notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
                     notif.setPosition(Notification.Position.BOTTOM_CENTER);
                     notif.setDuration(3000);
