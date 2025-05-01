@@ -128,6 +128,7 @@ public class TareaControlador {
             Recursos recurso = recursosDisponibles.get(i);
             recurso.setEstado(Recursos.EstadoRecurso.ASIGNADO);
             recurso.setTareaAsignada(tarea);
+            recursoServicio.asignarRecursoDisponibleATarea(tarea);
             recursoServicio.actualizarRecurso(recurso);
         }
     }
@@ -218,7 +219,7 @@ public class TareaControlador {
                 asignacionTareaServicio.asignarVoluntariosAutomaticamente(tareaActualizada, 10.0);
                 
                 // Asignar recursos automáticamente
-                asignarRecursosAutomaticamente(tareaActualizada);
+                recursoServicio.asignarRecursoDisponibleATarea(tareaActualizada);
             }
             
             return new ResponseEntity<>(tareaActualizada, HttpStatus.OK);

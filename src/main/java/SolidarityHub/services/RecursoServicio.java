@@ -112,4 +112,36 @@ public class RecursoServicio {
         
         return false;
     }
+
+    /**
+     * Asigna un recurso disponible y compatible a una tarea específica
+     * @param tarea La tarea a la que se asignará el recurso
+     */
+    public void asignarRecursoDisponibleATarea(Tarea tarea) {
+        if (tarea == null || tarea.getTipo() == null) {
+            return;
+        }
+    
+        try {
+            // Convertir tipo de necesidad de la tarea al tipo de recurso
+            TipoRecurso tipoRecurso = TipoRecurso.valueOf(tarea.getTipo().name());
+    
+            // Buscar el primer recurso disponible y no asignado del tipo correcto
+            Optional<Recursos> recursoOpt = recursoRepositorio.findByTipoRecurso(tipoRecurso).stream()
+                    .filter(r -> r.getEstado() == EstadoRecurso.DISPONIBLE && r.getTareaAsignada() == null)
+                    .findFirst();
+    
+            if (recursoOpt.isPresent()) {
+                Recursos recurso = recursoOpt.get();
+                recurso.setEstado(EstadoRecurso.ASIGNADO);
+                recurso.setTareaAsignada(tarea);
+                recursoRepositorio.save(recurso);
+            }
+    
+        } catch (IllegalArgumentException e) {
+            // El tipo de la tarea no corresponde con ningún tipo de recurso
+            return;
+        }
+    }
+
 }

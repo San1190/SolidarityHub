@@ -22,6 +22,8 @@ public class Recursos {
     private TipoRecurso tipoRecurso;
     private String descripcion;
     private int cantidad;
+
+    @Enumerated(EnumType.STRING)
     private EstadoRecurso estado = EstadoRecurso.DISPONIBLE;
     
     @ManyToOne(fetch = FetchType.LAZY)
@@ -33,6 +35,13 @@ public class Recursos {
     public Recursos(TipoRecurso tipoRecurso, String descripcion) {
         this.tipoRecurso = tipoRecurso;
         this.descripcion = descripcion;
+    }
+
+    public Recursos(TipoRecurso tipoRecurso, String descripcion, int cantidad, EstadoRecurso estado) {
+        this.tipoRecurso = tipoRecurso;
+        this.descripcion = descripcion;
+        this.cantidad = cantidad;
+        this.estado = estado;
     }
 
     public Long getId()  { return id; }
