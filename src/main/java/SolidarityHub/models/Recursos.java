@@ -3,6 +3,7 @@ package SolidarityHub.models;
 import jakarta.persistence.*;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
 public class Recursos {
 
@@ -23,14 +24,16 @@ public class Recursos {
     private String descripcion;
     private int cantidad;
 
-    @Enumerated(EnumType.STRING)
     private EstadoRecurso estado = EstadoRecurso.DISPONIBLE;
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tarea_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "afectados", "voluntariosAsignados", "creador", "recursosAsignados"})
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "afectados", "voluntariosAsignados", "creador",
+            "recursosAsignados" })
     private Tarea tareaAsignada;
-    public Recursos() {}
+
+    public Recursos() {
+    }
 
     public Recursos(TipoRecurso tipoRecurso, String descripcion) {
         this.tipoRecurso = tipoRecurso;
@@ -44,21 +47,51 @@ public class Recursos {
         this.estado = estado;
     }
 
-    public Long getId()  { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public TipoRecurso getTipoRecurso() { return tipoRecurso; }
-    public void setTipoRecurso(TipoRecurso tipoRecurso) { this.tipoRecurso = tipoRecurso; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-    
-    public int getCantidad() { return cantidad; }
-    public void setCantidad(int cantidad) { this.cantidad = cantidad; }
-    
-    public EstadoRecurso getEstado() { return estado; }
-    public void setEstado(EstadoRecurso estado) { this.estado = estado; }
-    
-    public Tarea getTareaAsignada() { return tareaAsignada; }
-    public void setTareaAsignada(Tarea tareaAsignada) { this.tareaAsignada = tareaAsignada; }
+    public TipoRecurso getTipoRecurso() {
+        return tipoRecurso;
+    }
+
+    public void setTipoRecurso(TipoRecurso tipoRecurso) {
+        this.tipoRecurso = tipoRecurso;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public int getCantidad() {
+        return cantidad;
+    }
+
+    public void setCantidad(int cantidad) {
+        this.cantidad = cantidad;
+    }
+
+    public EstadoRecurso getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoRecurso estado) {
+        this.estado = estado;
+    }
+
+    public Tarea getTareaAsignada() {
+        return tareaAsignada;
+    }
+
+    public void setTareaAsignada(Tarea tareaAsignada) {
+        this.tareaAsignada = tareaAsignada;
+    }
 }
