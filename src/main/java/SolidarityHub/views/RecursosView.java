@@ -9,6 +9,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H3;
@@ -37,6 +38,7 @@ public class RecursosView extends VerticalLayout {
     private final Grid<Recursos> grid = new Grid<>(Recursos.class, false);
     private final Binder<Recursos> binder = new Binder<>(Recursos.class);
     private Usuario usuario;
+    private Recursos recursoActual;
 
     public RecursosView() {
         // Recuperar el usuario actual desde la sesión
@@ -161,9 +163,8 @@ public class RecursosView extends VerticalLayout {
             HorizontalLayout actions = new HorizontalLayout();
 
             Button editButton = new Button("Editar", e -> {
-                // Cargar el recurso en el formulario para edición
-                binder.readBean(recurso);
-                Notification.show("Editando recurso: " + recurso.getDescripcion());
+                // Abrir diálogo de edición en lugar de cargar en el formulario principal
+                abrirDialogoEdicion(recurso);
             });
             editButton.getElement().getThemeList().add("primary");
 
@@ -184,6 +185,97 @@ public class RecursosView extends VerticalLayout {
 
         gridLayout.add(grid);
         return gridLayout;
+    }
+
+    private void abrirDialogoEdicion(Recursos recurso) {
+        // Crear un nuevo diálogo
+        Dialog dialog = new Dialog();
+        dialog.setWidth("600px");
+        dialog.setCloseOnEsc(true);
+        dialog.setCloseOnOutsideClick(false);
+        
+        // Título del diálogo
+        H3 titulo = new H3("Editar Recurso");
+        titulo.getStyle().set("margin-top", "0").set("color", "#3498db");
+        
+        // Crear un nuevo binder para el diálogo
+        Binder<Recursos> dialogBinder = new Binder<>(Recursos.class);
+        
+        // Crear formulario
+        FormLayout formLayout = new FormLayout();
+        formLayout.setWidth("100%");
+        
+        // Campos del formulario
+        ComboBox<TipoRecurso> tipoRecursoField = new ComboBox<>("Tipo de Recurso");
+        tipoRecursoField.setItems(TipoRecurso.values());
+        tipoRecursoField.setItemLabelGenerator(Enum::name);
+        dialogBinder.forField(tipoRecursoField).asRequired("El tipo de recurso es obligatorio")
+                .bind(Recursos::getTipoRecurso, Recursos::setTipoRecurso);
+        
+        TextArea descripcionField = new TextArea("Descripción");
+        descripcionField.setWidthFull();
+        descripcionField.setHeight("100px");
+        dialogBinder.forField(descripcionField).asRequired("La descripción es obligatoria")
+                .bind(Recursos::getDescripcion, Recursos::setDescripcion);
+        
+        TextField cantidadField = new TextField("Cantidad");
+        cantidadField.setWidthFull();
+        dialogBinder.forField(cantidadField)
+                .asRequired("La cantidad es obligatoria")
+                .withConverter(
+                    Integer::valueOf,
+                    String::valueOf,
+                    "Por favor ingrese un número válido"
+                )
+                .bind(Recursos::getCantidad, Recursos::setCantidad);
+        
+        ComboBox<EstadoRecurso> estadoField = new ComboBox<>("Estado");
+        estadoField.setItems(EstadoRecurso.values());
+        estadoField.setItemLabelGenerator(Enum::name);
+        dialogBinder.forField(estadoField)
+                .bind(Recursos::getEstado, Recursos::setEstado);
+        
+        // Cargar los datos del recurso en el formulario
+        dialogBinder.readBean(recurso);
+        
+        // Botones de acción
+        Button guardarButton = new Button("Actualizar", event -> {
+            if (dialogBinder.isValid()) {
+                try {
+                    // Actualizar el bean con los valores del formulario
+                    dialogBinder.writeBeanIfValid(recurso);
+                    
+                    // Actualizar el recurso a través de la API REST
+                    restTemplate.put(apiUrl + "/" + recurso.getId(), recurso);
+                    
+                    Notification.show("Recurso actualizado correctamente");
+                    dialog.close();
+                    refreshGrid();
+                } catch (Exception ex) {
+                    Notification.show("Error al actualizar el recurso: " + ex.getMessage());
+                }
+            } else {
+                Notification.show("Por favor, complete todos los campos obligatorios");
+            }
+        });
+        guardarButton.getStyle().set("background-color", "#3498db").set("color", "white");
+        
+        Button cancelarButton = new Button("Cancelar", event -> dialog.close());
+        
+        HorizontalLayout botonesLayout = new HorizontalLayout(guardarButton, cancelarButton);
+        botonesLayout.setWidthFull();
+        botonesLayout.setJustifyContentMode(JustifyContentMode.END);
+        
+        // Añadir componentes al formulario
+        formLayout.add(tipoRecursoField, descripcionField, cantidadField, estadoField);
+        
+        // Añadir componentes al diálogo
+        VerticalLayout dialogLayout = new VerticalLayout(titulo, formLayout, botonesLayout);
+        dialogLayout.setPadding(true);
+        dialogLayout.setSpacing(true);
+        
+        dialog.add(dialogLayout);
+        dialog.open();
     }
 
     private void refreshGrid() {
