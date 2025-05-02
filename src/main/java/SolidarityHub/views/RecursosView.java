@@ -2,6 +2,7 @@ package SolidarityHub.views;
 
 import SolidarityHub.models.Recursos;
 import SolidarityHub.models.Recursos.TipoRecurso;
+import SolidarityHub.models.Recursos.EstadoRecurso;
 import SolidarityHub.models.Usuario;
 
 import com.vaadin.flow.component.Component;
@@ -13,6 +14,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -85,6 +87,25 @@ public class RecursosView extends VerticalLayout {
         descripcionField.setHeight("100px");
         binder.forField(descripcionField).asRequired("La descripción es obligatoria")
                 .bind(Recursos::getDescripcion, (recursos, value) -> recursos.setDescripcion(value));
+                
+        // Añadir campo para cantidad
+        TextField cantidadField = new TextField("Cantidad");
+        cantidadField.setWidthFull();
+        binder.forField(cantidadField)
+                .asRequired("La cantidad es obligatoria")
+                .withConverter(
+                    Integer::valueOf,
+                    String::valueOf,
+                    "Por favor ingrese un número válido"
+                )
+                .bind(Recursos::getCantidad, Recursos::setCantidad);
+                
+        // Añadir campo para estado
+        ComboBox<EstadoRecurso> estadoField = new ComboBox<>("Estado");
+        estadoField.setItems(EstadoRecurso.values());
+        estadoField.setItemLabelGenerator(Enum::name);
+        binder.forField(estadoField)
+                .bind(Recursos::getEstado, Recursos::setEstado);
 
         // Botón para guardar
         Button saveButton = new Button("Guardar", event -> {
@@ -113,7 +134,7 @@ public class RecursosView extends VerticalLayout {
         botonLayout.setJustifyContentMode(JustifyContentMode.START);
 
         // Añadir campos al formulario
-        formLayout.add(tipoRecursoField, descripcionField, botonLayout);
+        formLayout.add(tipoRecursoField, descripcionField, cantidadField, estadoField, botonLayout);
         return formLayout;
     }
 
@@ -124,6 +145,15 @@ public class RecursosView extends VerticalLayout {
         // Configurar el grid
         grid.addColumn(recursos -> recursos.getTipoRecurso().name()).setHeader("Tipo de Recurso");
         grid.addColumn(Recursos::getDescripcion).setHeader("Descripción");
+        grid.addColumn(Recursos::getCantidad).setHeader("Cantidad");
+        grid.addColumn(recursos -> recursos.getEstado().name()).setHeader("Estado");
+        grid.addColumn(recursos -> {
+            if (recursos.getTareaAsignada() != null) {
+                return recursos.getTareaAsignada().getNombre();
+            } else {
+                return "No asignado";
+            }
+        }).setHeader("Tarea Asignada");
         grid.addColumn(Recursos::getId).setHeader("ID");
 
         // Añadir botones de acción para cada fila
