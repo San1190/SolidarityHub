@@ -208,13 +208,26 @@ public class AutomatizacionServicio implements ApplicationListener<ContextRefres
                 nuevaTarea.setDescripcion("Atender necesidad: " + necesidad.getDescripcion());
                 nuevaTarea.setTipo(necesidad.getTipoNecesidad());
                 nuevaTarea.setLocalizacion(necesidad.getUbicacion() != null ? necesidad.getUbicacion() : "Sin ubicación especificada");
-                nuevaTarea.setNumeroVoluntariosNecesarios(1); // Por defecto, se necesita al menos un voluntario
+                nuevaTarea.setFechaInicio(necesidad.getFechaInicio());
+                nuevaTarea.setFechaFin(necesidad.getFechaFinalizacion());
+                nuevaTarea.setCreador(necesidad.getCreador());
                 
-                // Establecer fechas por defecto (desde ahora hasta 7 días después)
-                LocalDateTime ahora = LocalDateTime.now();
-                nuevaTarea.setFechaInicio(ahora);
-                nuevaTarea.setFechaFin(ahora.plusDays(7));
                 
+                //dependiendo de la urgencia de la tarea  se asignara voluntarios numero distinto:
+                // 1. Urgencia baja: 1 voluntario
+                // 2. Urgencia media: 2 voluntarios
+                // 3. Urgencia alta: 3 voluntarios
+                switch (necesidad.getUrgencia()) {
+                    case BAJA:
+                        nuevaTarea.setNumeroVoluntariosNecesarios(1);
+                        break;
+                    case MEDIA:
+                        nuevaTarea.setNumeroVoluntariosNecesarios(2);
+                        break;
+                    case ALTA:
+                        nuevaTarea.setNumeroVoluntariosNecesarios(3);
+                        break;
+                }
                 // Establecer estado inicial
                 nuevaTarea.setEstado(EstadoTarea.PREPARADA);
                 

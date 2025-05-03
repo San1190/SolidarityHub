@@ -1,8 +1,10 @@
 package SolidarityHub.views;
 
+import SolidarityHub.models.Afectado;
 import SolidarityHub.models.Necesidad;
 import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Necesidad.Urgencia;
+import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -82,13 +84,29 @@ public class NecesidadesView extends VerticalLayout {
         binder.forField(ubicacionField).asRequired("La ubicación es obligatoria").bind(Necesidad::getUbicacion,
                 Necesidad::setUbicacion);
 
-        // Botón para guardar
+        //Añadir los campos de fecha de inicio y fecha de fin
+        DateTimePicker fechaInicioField = new DateTimePicker("Fecha de Inicio");
+        binder.forField(fechaInicioField)
+              .asRequired("La fecha de inicio es obligatoria")
+              .bind(Necesidad::getFechaInicio, Necesidad::setFechaInicio);
+            
+        DateTimePicker fechaFinField = new DateTimePicker("Fecha de Fin");
+        binder.forField(fechaFinField)
+              .asRequired("La fecha de fin es obligatoria")
+              .bind(Necesidad::getFechaFinalizacion, Necesidad::setFechaFinalizacion);
+            
+
+        //guardar el usuario que ha creado la necesidad
+       
+
+        
         Button saveButton = new Button("Guardar", event -> {
             if (binder.isValid()) {
                 Necesidad nuevaNecesidad = new Necesidad();
                 binder.writeBeanIfValid(nuevaNecesidad);
                 nuevaNecesidad.setEstadoNecesidad(Necesidad.EstadoNecesidad.REGISTRADA);
                 nuevaNecesidad.setFechaCreacion(LocalDateTime.now());
+                nuevaNecesidad.setCreador((Afectado) VaadinSession.getCurrent().getAttribute("usuario")); // Obtener el usuario actual de la sesión
 
                 // Guardar la necesidad a través de la API REST
                 restTemplate.postForObject(apiUrl + "/crear", nuevaNecesidad, Necesidad.class);
@@ -105,7 +123,7 @@ public class NecesidadesView extends VerticalLayout {
         botonLayout.setJustifyContentMode(JustifyContentMode.END);
 
         // Añadir campos al formulario
-        formLayout.add(tipoNecesidadField, descripcionField, urgenciaField, ubicacionField, botonLayout);
+        formLayout.add(tipoNecesidadField, descripcionField, urgenciaField, ubicacionField, fechaInicioField, fechaFinField, botonLayout);
         return formLayout;
     }
 
@@ -119,6 +137,8 @@ public class NecesidadesView extends VerticalLayout {
         grid.addColumn(Necesidad::getUbicacion).setHeader("Ubicación");
         grid.addColumn(necesidad -> necesidad.getUrgencia().name()).setHeader("Urgencia").setAutoWidth(true).setFlexGrow(0);
         grid.addColumn(necesidad -> necesidad.getFechaCreacion().format(formatter)).setHeader("Fecha de Creación").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(necesidad -> necesidad.getFechaInicio().format(formatter)).setHeader("Fecha de Inicio").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(necesidad -> necesidad.getFechaFinalizacion().format(formatter)).setHeader("Fecha de Fin").setAutoWidth(true).setFlexGrow(0);
 
         gridLayout.add(grid);
         return gridLayout;
