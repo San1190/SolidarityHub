@@ -35,6 +35,7 @@ public class Tarea {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creador_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Usuario creador;
     
     @ManyToMany(fetch = FetchType.LAZY)
@@ -51,6 +52,7 @@ public class Tarea {
         joinColumns = @JoinColumn(name = "tarea_id"),
         inverseJoinColumns = @JoinColumn(name = "voluntario_id")
     )
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "tareasAsignadas"})
     private List<Voluntario> voluntariosAsignados;
     
     @OneToMany(mappedBy = "tareaAsignada", fetch = FetchType.LAZY)
