@@ -8,7 +8,6 @@ import java.util.List;
 public class Afectado extends Usuario {
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "afectado_id") // Agrega una columna en `Necesidad` para referenciar al `Afectado`
     private List<Necesidad> necesidades;
 
     public Afectado() {}    
