@@ -207,8 +207,12 @@ public class LoginView extends VerticalLayout {
                 usuario = new Voluntario();
                 usuario.setEmail(emailField.getValue());
                 usuario.setPassword(contraseñaField.getValue());
-            } else {
+            } else if ("Afectado".equals(tipoUsuarioSeleccionado)) {
                 usuario = new Afectado();
+                usuario.setEmail(emailField.getValue());
+                usuario.setPassword(contraseñaField.getValue());
+            } else if ("Gestor".equals(tipoUsuarioSeleccionado)) {
+                usuario = new Gestor();
                 usuario.setEmail(emailField.getValue());
                 usuario.setPassword(contraseñaField.getValue());
             }

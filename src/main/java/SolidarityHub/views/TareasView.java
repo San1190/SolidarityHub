@@ -148,14 +148,6 @@ public class TareasView extends VerticalLayout {
 
             layoutUsuario.add(tareasCompatiblesButton, misTareasButton);
             layout.add(layoutUsuario);
-        } else if (usuarioActual instanceof Afectado) {
-            // Para afectados, solo mostrar todas las tareas disponibles
-            Button todasLasTareasButton = new Button("Todas las Tareas", e -> {
-                refreshTareas();
-            });
-            todasLasTareasButton.getElement().getThemeList().add("primary");
-            todasLasTareasButton.getStyle().set("margin-left", "64px");
-            layout.add(todasLasTareasButton);
         } else if (usuarioActual != null && usuarioActual.getTipoUsuario().equals("gestor")) {
             // Para gestor, mostrar botón para asignar recursos manualmente
             Button asignarRecursosButton = new Button("Asignar Recursos a Tarea", e -> abrirDialogoAsignarRecursos());
@@ -1116,7 +1108,7 @@ titulo.getStyle().set("margin", "0").set("margin-top", "8px").setWidth("700px");
     // Al final de la clase, agregar el método para el gestor
     private void abrirDialogoAsignarRecursos() {
         Dialog dialog = new Dialog();
-        dialog.setWidth("600px");
+        dialog.setWidth("500px");
         dialog.setCloseOnEsc(true);
         dialog.setCloseOnOutsideClick(false);
     
@@ -1140,6 +1132,7 @@ titulo.getStyle().set("margin", "0").set("margin-top", "8px").setWidth("700px");
             if (tareaSeleccionada != null && recursoSeleccionado != null) {
                 try {
                     recursoSeleccionado.setTareaAsignada(tareaSeleccionada);
+                    recursoSeleccionado.setEstado(Recursos.EstadoRecurso.ASIGNADO); // Cambiar estado a 'asignado'
                     restTemplate.put("http://localhost:8080/api/recursos/" + recursoSeleccionado.getId(), recursoSeleccionado);
                     Notification.show("Recurso asignado correctamente");
                     dialog.close();
