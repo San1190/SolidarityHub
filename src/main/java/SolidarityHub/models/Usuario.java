@@ -18,7 +18,8 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 // Definir los subtipos de Usuario (Afectado y Voluntario)
 @JsonSubTypes({
     @JsonSubTypes.Type(value = Afectado.class, name = "afectado"),
-    @JsonSubTypes.Type(value = Voluntario.class, name = "voluntario")
+    @JsonSubTypes.Type(value = Voluntario.class, name = "voluntario"),
+    @JsonSubTypes.Type(value = Gestor.class, name = "gestor")
 })
 public abstract class Usuario {
 

@@ -134,8 +134,7 @@ public class TareasView extends VerticalLayout {
             Voluntario voluntario = (Voluntario) usuarioActual;
             Long voluntarioId = voluntario.getId();
 
-            // Botón para cargar tareas compatibles con las habilidades del voluntario
-            // actual
+            // Botón para cargar tareas compatibles con las habilidades del voluntario actual
             Button tareasCompatiblesButton = new Button("Mis Tareas Compatibles", e -> {
                 cargarTareasCompatiblesConVoluntario(voluntarioId);
             });
@@ -157,6 +156,12 @@ public class TareasView extends VerticalLayout {
             todasLasTareasButton.getElement().getThemeList().add("primary");
             todasLasTareasButton.getStyle().set("margin-left", "64px");
             layout.add(todasLasTareasButton);
+        } else if (usuarioActual != null && usuarioActual.getTipoUsuario().equals("gestor")) {
+            // Para gestor, mostrar botón para asignar recursos manualmente
+            Button asignarRecursosButton = new Button("Asignar Recursos a Tarea", e -> abrirDialogoAsignarRecursos());
+            asignarRecursosButton.getElement().getThemeList().add("primary");
+            layoutUsuario.add(asignarRecursosButton);
+            layout.add(layoutUsuario);
         }
 
         return layout;
@@ -1105,6 +1110,87 @@ titulo.getStyle().set("margin", "0").set("margin-top", "8px").setWidth("700px");
             ex.printStackTrace();
             // Mostrar una lista vacía para evitar que la interfaz se rompa
             mostrarTareas(Collections.emptyList());
+        }
+    }
+
+    // Al final de la clase, agregar el método para el gestor
+    private void abrirDialogoAsignarRecursos() {
+        Dialog dialog = new Dialog();
+        dialog.setWidth("600px");
+        dialog.setCloseOnEsc(true);
+        dialog.setCloseOnOutsideClick(false);
+    
+        H3 titulo = new H3("Asignar Recursos a Tarea");
+        titulo.getStyle().set("margin-top", "0").set("color", "#3498db");
+    
+        FormLayout formLayout = new FormLayout();
+        ComboBox<Tarea> tareaCombo = new ComboBox<>("Tarea");
+        tareaCombo.setItems(obtenerTodasLasTareas());
+        tareaCombo.setItemLabelGenerator(Tarea::getNombre);
+    
+        ComboBox<Recursos> recursoCombo = new ComboBox<>("Recurso");
+        recursoCombo.setItems(obtenerRecursosNoAsignados());
+        recursoCombo.setItemLabelGenerator(Recursos::getDescripcion);
+    
+        formLayout.add(tareaCombo, recursoCombo);
+    
+        Button asignarButton = new Button("Asignar", event -> {
+            Tarea tareaSeleccionada = tareaCombo.getValue();
+            Recursos recursoSeleccionado = recursoCombo.getValue();
+            if (tareaSeleccionada != null && recursoSeleccionado != null) {
+                try {
+                    recursoSeleccionado.setTareaAsignada(tareaSeleccionada);
+                    restTemplate.put("http://localhost:8080/api/recursos/" + recursoSeleccionado.getId(), recursoSeleccionado);
+                    Notification.show("Recurso asignado correctamente");
+                    dialog.close();
+                    refreshTareas();
+                } catch (Exception ex) {
+                    Notification.show("Error al asignar el recurso: " + ex.getMessage());
+                }
+            } else {
+                Notification.show("Seleccione una tarea y un recurso");
+            }
+        });
+        asignarButton.getStyle().set("background-color", "#3498db").set("color", "white");
+    
+        Button cancelarButton = new Button("Cancelar", event -> dialog.close());
+        HorizontalLayout botonesLayout = new HorizontalLayout(asignarButton, cancelarButton);
+        botonesLayout.setWidthFull();
+        botonesLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+    
+        VerticalLayout dialogLayout = new VerticalLayout(titulo, formLayout, botonesLayout);
+        dialogLayout.setPadding(true);
+        dialogLayout.setSpacing(true);
+        dialog.add(dialogLayout);
+        dialog.open();
+    }
+
+    private List<Tarea> obtenerTodasLasTareas() {
+        try {
+            Tarea[] tareasArray = restTemplate.getForObject(apiUrl, Tarea[].class);
+            return tareasArray != null ? Arrays.asList(tareasArray) : Collections.emptyList();
+        } catch (Exception e) {
+            Notification.show("Error al cargar las tareas: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    private List<Recursos> obtenerRecursosNoAsignados() {
+        try {
+            List<Recursos> recursos = restTemplate.exchange(
+                    "http://localhost:8080/api/recursos",
+                    org.springframework.http.HttpMethod.GET,
+                    null,
+                    new org.springframework.core.ParameterizedTypeReference<List<Recursos>>() {
+                    }).getBody();
+            if (recursos != null) {
+                return recursos.stream().filter(r -> r.getTareaAsignada() == null).collect(Collectors.toList());
+            } else {
+                return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            Notification.show("Error al cargar los recursos: " + e.getMessage());
+            return Collections.emptyList();
         }
     }
 }

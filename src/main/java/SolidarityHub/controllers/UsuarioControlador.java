@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import SolidarityHub.models.Usuario;
 import SolidarityHub.models.Voluntario;
+import SolidarityHub.models.Gestor;
 import SolidarityHub.models.Afectado;
 import SolidarityHub.services.UsuarioServicio;
 
@@ -128,6 +129,7 @@ public class UsuarioControlador {
         return switch (tipoUsuario.toLowerCase()) {
             case "voluntario" -> Voluntario.class;
             case "afectado" -> Afectado.class;
+            case "gestor" -> Gestor.class;
             default -> null;
         };
     }

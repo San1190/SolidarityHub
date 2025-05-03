@@ -19,6 +19,7 @@ import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import SolidarityHub.models.Gestor;
 
 import org.springframework.web.client.RestTemplate;
 import SolidarityHub.models.Voluntario;
@@ -152,7 +153,7 @@ public class LoginView extends VerticalLayout {
         // Grupo de botones para seleccionar tipo de usuario
         tipoUsuario = new RadioButtonGroup<>();
         tipoUsuario.setLabel("Tipo de cuenta");
-        tipoUsuario.setItems("Afectado", "Voluntario");
+        tipoUsuario.setItems("Afectado", "Voluntario", "Gestor");
         tipoUsuario.setValue("Afectado");
 
         // Style the radio group similar to RegistroView
