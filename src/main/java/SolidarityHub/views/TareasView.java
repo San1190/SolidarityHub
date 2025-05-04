@@ -19,6 +19,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -134,7 +135,8 @@ public class TareasView extends VerticalLayout {
             Voluntario voluntario = (Voluntario) usuarioActual;
             Long voluntarioId = voluntario.getId();
 
-            // Botón para cargar tareas compatibles con las habilidades del voluntario actual
+            // Botón para cargar tareas compatibles con las habilidades del voluntario
+            // actual
             Button tareasCompatiblesButton = new Button("Mis Tareas Compatibles", e -> {
                 cargarTareasCompatiblesConVoluntario(voluntarioId);
             });
@@ -330,7 +332,7 @@ public class TareasView extends VerticalLayout {
         estructura.setPadding(true);
 
         H4 titulo = new H4(tarea.getNombre());
-titulo.getStyle().set("margin", "0").set("margin-top", "8px").setWidth("700px");
+        titulo.getStyle().set("margin", "0").set("margin-top", "8px").setWidth("700px");
 
         HorizontalLayout contenido = new HorizontalLayout();
         contenido.setPadding(true);
@@ -380,7 +382,7 @@ titulo.getStyle().set("margin", "0").set("margin-top", "8px").setWidth("700px");
                 .set("background-color", "#E2E3E5")
                 .set("color", "#383D41");
 
-        layoutTitulo.add(titulo, divisortitulo,estadoSpan, tipoSpan);
+        layoutTitulo.add(titulo, divisortitulo, estadoSpan, tipoSpan);
 
         // Descripción de la tarea (limitada a 100 caracteres)
         String descripcionCorta = tarea.getDescripcion();
@@ -1111,21 +1113,35 @@ titulo.getStyle().set("margin", "0").set("margin-top", "8px").setWidth("700px");
         dialog.setWidth("500px");
         dialog.setCloseOnEsc(true);
         dialog.setCloseOnOutsideClick(false);
-    
+
         H3 titulo = new H3("Asignar Recursos a Tarea");
         titulo.getStyle().set("margin-top", "0").set("color", "#3498db");
-    
+
         FormLayout formLayout = new FormLayout();
         ComboBox<Tarea> tareaCombo = new ComboBox<>("Tarea");
         tareaCombo.setItems(obtenerTodasLasTareas());
         tareaCombo.setItemLabelGenerator(Tarea::getNombre);
-    
+
         ComboBox<Recursos> recursoCombo = new ComboBox<>("Recurso");
-        recursoCombo.setItems(obtenerRecursosNoAsignados());
+        List<Recursos> recursosNoAsignados = obtenerRecursosNoAsignados();
+        recursoCombo.setItems(recursosNoAsignados);
         recursoCombo.setItemLabelGenerator(Recursos::getDescripcion);
-    
+
+        // Verificar si hay recursos disponibles
+        if (recursosNoAsignados.isEmpty()) {
+            // Notification.show("No hay recursos disponibles para asignar", 3000,
+            // Notification.Position.MIDDLE);
+            // También puedes mostrar un mensaje en el propio diálogo
+            Label mensaje = new Label("No hay recursos disponibles para asignar");
+            mensaje.getStyle().set("color", "red");
+            formLayout.add(mensaje);
+
+            // Deshabilitar el comboBox y el botón de asignar
+            recursoCombo.setEnabled(false);
+        }
+
         formLayout.add(tareaCombo, recursoCombo);
-    
+
         Button asignarButton = new Button("Asignar", event -> {
             Tarea tareaSeleccionada = tareaCombo.getValue();
             Recursos recursoSeleccionado = recursoCombo.getValue();
@@ -1133,7 +1149,8 @@ titulo.getStyle().set("margin", "0").set("margin-top", "8px").setWidth("700px");
                 try {
                     recursoSeleccionado.setTareaAsignada(tareaSeleccionada);
                     recursoSeleccionado.setEstado(Recursos.EstadoRecurso.ASIGNADO); // Cambiar estado a 'asignado'
-                    restTemplate.put("http://localhost:8080/api/recursos/" + recursoSeleccionado.getId(), recursoSeleccionado);
+                    restTemplate.put("http://localhost:8080/api/recursos/" + recursoSeleccionado.getId(),
+                            recursoSeleccionado);
                     Notification.show("Recurso asignado correctamente");
                     dialog.close();
                     refreshTareas();
@@ -1145,12 +1162,12 @@ titulo.getStyle().set("margin", "0").set("margin-top", "8px").setWidth("700px");
             }
         });
         asignarButton.getStyle().set("background-color", "#3498db").set("color", "white");
-    
+
         Button cancelarButton = new Button("Cancelar", event -> dialog.close());
         HorizontalLayout botonesLayout = new HorizontalLayout(asignarButton, cancelarButton);
         botonesLayout.setWidthFull();
         botonesLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
-    
+
         VerticalLayout dialogLayout = new VerticalLayout(titulo, formLayout, botonesLayout);
         dialogLayout.setPadding(true);
         dialogLayout.setSpacing(true);
