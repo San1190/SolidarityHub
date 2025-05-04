@@ -99,9 +99,9 @@ public class TareasView extends VerticalLayout {
         // Título con estilo mejorado
         H3 titulo = new H3("Gestión de Tareas");
         titulo.getStyle()
-            .set("margin", "0")
-            .set("font-weight", "600")
-            .set("color", "#1676F3");
+                .set("margin", "0")
+                .set("font-weight", "600")
+                .set("color", "#1676F3");
 
         // Contenedor para el botón de nueva tarea (solo para voluntarios)
         HorizontalLayout botonesEncabezado = new HorizontalLayout();
@@ -113,8 +113,8 @@ public class TareasView extends VerticalLayout {
             nuevaTarea.addClickListener(e -> abrirFormulario(new Tarea()));
             nuevaTarea.getElement().getThemeList().add("primary");
             nuevaTarea.getStyle()
-                .set("font-weight", "bold")
-                .set("border-radius", "4px");
+                    .set("font-weight", "bold")
+                    .set("border-radius", "4px");
             botonesEncabezado.add(nuevaTarea);
         }
 
@@ -127,11 +127,11 @@ public class TareasView extends VerticalLayout {
         Div contenedorPrincipal = new Div();
         contenedorPrincipal.setWidthFull();
         contenedorPrincipal.getStyle()
-            .set("background-color", "#f8f9fa")
-            .set("border-radius", "8px")
-            .set("padding", "16px")
-            .set("margin-bottom", "-50px")
-            .set("box-shadow", "0 2px 4px rgba(0,0,0,0.05)");
+                .set("background-color", "#f8f9fa")
+                .set("border-radius", "8px")
+                .set("padding", "16px")
+                .set("margin-bottom", "-50px")
+                .set("box-shadow", "0 2px 4px rgba(0,0,0,0.05)");
 
         // Crear el layout de filtros y acciones
         HorizontalLayout layoutFiltros = crearLayoutFiltros();
@@ -147,8 +147,8 @@ public class TareasView extends VerticalLayout {
         layout.setAlignItems(FlexComponent.Alignment.CENTER);
         layout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         layout.getStyle()
-            .set("flex-wrap", "wrap")
-            .set("gap", "16px");
+                .set("flex-wrap", "wrap")
+                .set("gap", "16px");
 
         // Panel izquierdo: filtros generales
         HorizontalLayout filtrosGenerales = new HorizontalLayout();
@@ -176,8 +176,8 @@ public class TareasView extends VerticalLayout {
         });
         filtrarButton.getElement().getThemeList().add("primary");
         filtrarButton.getStyle()
-            .set("margin-left", "8px")
-            .set("margin-right", "8px");
+                .set("margin-left", "8px")
+                .set("margin-right", "8px");
 
         Button limpiarButton = new Button("Limpiar", e -> {
             filtroEstado.clear();
@@ -201,30 +201,30 @@ public class TareasView extends VerticalLayout {
             Long voluntarioId = voluntario.getId();
 
             // Botón para tareas compatibles
-            Button tareasCompatiblesButton = new Button("Mis Tareas Compatibles", 
-                new Icon(VaadinIcon.CONNECT));
+            Button tareasCompatiblesButton = new Button("Mis Tareas Compatibles",
+                    new Icon(VaadinIcon.CONNECT));
             tareasCompatiblesButton.addClickListener(e -> {
                 cargarTareasCompatiblesConVoluntario(voluntarioId);
             });
             tareasCompatiblesButton.getElement().getThemeList().add("primary");
             tareasCompatiblesButton.getStyle()
-                .set("white-space", "nowrap");
+                    .set("white-space", "nowrap");
 
             // Botón para tareas asignadas
-            Button misTareasButton = new Button("Mis Tareas Asignadas", 
-                new Icon(VaadinIcon.USER_CHECK));
+            Button misTareasButton = new Button("Mis Tareas Asignadas",
+                    new Icon(VaadinIcon.USER_CHECK));
             misTareasButton.addClickListener(e -> {
                 cargarTareasAsignadasAVoluntario(voluntarioId);
             });
             misTareasButton.getElement().getThemeList().add("primary");
             misTareasButton.getStyle()
-                .set("white-space", "nowrap");
+                    .set("white-space", "nowrap");
 
             accionesUsuario.add(tareasCompatiblesButton, misTareasButton);
         } else if (usuarioActual instanceof Afectado) {
             // Para afectados, solo mostrar todas las tareas disponibles
-            Button todasLasTareasButton = new Button("Todas las Tareas", 
-                new Icon(VaadinIcon.LIST));
+            Button todasLasTareasButton = new Button("Todas las Tareas",
+                    new Icon(VaadinIcon.LIST));
             todasLasTareasButton.addClickListener(e -> {
                 refreshTareas();
             });
@@ -482,7 +482,7 @@ public class TareasView extends VerticalLayout {
 
         etiquetasContainer.add(tipoSpan, estadoSpan);
         cabecera.add(titulo, etiquetasContainer);
-        
+
         // Cuerpo de la tarjeta
         VerticalLayout cuerpo = new VerticalLayout();
         cuerpo.setPadding(true);
@@ -497,7 +497,7 @@ public class TareasView extends VerticalLayout {
         if (descripcionCorta != null && descripcionCorta.length() > 100) {
             descripcionCorta = descripcionCorta.substring(0, 97) + "...";
         }
-        
+
         Paragraph descripcion = new Paragraph(descripcionCorta);
         descripcion.getStyle()
                 .set("color", "#444")
@@ -525,13 +525,13 @@ public class TareasView extends VerticalLayout {
         localizacionLayout.getStyle()
                 .set("gap", "10px")
                 .set("padding", "4px 0");
-        
+
         Icon locIcon = VaadinIcon.MAP_MARKER.create();
         locIcon.setSize("18px");
         locIcon.getStyle()
                 .set("color", "#1676F3")
                 .set("flex-shrink", "0");
-        
+
         Span localizacion = new Span(tarea.getLocalizacion());
         localizacion.getStyle()
                 .set("font-size", "14px")
@@ -540,7 +540,7 @@ public class TareasView extends VerticalLayout {
                 .set("overflow", "hidden")
                 .set("text-overflow", "ellipsis")
                 .set("white-space", "nowrap");
-        
+
         localizacionLayout.add(locIcon, localizacion);
 
         // Fechas con icono
@@ -550,7 +550,7 @@ public class TareasView extends VerticalLayout {
         fechasLayout.getStyle()
                 .set("gap", "10px")
                 .set("padding", "4px 0");
-        
+
         Icon calendarIcon = VaadinIcon.CALENDAR.create();
         calendarIcon.setSize("18px");
         calendarIcon.getStyle()
@@ -563,7 +563,7 @@ public class TareasView extends VerticalLayout {
         } else {
             fechasTexto = "Fechas no definidas";
         }
-        
+
         Span fechas = new Span(fechasTexto);
         fechas.getStyle()
                 .set("font-size", "14px")
@@ -572,7 +572,7 @@ public class TareasView extends VerticalLayout {
                 .set("overflow", "hidden")
                 .set("text-overflow", "ellipsis")
                 .set("white-space", "nowrap");
-        
+
         fechasLayout.add(calendarIcon, fechas);
 
         // Voluntarios con icono
@@ -582,13 +582,13 @@ public class TareasView extends VerticalLayout {
         voluntariosLayout.getStyle()
                 .set("gap", "10px")
                 .set("padding", "4px 0");
-        
+
         Icon userIcon = VaadinIcon.USERS.create();
         userIcon.setSize("18px");
         userIcon.getStyle()
                 .set("color", "#1676F3")
                 .set("flex-shrink", "0");
-        
+
         Span voluntariosInfo = new Span(tarea.getNumeroVoluntariosNecesarios() + " voluntarios necesarios");
         voluntariosInfo.getStyle()
                 .set("font-size", "14px")
@@ -597,7 +597,7 @@ public class TareasView extends VerticalLayout {
                 .set("overflow", "hidden")
                 .set("text-overflow", "ellipsis")
                 .set("white-space", "nowrap");
-        
+
         voluntariosLayout.add(userIcon, voluntariosInfo);
 
         // Información de recursos
@@ -607,19 +607,19 @@ public class TareasView extends VerticalLayout {
         recursosLayout.getStyle()
                 .set("gap", "10px")
                 .set("padding", "4px 0");
-        
+
         Icon resourceIcon = VaadinIcon.PACKAGE.create();
         resourceIcon.setSize("18px");
         resourceIcon.getStyle()
                 .set("color", "#1676F3")
                 .set("flex-shrink", "0");
-        
+
         String recursosTexto = "No hay recursos asignados";
         List<Recursos> recursosAsignados = obtenerRecursosAsignados(tarea);
         if (!recursosAsignados.isEmpty()) {
             recursosTexto = recursosAsignados.size() + " recursos asignados";
         }
-        
+
         Span recursosInfo = new Span(recursosTexto);
         recursosInfo.getStyle()
                 .set("font-size", "14px")
@@ -628,7 +628,7 @@ public class TareasView extends VerticalLayout {
                 .set("overflow", "hidden")
                 .set("text-overflow", "ellipsis")
                 .set("white-space", "nowrap");
-        
+
         recursosLayout.add(resourceIcon, recursosInfo);
 
         // Añadir toda la información al contenedor

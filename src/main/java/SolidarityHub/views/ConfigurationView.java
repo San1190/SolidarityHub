@@ -394,13 +394,13 @@ public class ConfigurationView extends VerticalLayout {
         Button guardarBtn = new Button("Guardar Cambios");
         guardarBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         guardarBtn.getStyle()
-                .set("background-color", "#3498db")
-                .set("color", "white")
                 .set("border-radius", "6px")
                 .set("font-weight", "600")
                 .set("box-shadow", "0 4px 6px rgba(52, 152, 219, 0.2)")
                 .set("transition", "transform 0.1s ease-in-out")
                 .set("padding", "0.5rem 1.5rem");
+        guardarBtn.getElement().getThemeList().add("primary");
+        guardarBtn.addClickShortcut(com.vaadin.flow.component.Key.ENTER);
         guardarBtn.addClickListener(event -> {
             try {
                 // Actualizar el objeto usuario con los datos del formulario

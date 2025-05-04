@@ -117,7 +117,7 @@ public class NecesidadesView extends VerticalLayout {
                 Notification.show("Por favor, complete todos los campos obligatorios");
             }
         });
-        saveButton.getStyle().set("background-color", "#3498db").set("color", "white");
+        saveButton.getElement().getThemeList().add("primary");;
         HorizontalLayout botonLayout = new HorizontalLayout(saveButton);
         botonLayout.setWidthFull();
         botonLayout.setJustifyContentMode(JustifyContentMode.END);
@@ -163,7 +163,7 @@ public class NecesidadesView extends VerticalLayout {
 
     private Component crearTitulo() {
         H3 titulo = new H3("Añada su Necesidad:");
-        titulo.getStyle().set("text-align", "center").set("color", "#3498db");
+        titulo.getStyle().set("text-align", "center").set("color", "#1676F3");
         return titulo;
     }
 }
