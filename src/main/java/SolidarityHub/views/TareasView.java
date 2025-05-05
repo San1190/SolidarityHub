@@ -19,6 +19,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -36,7 +37,12 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
+
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClientException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -220,6 +226,14 @@ public class TareasView extends VerticalLayout {
             misTareasButton.getStyle()
                     .set("white-space", "nowrap");
 
+            layoutUsuario.add(tareasCompatiblesButton, misTareasButton);
+            layout.add(layoutUsuario);
+        } else if (usuarioActual != null && usuarioActual.getTipoUsuario().equals("gestor")) {
+            // Para gestor, mostrar botón para asignar recursos manualmente
+            Button asignarRecursosButton = new Button("Asignar Recursos a Tarea", e -> abrirDialogoAsignarRecursos());
+            asignarRecursosButton.getElement().getThemeList().add("primary");
+            layoutUsuario.add(asignarRecursosButton);
+            layout.add(layoutUsuario);
             accionesUsuario.add(tareasCompatiblesButton, misTareasButton);
         } else if (usuarioActual instanceof Afectado) {
             // Para afectados, solo mostrar todas las tareas disponibles
@@ -406,7 +420,7 @@ public class TareasView extends VerticalLayout {
 
         // Título de la tarea
         H4 titulo = new H4(tarea.getNombre());
-        titulo.getStyle()
+                titulo.getStyle()
                 .set("margin", "0")
                 .set("font-weight", "600")
                 .set("color", "#333")
@@ -491,6 +505,10 @@ public class TareasView extends VerticalLayout {
                 .set("padding", "16px 20px")
                 .set("background-color", "#ffffff")
                 .set("border-radius", "0 0 12px 12px");
+                .set("background-color", "#E2E3E5")
+                .set("color", "#383D41");
+
+        layoutTitulo.add(titulo, divisortitulo, estadoSpan, tipoSpan);
 
         // Descripción con límite de caracteres
         String descripcionCorta = tarea.getDescripcion();
@@ -679,11 +697,92 @@ public class TareasView extends VerticalLayout {
             }
         } else {
             pie.add(verDetallesBtn);
+        // Botones de acción
+        VerticalLayout botonesLayout = new VerticalLayout();
+        botonesLayout.setWidthFull();
+        botonesLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+
+        Button verDetallesButton = new Button("Ver Detalles", e -> mostrarDetallesTarea(tarea));
+        verDetallesButton.getElement().getThemeList().add("primary");
+
+        botonesLayout.add(verDetallesButton);
+
+        // Añadir botones específicos según el tipo de usuario y el estado de la tarea
+        if (usuarioActual instanceof Voluntario) {
+            // Si es el creador o está asignado, mostrar botones de edición/eliminación
+            boolean esCreador = tarea.getCreador() != null && tarea.getCreador().getId().equals(usuarioActual.getId());
+            boolean estaAsignado = tarea.getVoluntariosAsignados() != null &&
+                    tarea.getVoluntariosAsignados().stream()
+                            .anyMatch(vol -> vol.getId().equals(usuarioActual.getId()));
+
+            if (esCreador) {
+                Button editarButton = new Button("Editar", e -> abrirFormulario(tarea));
+                Button eliminarButton = new Button("Eliminar", e -> eliminarTarea(tarea));
+                eliminarButton.getElement().getThemeList().add("error");
+                botonesLayout.add(editarButton, eliminarButton);
+            } else if (!estaAsignado && tarea.getEstado() == EstadoTarea.PREPARADA) {
+                // Si no está asignado y la tarea está pendiente, mostrar botón para postularse
+                Button postularseButton = new Button("Postularme", e -> {
+                    // Aquí iría la lógica para postularse a la tarea
+                    Notification.show("Funcionalidad de postulación no implementada", 3000, Position.BOTTOM_START);
+                });
+                postularseButton.getElement().getThemeList().add("success");
+                botonesLayout.add(postularseButton);
+            }
         }
 
-        // Ensamblar la tarjeta completa
-        contenidoTarjeta.add(cabecera, cuerpo, pie);
-        tarjeta.add(contenidoTarjeta);
+        // Contenedor para recursos asignados
+        Div recursosContainer = new Div();
+        recursosContainer.setWidthFull();
+        recursosContainer.getStyle()
+                .set("margin-top", "12px")
+                .set("margin-bottom", "8px");
+
+        try {
+            // Obtener recursos asignados directamente desde el endpoint de la tarea
+            List<Recursos> recursosAsignados = tarea.getRecursosAsignados();
+
+            if (recursosAsignados != null && !recursosAsignados.isEmpty()) {
+                VerticalLayout listaLayout = new VerticalLayout();
+                listaLayout.setSpacing(false);
+                listaLayout.setPadding(false);
+
+                Span tituloRecursosSpan = new Span("Recursos asignados:");
+                tituloRecursosSpan.getStyle()
+                        .set("font-weight", "bold")
+                        .set("font-size", "14px");
+                listaLayout.add(tituloRecursosSpan);
+
+                VerticalLayout listaRecursos = new VerticalLayout();
+                for (Recursos recurso : recursosAsignados) {
+                    Span descripcionRecurso = new Span("• " + recurso.getDescripcion());
+                    descripcionRecurso.getStyle()
+                            .set("font-size", "12px")
+                            .set("color", "#6c757d")
+                            .set("margin-left", "8px");
+                    listaRecursos.add(descripcionRecurso);
+                }
+                listaLayout.add(listaRecursos);
+                recursosContainer.add(listaLayout);
+            } else {
+                Span noRecursos = new Span("No hay recursos asignados");
+                noRecursos.getStyle()
+                        .set("font-size", "12px")
+                        .set("color", "#6c757d");
+                recursosContainer.add(noRecursos);
+            }
+        } catch (Exception e) {
+            Span error = new Span("Error al cargar recursos");
+            error.getStyle()
+                    .set("font-size", "12px")
+                    .set("color", "red");
+            recursosContainer.add(error);
+        }
+
+        // Añadir todos los componentes a la tarjeta
+        contenido.add(descripcion, infoContainer, recursosContainer, botonesLayout);
+        estructura.add(layoutTitulo, contenido);
+        tarjeta.add(estructura);
 
         return tarjeta;
     }
@@ -1223,6 +1322,101 @@ public class TareasView extends VerticalLayout {
             ex.printStackTrace();
             // Mostrar una lista vacía para evitar que la interfaz se rompa
             mostrarTareas(Collections.emptyList());
+        }
+    }
+
+    // Al final de la clase, agregar el método para el gestor
+    private void abrirDialogoAsignarRecursos() {
+        Dialog dialog = new Dialog();
+        dialog.setWidth("500px");
+        dialog.setCloseOnEsc(true);
+        dialog.setCloseOnOutsideClick(false);
+
+        H3 titulo = new H3("Asignar Recursos a Tarea");
+        titulo.getStyle().set("margin-top", "0").set("color", "#3498db");
+
+        FormLayout formLayout = new FormLayout();
+        ComboBox<Tarea> tareaCombo = new ComboBox<>("Tarea");
+        tareaCombo.setItems(obtenerTodasLasTareas());
+        tareaCombo.setItemLabelGenerator(Tarea::getNombre);
+
+        ComboBox<Recursos> recursoCombo = new ComboBox<>("Recurso");
+        List<Recursos> recursosNoAsignados = obtenerRecursosNoAsignados();
+        recursoCombo.setItems(recursosNoAsignados);
+        recursoCombo.setItemLabelGenerator(Recursos::getDescripcion);
+
+        // Verificar si hay recursos disponibles
+        if (recursosNoAsignados.isEmpty()) {
+            // Mostrar un mensaje en el propio diálogo
+            Label mensaje = new Label("No hay recursos disponibles para asignar");
+            mensaje.getStyle().set("color", "red");
+            formLayout.add(mensaje);
+
+            // Deshabilitar el comboBox y el botón de asignar
+            recursoCombo.setEnabled(false);
+        }
+
+        formLayout.add(tareaCombo, recursoCombo);
+
+        Button asignarButton = new Button("Asignar", event -> {
+            Tarea tareaSeleccionada = tareaCombo.getValue();
+            Recursos recursoSeleccionado = recursoCombo.getValue();
+            if (tareaSeleccionada != null && recursoSeleccionado != null) {
+                try {
+                    recursoSeleccionado.setTareaAsignada(tareaSeleccionada);
+                    recursoSeleccionado.setEstado(Recursos.EstadoRecurso.ASIGNADO); // Cambiar estado a 'asignado'
+                    restTemplate.put("http://localhost:8080/api/recursos/" + recursoSeleccionado.getId(),
+                            recursoSeleccionado);
+                    Notification.show("Recurso asignado correctamente");
+                    dialog.close();
+                    refreshTareas();
+                } catch (Exception ex) {
+                    Notification.show("Error al asignar el recurso: " + ex.getMessage());
+                }
+            } else {
+                Notification.show("Seleccione una tarea y un recurso");
+            }
+        });
+        asignarButton.getStyle().set("background-color", "#3498db").set("color", "white");
+
+        Button cancelarButton = new Button("Cancelar", event -> dialog.close());
+        HorizontalLayout botonesLayout = new HorizontalLayout(asignarButton, cancelarButton);
+        botonesLayout.setWidthFull();
+        botonesLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+
+        VerticalLayout dialogLayout = new VerticalLayout(titulo, formLayout, botonesLayout);
+        dialogLayout.setPadding(true);
+        dialogLayout.setSpacing(true);
+        dialog.add(dialogLayout);
+        dialog.open();
+    }
+
+    private List<Tarea> obtenerTodasLasTareas() {
+        try {
+            Tarea[] tareasArray = restTemplate.getForObject(apiUrl, Tarea[].class);
+            return tareasArray != null ? Arrays.asList(tareasArray) : Collections.emptyList();
+        } catch (Exception e) {
+            Notification.show("Error al cargar las tareas: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    private List<Recursos> obtenerRecursosNoAsignados() {
+        try {
+            List<Recursos> recursos = restTemplate.exchange(
+                    "http://localhost:8080/api/recursos",
+                    org.springframework.http.HttpMethod.GET,
+                    null,
+                    new org.springframework.core.ParameterizedTypeReference<List<Recursos>>() {
+                    }).getBody();
+            if (recursos != null) {
+                return recursos.stream().filter(r -> r.getTareaAsignada() == null).collect(Collectors.toList());
+            } else {
+                return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            Notification.show("Error al cargar los recursos: " + e.getMessage());
+            return Collections.emptyList();
         }
     }
 }

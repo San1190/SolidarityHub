@@ -17,6 +17,9 @@ public class FabricaUsuario extends FabricaGeneral {
                             foto, habilidades, diasDisponibles, turnoDisponibilidad, null);
             case "Afectado" ->
                     new Afectado(dni, nombre, apellidos, email, password, telefono, direccion, foto, necesidades);
+
+            case "Gestor" ->
+                    new Gestor(dni, nombre, apellidos, email, password, telefono, direccion, foto);
             default -> null;
         };
     }

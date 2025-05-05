@@ -150,7 +150,7 @@ public class RecursosView extends VerticalLayout {
         grid.addColumn(recursos -> recursos.getEstado().name()).setHeader("Estado");
         grid.addColumn(recursos -> {
             if (recursos.getTareaAsignada() != null) {
-                return recursos.getTareaAsignada().getNombre();
+                return recursos.getTareaAsignada().getDescripcion().replace("Atender necesidad:", "").trim();
             } else {
                 return "No asignado";
             }
