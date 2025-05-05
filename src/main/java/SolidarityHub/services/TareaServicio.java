@@ -1,10 +1,12 @@
 package SolidarityHub.services;
 
-import SolidarityHub.events.TareaCreadaEvent;
+import SolidarityHub.models.Notificacion;
 import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Tarea.EstadoTarea;
+import SolidarityHub.models.Usuario;
 import SolidarityHub.models.Voluntario;
+import SolidarityHub.repository.NotificacionRepositorio;
 import SolidarityHub.repository.TareaRepositorio;
 
 import java.time.LocalDateTime;
@@ -12,9 +14,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import SolidarityHub.repository.UsuarioRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TareaServicio {
@@ -22,10 +26,16 @@ public class TareaServicio {
     private final TareaRepositorio tareaRepositorio;
 
     @Autowired
-    private ApplicationEventPublisher eventPublisher;
+    private final NotificacionRepositorio notificacionRepositorio;
 
-    public TareaServicio(TareaRepositorio tareaRepositorio) {
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+    @Autowired
+    private UsuarioRepositorio usuarioRepositorio;
+
+    public TareaServicio(TareaRepositorio tareaRepositorio, NotificacionRepositorio notificacionRepositorio) {
         this.tareaRepositorio = tareaRepositorio;
+        this.notificacionRepositorio = notificacionRepositorio;
     }
 
     // Método para listar todas las tareas
@@ -150,5 +160,35 @@ public class TareaServicio {
                 .filter(tarea -> tarea.getFechaInicio().isAfter(inicioDia) && 
                                  tarea.getFechaInicio().isBefore(finDia))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void notificarSuscritores(Tarea tarea, String titulo, String mensaje) {
+        for (Voluntario voluntario : tarea.getSuscriptores()) {
+            Notificacion notificacion = new Notificacion();
+            notificacion.setUsuario(voluntario);
+            notificacion.setTarea(tarea);
+            notificacion.setTitulo(titulo);
+            notificacion.setMensaje(mensaje);
+            notificacionRepositorio.save(notificacion);
+        }
+    }
+
+    public void suscribirVoluntario(Long tareaId, Long voluntarioId) {
+        Tarea tarea = tareaRepositorio.findById(tareaId).orElseThrow();
+        Usuario usuario = usuarioRepositorio.findById(voluntarioId).orElseThrow();
+        if (usuario instanceof Voluntario voluntario) {
+            tarea.suscribirVoluntario(voluntario);
+        }
+        tareaRepositorio.save(tarea);
+    }
+
+    public void dessuscribirVoluntario(Long tareaId, Long voluntarioId) {
+        Tarea tarea = tareaRepositorio.findById(tareaId).orElseThrow();
+        Usuario usuario = usuarioRepositorio.findById(voluntarioId).orElseThrow();
+        if (usuario instanceof Voluntario voluntario) {
+            tarea.dessuscribirVoluntario(voluntario);
+        }
+        tareaRepositorio.save(tarea);
     }
 }

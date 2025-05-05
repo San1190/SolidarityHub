@@ -1,5 +1,7 @@
 package SolidarityHub.controllers;
 
+import SolidarityHub.models.Notificacion;
+import SolidarityHub.repository.UsuarioRepositorio;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,14 +15,17 @@ import SolidarityHub.services.UsuarioServicio;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioControlador {
     private final UsuarioServicio usuarioServicio;
+    private final UsuarioRepositorio usuarioRepositorio;
 
-    public UsuarioControlador(UsuarioServicio usuarioServicio) {
+    public UsuarioControlador(UsuarioServicio usuarioServicio, UsuarioRepositorio usuarioRepositorio) {
         this.usuarioServicio = usuarioServicio;
+        this.usuarioRepositorio = usuarioRepositorio;
     }
 
     // 🔹 Obtener todos los usuarios
@@ -169,5 +174,21 @@ public class UsuarioControlador {
                 : usuarioServicio.getDefaultProfileImage();
 
         return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(foto);
+    }
+
+    @GetMapping("/{id}/notificaciones")
+    public ResponseEntity<List<Notificacion>> actualizarNotificaciones(@PathVariable long id) {
+        Optional<Usuario> usuarioOpt = usuarioRepositorio.findById(id);
+        if (usuarioOpt.isPresent()) {
+            Usuario usuario = usuarioOpt.get();
+            if (usuario instanceof Voluntario voluntario) {
+                List<Notificacion> notificaciones = usuarioServicio.actualizarNotificaciones(voluntario);
+                return ResponseEntity.ok(notificaciones);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        }else{
+            return ResponseEntity.notFound().build();
+        }
     }
 }

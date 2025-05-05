@@ -67,8 +67,16 @@ public class Tarea {
     @Enumerated(EnumType.STRING) // Guarda el nombre del enum, como "COCINA", "MEDICINA", etc.
     @Column(name = "habilidad")
     private List<Habilidad> habilidadesRequeridas;
-    
-    
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "tarea_suscriptores",
+            joinColumns = @JoinColumn(name = "tarea_id"),
+            inverseJoinColumns = @JoinColumn(name = "voluntario_id")
+    )
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "tareasAsignadas"})
+    private List<Voluntario> suscriptores;
+
     // Constructor vacío requerido por JPA
     public Tarea() {}
 
@@ -77,7 +85,7 @@ public class Tarea {
                 String localizacion, int numeroVoluntariosNecesarios, 
                 LocalDateTime fechaInicio, LocalDateTime fechaFin, 
                 EstadoTarea estado, Usuario creador, List<Afectado> afectados, 
-                List<Voluntario> voluntariosAsignados, List<Habilidad> habilidadesRequeridas) {
+                List<Voluntario> voluntariosAsignados, List<Habilidad> habilidadesRequeridas, List<Voluntario> suscriptores) {
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.tipo = tipo;
@@ -90,6 +98,7 @@ public class Tarea {
         this.afectados = afectados;
         this.voluntariosAsignados = voluntariosAsignados;
         this.habilidadesRequeridas = habilidadesRequeridas;
+        this.suscriptores = suscriptores;
     }
     
     // Getters y Setters
@@ -144,6 +153,11 @@ public class Tarea {
         this.habilidadesRequeridas = habilidadesRequeridas;
     }
 
+    public List<Voluntario> getSuscriptores() { return suscriptores; }
+    public void setSuscriptores(List<Voluntario> suscriptores) {
+        this.suscriptores = suscriptores;
+    }
+
     public TipoNecesidad getTipoNecesidad() {
         return tipo;
     }
@@ -158,5 +172,12 @@ public class Tarea {
 
     public void setEstadoTarea(EstadoTarea estado) {
         this.estado = estado;
+    }
+
+    public void suscribirVoluntario(Voluntario voluntario) {
+        suscriptores.add(voluntario);
+    }
+    public void dessuscribirVoluntario(Voluntario voluntario) {
+        suscriptores.remove(voluntario);
     }
 }

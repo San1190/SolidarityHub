@@ -1,5 +1,6 @@
 package SolidarityHub.controllers;
 
+import SolidarityHub.models.dtos.NotificacionDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -344,5 +345,34 @@ public class TareaControlador {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error al emparejar tareas: " + e.getMessage());
         }
+    }
+
+    @PostMapping("/{id}/notificar")
+    public ResponseEntity<Void> notificarSuscripores(@PathVariable Long id,  @RequestBody NotificacionDTO dto){
+        Optional<Tarea> tareaOpt = tareaServicio.obtenerTareaPorId(id);
+
+        if (dto.getTitulo() == null || dto.getMensaje() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        tareaOpt.ifPresent(tarea -> tareaServicio.notificarSuscritores(tarea, dto.getTitulo(), dto.getMensaje()));
+
+        if(tareaOpt.isPresent()){
+            return ResponseEntity.ok().build();
+        } else {
+             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/{tareaId}/suscribir/{voluntarioId}")
+    public ResponseEntity<Void> suscribir(@PathVariable Long tareaId, @PathVariable Long voluntarioId) {
+        tareaServicio.suscribirVoluntario(tareaId, voluntarioId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{tareaId}/dessuscribir/{voluntarioId}")
+    public ResponseEntity<Void> dessuscribir(@PathVariable Long tareaId, @PathVariable Long voluntarioId) {
+        tareaServicio.dessuscribirVoluntario(tareaId, voluntarioId);
+        return ResponseEntity.ok().build();
     }
 }

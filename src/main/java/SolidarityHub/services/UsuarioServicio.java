@@ -1,6 +1,8 @@
 package SolidarityHub.services;
 
+import SolidarityHub.models.Notificacion;
 import SolidarityHub.models.Usuario;
+import SolidarityHub.models.Voluntario;
 import SolidarityHub.repository.UsuarioRepositorio;
 import org.springframework.stereotype.Service;
 import org.springframework.core.io.ClassPathResource;
@@ -14,10 +16,12 @@ import java.util.Optional;
 public class UsuarioServicio {
     private final UsuarioRepositorio usuarioRepositorio;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificacionServicio notificacionServicio;
 
-    public UsuarioServicio(UsuarioRepositorio usuarioRepositorio, ApplicationEventPublisher eventPublisher) {
+    public UsuarioServicio(UsuarioRepositorio usuarioRepositorio, ApplicationEventPublisher eventPublisher, NotificacionServicio notificacionServicio) {
         this.usuarioRepositorio = usuarioRepositorio;
         this.eventPublisher = eventPublisher;
+        this.notificacionServicio = notificacionServicio;
     }
 
     // 🔹 Método corregido para buscar usuario por email y tipo (usando Class)
@@ -79,5 +83,9 @@ public class UsuarioServicio {
         try (var inputStream = defaultImage.getInputStream()) {
             return inputStream.readAllBytes();
         }
+    }
+
+    public List<Notificacion> actualizarNotificaciones(Voluntario voluntario) {
+        return notificacionServicio.findByVoluntarioAndEstado(voluntario, Notificacion.EstadoNotificacion.PENDIENTE);
     }
 }
