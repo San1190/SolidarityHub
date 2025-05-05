@@ -21,8 +21,6 @@ public class NotificacionServicio {
     @Autowired
     private NotificacionRepositorio notificacionRepositorio;
     
-    @Autowired
-    private TareaRepositorio tareaRepositorio;
     
     @Autowired
     private TareaServicio tareaServicio;

@@ -226,15 +226,15 @@ public class TareasView extends VerticalLayout {
             misTareasButton.getStyle()
                     .set("white-space", "nowrap");
 
-            layoutUsuario.add(tareasCompatiblesButton, misTareasButton);
-            layout.add(layoutUsuario);
+            accionesUsuario.add(tareasCompatiblesButton, misTareasButton);
+            layout.add(accionesUsuario);
         } else if (usuarioActual != null && usuarioActual.getTipoUsuario().equals("gestor")) {
             // Para gestor, mostrar botón para asignar recursos manualmente
             Button asignarRecursosButton = new Button("Asignar Recursos a Tarea", e -> abrirDialogoAsignarRecursos());
             asignarRecursosButton.getElement().getThemeList().add("primary");
-            layoutUsuario.add(asignarRecursosButton);
-            layout.add(layoutUsuario);
-            accionesUsuario.add(tareasCompatiblesButton, misTareasButton);
+            accionesUsuario.add(asignarRecursosButton);
+            layout.add(accionesUsuario);
+            accionesUsuario.add(asignarRecursosButton);
         } else if (usuarioActual instanceof Afectado) {
             // Para afectados, solo mostrar todas las tareas disponibles
             Button todasLasTareasButton = new Button("Todas las Tareas",
@@ -385,408 +385,152 @@ public class TareasView extends VerticalLayout {
     }
 
     private Component crearTarjetaTarea(Tarea tarea) {
+        // Contenedor principal
         Div tarjeta = new Div();
         tarjeta.setWidth("100%");
         tarjeta.getStyle()
-                .set("box-shadow", "none")
-                .set("background-color", "white")
-                .set("transition", "all 0.3s ease")
-                .set("margin-bottom", "-50px")
-                .set("border", "transparent");
-
-        tarjeta.getElement().addEventListener("mouseover", e -> {
-            tarjeta.getStyle()
-                    .set("transform", "translateY(-5px)");
-        });
-        tarjeta.getElement().addEventListener("mouseout", e -> {
-            tarjeta.getStyle()
-                    .set("transform", "translateY(0)");
-        });
-
-        VerticalLayout contenidoTarjeta = new VerticalLayout();
-        contenidoTarjeta.setPadding(false);
-        contenidoTarjeta.setSpacing(false);
-        contenidoTarjeta.setWidthFull();
-
+               .set("box-shadow", "none")
+               .set("background-color", "white")
+               .set("transition", "all 0.3s ease")
+               .set("margin-bottom", "-50px")
+               .set("border", "transparent");
+    
+        // Efecto hover
+        tarjeta.getElement().addEventListener("mouseover", e ->
+            tarjeta.getStyle().set("transform", "translateY(-5px)")
+        );
+        tarjeta.getElement().addEventListener("mouseout", e ->
+            tarjeta.getStyle().set("transform", "translateY(0)")
+        );
+    
+        // Layout interno
+        VerticalLayout contenido = new VerticalLayout();
+        contenido.setPadding(false);
+        contenido.setSpacing(false);
+        contenido.setWidthFull();
+    
+        // 1) Cabecera: título, tipo y estado
         HorizontalLayout cabecera = new HorizontalLayout();
         cabecera.setWidthFull();
         cabecera.setPadding(true);
         cabecera.getStyle()
-                .set("background-color", "#f8f9fa")
-                .set("border-bottom", "1px solid #eaeaea")
-                .set("padding-top", "18px")
-                .set("padding-bottom", "12px")
-                .set("border-radius", "12px 12px 0 0");
-
-        // Título de la tarea
+               .set("background-color", "#f8f9fa")
+               .set("border-bottom", "1px solid #eaeaea")
+               .set("padding", "18px 12px")
+               .set("border-radius", "12px 12px 0 0");
+    
         H4 titulo = new H4(tarea.getNombre());
-                titulo.getStyle()
-                .set("margin", "0")
-                .set("font-weight", "600")
-                .set("color", "#333")
-                .set("font-size", "20px")
-                .set("overflow", "hidden")
-                .set("text-overflow", "ellipsis")
-                .set("white-space", "nowrap");
-
-        // Contenedor para las etiquetas
-        Div etiquetasContainer = new Div();
-        etiquetasContainer.getStyle()
-                .set("display", "flex")
-                .set("gap", "8px")
-                .set("margin-left", "auto");
-
-        Span estadoSpan = new Span(tarea.getEstado() != null ? tarea.getEstado().name() : "SIN ESTADO");
-        estadoSpan.getStyle()
-                .set("padding", "4px 10px")
-                .set("border-radius", "20px")
-                .set("font-size", "12px")
-                .set("font-weight", "600")
-                .set("display", "inline-flex")
-                .set("align-items", "center")
-                .set("height", "22px");
-
-        // Colores según el estado
-        if (tarea.getEstado() != null) {
-            switch (tarea.getEstado()) {
-                case PREPARADA:
-                    estadoSpan.getStyle()
-                            .set("background-color", "#FFF8E1")
-                            .set("color", "#F57F17")
-                            .set("border", "1px solid #FFE082");
-                    break;
-                case EN_CURSO:
-                    estadoSpan.getStyle()
-                            .set("background-color", "#E3F2FD")
-                            .set("color", "#1565C0")
-                            .set("border", "1px solid #BBDEFB");
-                    break;
-                case FINALIZADA:
-                    estadoSpan.getStyle()
-                            .set("background-color", "#E8F5E9")
-                            .set("color", "#2E7D32")
-                            .set("border", "1px solid #C8E6C9");
-                    break;
-                default:
-                    estadoSpan.getStyle()
-                            .set("background-color", "#ECEFF1")
-                            .set("color", "#546E7A")
-                            .set("border", "1px solid #CFD8DC");
-            }
-        } else {
-            estadoSpan.getStyle()
-                    .set("background-color", "#ECEFF1")
-                    .set("color", "#546E7A")
-                    .set("border", "1px solid #CFD8DC");
-        }
-
-        // Etiqueta de tipo de necesidad
-        Span tipoSpan = new Span(tarea.getTipo() != null ? tarea.getTipo().name() : "SIN TIPO");
-        tipoSpan.getStyle()
-                .set("padding", "4px 10px")
-                .set("border-radius", "20px")
-                .set("font-size", "12px")
-                .set("font-weight", "600")
-                .set("background-color", "#F3E5F5")
-                .set("color", "#6A1B9A")
-                .set("border", "1px solid #E1BEE7")
-                .set("display", "inline-flex")
-                .set("align-items", "center")
-                .set("height", "22px");
-
-        etiquetasContainer.add(tipoSpan, estadoSpan);
-        cabecera.add(titulo, etiquetasContainer);
-
-        // Cuerpo de la tarjeta
+        titulo.getStyle().set("margin", "0");
+    
+        Span tipoSpan = crearBadge(tarea.getTipo() != null ? tarea.getTipo().name() : "SIN TIPO",
+                                   "#F3E5F5", "#6A1B9A", "1px solid #E1BEE7");
+        Span estadoSpan = crearBadge(
+            tarea.getEstado() != null ? tarea.getEstado().name() : "SIN ESTADO",
+            tarea.getEstado() == EstadoTarea.PREPARADA ? "#FFF3CD" :
+            tarea.getEstado() == EstadoTarea.EN_CURSO ? "#D1ECF1" :
+            tarea.getEstado() == EstadoTarea.FINALIZADA ? "#D4EDDA" : "#E2E3E5",
+            tarea.getEstado() == EstadoTarea.PREPARADA ? "#856404" :
+            tarea.getEstado() == EstadoTarea.EN_CURSO ? "#0C5460" :
+            tarea.getEstado() == EstadoTarea.FINALIZADA ? "#155724" : "#383D41",
+            tarea.getEstado() == EstadoTarea.PREPARADA ? "1px solid #856404" :
+            tarea.getEstado() == EstadoTarea.EN_CURSO ? "1px solid #0C5460" :
+            tarea.getEstado() == EstadoTarea.FINALIZADA ? "1px solid #155724" : "1px solid #383D41"
+        );
+    
+        Div etiquetas = new Div(tipoSpan, estadoSpan);
+        etiquetas.getStyle().set("margin-left", "auto");
+    
+        cabecera.add(titulo, etiquetas);
+    
+        // 2) Cuerpo: descripción e info adicional
         VerticalLayout cuerpo = new VerticalLayout();
         cuerpo.setPadding(true);
-        cuerpo.setSpacing(false);
-        cuerpo.getStyle()
-                .set("padding", "16px 20px")
-                .set("background-color", "#ffffff")
-                .set("border-radius", "0 0 12px 12px");
-                .set("background-color", "#E2E3E5")
-                .set("color", "#383D41");
-
-        layoutTitulo.add(titulo, divisortitulo, estadoSpan, tipoSpan);
-
-        // Descripción con límite de caracteres
-        String descripcionCorta = tarea.getDescripcion();
-        if (descripcionCorta != null && descripcionCorta.length() > 100) {
-            descripcionCorta = descripcionCorta.substring(0, 97) + "...";
-        }
-
-        Paragraph descripcion = new Paragraph(descripcionCorta);
-        descripcion.getStyle()
-                .set("color", "#444")
-                .set("margin", "0 0 20px 0")
-                .set("line-height", "1.6")
-                .set("font-size", "15px")
-                .set("font-weight", "400")
-                .set("letter-spacing", "0.2px");
-
-        // Información adicional en formato de lista con estilo mejorado
-        Div infoContainer = new Div();
-        infoContainer.getStyle()
+        cuerpo.getStyle().set("background-color", "#E2E3E5");
+    
+        Paragraph desc = new Paragraph(truncar(tarea.getDescripcion(), 100));
+        desc.getStyle().set("margin-bottom", "20px");
+    
+        Div infoGrid = new Div();
+        infoGrid.getStyle()
                 .set("display", "grid")
                 .set("grid-template-columns", "1fr 1fr")
                 .set("gap", "16px 24px")
-                .set("background-color", "#f9f9f9")
-                .set("border-radius", "8px")
-                .set("padding", "16px")
-                .set("margin-bottom", "10px");
-
-        // Localización con icono
-        HorizontalLayout localizacionLayout = new HorizontalLayout();
-        localizacionLayout.setSpacing(false);
-        localizacionLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        localizacionLayout.getStyle()
-                .set("gap", "10px")
-                .set("padding", "4px 0");
-
-        Icon locIcon = VaadinIcon.MAP_MARKER.create();
-        locIcon.setSize("18px");
-        locIcon.getStyle()
-                .set("color", "#1676F3")
-                .set("flex-shrink", "0");
-
-        Span localizacion = new Span(tarea.getLocalizacion());
-        localizacion.getStyle()
-                .set("font-size", "14px")
-                .set("color", "#555")
-                .set("font-weight", "500")
-                .set("overflow", "hidden")
-                .set("text-overflow", "ellipsis")
-                .set("white-space", "nowrap");
-
-        localizacionLayout.add(locIcon, localizacion);
-
-        // Fechas con icono
-        HorizontalLayout fechasLayout = new HorizontalLayout();
-        fechasLayout.setSpacing(false);
-        fechasLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        fechasLayout.getStyle()
-                .set("gap", "10px")
-                .set("padding", "4px 0");
-
-        Icon calendarIcon = VaadinIcon.CALENDAR.create();
-        calendarIcon.setSize("18px");
-        calendarIcon.getStyle()
-                .set("color", "#1676F3")
-                .set("flex-shrink", "0");
-
-        String fechasTexto = "";
-        if (tarea.getFechaInicio() != null && tarea.getFechaFin() != null) {
-            fechasTexto = formatter.format(tarea.getFechaInicio()) + " - " + formatter.format(tarea.getFechaFin());
-        } else {
-            fechasTexto = "Fechas no definidas";
-        }
-
-        Span fechas = new Span(fechasTexto);
-        fechas.getStyle()
-                .set("font-size", "14px")
-                .set("color", "#555")
-                .set("font-weight", "500")
-                .set("overflow", "hidden")
-                .set("text-overflow", "ellipsis")
-                .set("white-space", "nowrap");
-
-        fechasLayout.add(calendarIcon, fechas);
-
-        // Voluntarios con icono
-        HorizontalLayout voluntariosLayout = new HorizontalLayout();
-        voluntariosLayout.setSpacing(false);
-        voluntariosLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        voluntariosLayout.getStyle()
-                .set("gap", "10px")
-                .set("padding", "4px 0");
-
-        Icon userIcon = VaadinIcon.USERS.create();
-        userIcon.setSize("18px");
-        userIcon.getStyle()
-                .set("color", "#1676F3")
-                .set("flex-shrink", "0");
-
-        Span voluntariosInfo = new Span(tarea.getNumeroVoluntariosNecesarios() + " voluntarios necesarios");
-        voluntariosInfo.getStyle()
-                .set("font-size", "14px")
-                .set("color", "#555")
-                .set("font-weight", "500")
-                .set("overflow", "hidden")
-                .set("text-overflow", "ellipsis")
-                .set("white-space", "nowrap");
-
-        voluntariosLayout.add(userIcon, voluntariosInfo);
-
-        // Información de recursos
-        HorizontalLayout recursosLayout = new HorizontalLayout();
-        recursosLayout.setSpacing(false);
-        recursosLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        recursosLayout.getStyle()
-                .set("gap", "10px")
-                .set("padding", "4px 0");
-
-        Icon resourceIcon = VaadinIcon.PACKAGE.create();
-        resourceIcon.setSize("18px");
-        resourceIcon.getStyle()
-                .set("color", "#1676F3")
-                .set("flex-shrink", "0");
-
-        String recursosTexto = "No hay recursos asignados";
-        List<Recursos> recursosAsignados = obtenerRecursosAsignados(tarea);
-        if (!recursosAsignados.isEmpty()) {
-            recursosTexto = recursosAsignados.size() + " recursos asignados";
-        }
-
-        Span recursosInfo = new Span(recursosTexto);
-        recursosInfo.getStyle()
-                .set("font-size", "14px")
-                .set("color", "#555")
-                .set("font-weight", "500")
-                .set("overflow", "hidden")
-                .set("text-overflow", "ellipsis")
-                .set("white-space", "nowrap");
-
-        recursosLayout.add(resourceIcon, recursosInfo);
-
-        // Añadir toda la información al contenedor
-        infoContainer.add(localizacionLayout, fechasLayout, voluntariosLayout, recursosLayout);
-        cuerpo.add(descripcion, infoContainer);
-
-        // Pie de la tarjeta con botones de acción
+                .set("padding", "16px");
+    
+        infoGrid.add(
+            crearInfoItem(VaadinIcon.MAP_MARKER, tarea.getLocalizacion()),
+            crearInfoItem(VaadinIcon.CALENDAR, 
+                "Inicio: " + (tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "No definida") + 
+                "\nFin: " + (tarea.getFechaFin() != null ? formatter.format(tarea.getFechaFin()) : "No definida")),
+            crearInfoItem(VaadinIcon.USERS, tarea.getNumeroVoluntariosNecesarios() + " voluntarios"),
+            crearInfoItem(VaadinIcon.PACKAGE, "Recursos: " + (obtenerRecursosAsignados(tarea) != null && !obtenerRecursosAsignados(tarea).isEmpty() ?
+                obtenerRecursosAsignados(tarea).stream().<Recursos>map(r -> (Recursos) r)
+                    .map(r -> ((Recursos)r).getTipoRecurso().name())
+                    .collect(Collectors.joining(", ")) 
+                : "Sin recursos asignados"))
+        );
+    
+        cuerpo.add(desc, infoGrid);
+    
+        // 3) Pie: botones
         HorizontalLayout pie = new HorizontalLayout();
         pie.setWidthFull();
         pie.setPadding(true);
         pie.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
-        pie.getStyle()
-                .set("border-top", "1px solid #eaeaea")
-                .set("background-color", "#f8f9fa")
-                .set("padding-top", "12px")
-                .set("padding-bottom", "12px")
-                .set("border-radius", "0 0 12px 12px");
-
-        // Botón de detalles
-        Button verDetallesBtn = new Button("Ver Detalles", new Icon(VaadinIcon.SEARCH));
-        verDetallesBtn.getElement().getThemeList().add("tertiary");
-        verDetallesBtn.getStyle()
-                .set("margin-right", "8px")
-                .set("font-weight", "500");
-        verDetallesBtn.addClickListener(e -> mostrarDetallesTarea(tarea));
-
-        // Botón de editar (solo para voluntarios)
-        Button editarBtn = new Button("Editar", new Icon(VaadinIcon.EDIT));
-        editarBtn.getElement().getThemeList().add("tertiary");
-        editarBtn.getStyle().set("font-weight", "500");
-        editarBtn.addClickListener(e -> abrirFormularioTarea(tarea));
-
-        // Botón de eliminar (solo para voluntarios)
-        Button eliminarBtn = new Button("Eliminar", new Icon(VaadinIcon.TRASH));
-        eliminarBtn.getElement().getThemeList().add("tertiary");
-        eliminarBtn.getStyle()
-                .set("color", "#D32F2F")
-                .set("font-weight", "500");
-        eliminarBtn.addClickListener(e -> eliminarTarea(tarea));
-
-        // Añadir botones según el tipo de usuario
-        if (usuarioActual instanceof Voluntario) {
-            boolean esCreador = tarea.getCreador() != null && tarea.getCreador().getId().equals(usuarioActual.getId());
-            if (esCreador) {
-                pie.add(verDetallesBtn, editarBtn, eliminarBtn);
-            } else {
-                pie.add(verDetallesBtn);
-            }
-        } else {
-            pie.add(verDetallesBtn);
-        // Botones de acción
-        VerticalLayout botonesLayout = new VerticalLayout();
-        botonesLayout.setWidthFull();
-        botonesLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-
-        Button verDetallesButton = new Button("Ver Detalles", e -> mostrarDetallesTarea(tarea));
-        verDetallesButton.getElement().getThemeList().add("primary");
-
-        botonesLayout.add(verDetallesButton);
-
-        // Añadir botones específicos según el tipo de usuario y el estado de la tarea
-        if (usuarioActual instanceof Voluntario) {
-            // Si es el creador o está asignado, mostrar botones de edición/eliminación
-            boolean esCreador = tarea.getCreador() != null && tarea.getCreador().getId().equals(usuarioActual.getId());
-            boolean estaAsignado = tarea.getVoluntariosAsignados() != null &&
-                    tarea.getVoluntariosAsignados().stream()
-                            .anyMatch(vol -> vol.getId().equals(usuarioActual.getId()));
-
-            if (esCreador) {
-                Button editarButton = new Button("Editar", e -> abrirFormulario(tarea));
-                Button eliminarButton = new Button("Eliminar", e -> eliminarTarea(tarea));
-                eliminarButton.getElement().getThemeList().add("error");
-                botonesLayout.add(editarButton, eliminarButton);
-            } else if (!estaAsignado && tarea.getEstado() == EstadoTarea.PREPARADA) {
-                // Si no está asignado y la tarea está pendiente, mostrar botón para postularse
-                Button postularseButton = new Button("Postularme", e -> {
-                    // Aquí iría la lógica para postularse a la tarea
-                    Notification.show("Funcionalidad de postulación no implementada", 3000, Position.BOTTOM_START);
-                });
-                postularseButton.getElement().getThemeList().add("success");
-                botonesLayout.add(postularseButton);
-            }
+        pie.getStyle().set("border-top", "1px solid #eaeaea");
+    
+        Button detalles = new Button("Ver Detalles", new Icon(VaadinIcon.SEARCH));
+        detalles.getElement().getThemeList().add("tertiary");
+        detalles.addClickListener(e -> mostrarDetallesTarea(tarea));
+        pie.add(detalles);
+    
+        if (usuarioActual instanceof Voluntario
+            && esCreador(tarea, usuarioActual)) {
+            Button editar = new Button("Editar", new Icon(VaadinIcon.EDIT));
+            editar.addClickListener(e -> abrirFormularioTarea(tarea));
+            Button eliminar = new Button("Eliminar", new Icon(VaadinIcon.TRASH));
+            eliminar.getElement().getThemeList().add("error");
+            eliminar.addClickListener(e -> eliminarTarea(tarea));
+            pie.add(editar, eliminar);
         }
-
-        // Contenedor para recursos asignados
-        Div recursosContainer = new Div();
-        recursosContainer.setWidthFull();
-        recursosContainer.getStyle()
-                .set("margin-top", "12px")
-                .set("margin-bottom", "8px");
-
-        try {
-            // Obtener recursos asignados directamente desde el endpoint de la tarea
-            List<Recursos> recursosAsignados = tarea.getRecursosAsignados();
-
-            if (recursosAsignados != null && !recursosAsignados.isEmpty()) {
-                VerticalLayout listaLayout = new VerticalLayout();
-                listaLayout.setSpacing(false);
-                listaLayout.setPadding(false);
-
-                Span tituloRecursosSpan = new Span("Recursos asignados:");
-                tituloRecursosSpan.getStyle()
-                        .set("font-weight", "bold")
-                        .set("font-size", "14px");
-                listaLayout.add(tituloRecursosSpan);
-
-                VerticalLayout listaRecursos = new VerticalLayout();
-                for (Recursos recurso : recursosAsignados) {
-                    Span descripcionRecurso = new Span("• " + recurso.getDescripcion());
-                    descripcionRecurso.getStyle()
-                            .set("font-size", "12px")
-                            .set("color", "#6c757d")
-                            .set("margin-left", "8px");
-                    listaRecursos.add(descripcionRecurso);
-                }
-                listaLayout.add(listaRecursos);
-                recursosContainer.add(listaLayout);
-            } else {
-                Span noRecursos = new Span("No hay recursos asignados");
-                noRecursos.getStyle()
-                        .set("font-size", "12px")
-                        .set("color", "#6c757d");
-                recursosContainer.add(noRecursos);
-            }
-        } catch (Exception e) {
-            Span error = new Span("Error al cargar recursos");
-            error.getStyle()
-                    .set("font-size", "12px")
-                    .set("color", "red");
-            recursosContainer.add(error);
-        }
-
-        // Añadir todos los componentes a la tarjeta
-        contenido.add(descripcion, infoContainer, recursosContainer, botonesLayout);
-        estructura.add(layoutTitulo, contenido);
-        tarjeta.add(estructura);
-
+    
+        // Ensamblar tarjeta
+        contenido.add(cabecera, cuerpo, pie);
+        tarjeta.add(contenido);
         return tarjeta;
     }
-
+    
+    // Métodos auxiliares:
+    private Span crearBadge(String text, String bg, String color, String border) {
+        Span badge = new Span(text);
+        badge.getStyle()
+             .set("padding", "4px 10px")
+             .set("border-radius", "20px")
+             .set("font-size", "12px")
+             .set("font-weight", "600")
+             .set("background-color", bg)
+             .set("color", color)
+             .set("border", border);
+        return badge;
+    }
+    
+    private Component crearInfoItem(VaadinIcon iconType, String text) {
+        HorizontalLayout layout = new HorizontalLayout();
+        Icon icon = iconType.create();
+        icon.setSize("18px");
+        layout.add(icon, new Span(text));
+        return layout;
+    }
+    
+    private String truncar(String s, int max) {
+        if (s == null) return "";
+        return s.length() <= max ? s : s.substring(0, max - 3) + "...";
+    }
+    
+    private boolean esCreador(Tarea tarea, Usuario u) {
+        return tarea.getCreador() != null && tarea.getCreador().getId().equals(u.getId());
+    }
+    
     /**
      * Muestra un diálogo con los detalles completos de una tarea
      * 
