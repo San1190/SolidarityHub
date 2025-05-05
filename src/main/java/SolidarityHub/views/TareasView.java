@@ -37,7 +37,12 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
+
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClientException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -494,75 +499,56 @@ public class TareasView extends VerticalLayout {
             }
         }
 
-        // Añadir barra de progreso de recursos
-        Div progressBarContainer = new Div();
-        progressBarContainer.setWidthFull();
-        progressBarContainer.getStyle()
+        // Contenedor para recursos asignados
+        Div recursosContainer = new Div();
+        recursosContainer.setWidthFull();
+        recursosContainer.getStyle()
                 .set("margin-top", "12px")
                 .set("margin-bottom", "8px");
 
-        // Obtener los recursos asignados a esta tarea
-        List<Recursos> recursosAsignados = obtenerRecursosAsignados(tarea);
+        try {
+            // Obtener recursos asignados directamente desde el endpoint de la tarea
+            List<Recursos> recursosAsignados = tarea.getRecursosAsignados();
 
-        if (!recursosAsignados.isEmpty()) {
-            // Agrupar recursos por tipo
-            Map<TipoRecurso, Long> recursosPorTipo = recursosAsignados.stream()
-                    .collect(Collectors.groupingBy(Recursos::getTipoRecurso, Collectors.counting()));
+            if (recursosAsignados != null && !recursosAsignados.isEmpty()) {
+                VerticalLayout listaLayout = new VerticalLayout();
+                listaLayout.setSpacing(false);
+                listaLayout.setPadding(false);
 
-            // Crear una barra de progreso para cada tipo de recurso
-            for (Map.Entry<TipoRecurso, Long> entry : recursosPorTipo.entrySet()) {
-                String tipoRecurso = entry.getKey().name();
-                long cantidad = entry.getValue();
+                Span tituloRecursosSpan = new Span("Recursos asignados:");
+                tituloRecursosSpan.getStyle()
+                        .set("font-weight", "bold")
+                        .set("font-size", "14px");
+                listaLayout.add(tituloRecursosSpan);
 
-                // Contenedor para la etiqueta y la barra
-                HorizontalLayout progressLayout = new HorizontalLayout();
-                progressLayout.setWidthFull();
-                progressLayout.setSpacing(false);
-                progressLayout.setPadding(false);
-                progressLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-
-                // Etiqueta del tipo de recurso
-                Span tipoLabel = new Span(tipoRecurso + ": " + cantidad);
-                tipoLabel.getStyle()
+                VerticalLayout listaRecursos = new VerticalLayout();
+                for (Recursos recurso : recursosAsignados) {
+                    Span descripcionRecurso = new Span("• " + recurso.getDescripcion());
+                    descripcionRecurso.getStyle()
+                            .set("font-size", "12px")
+                            .set("color", "#6c757d")
+                            .set("margin-left", "8px");
+                    listaRecursos.add(descripcionRecurso);
+                }
+                listaLayout.add(listaRecursos);
+                recursosContainer.add(listaLayout);
+            } else {
+                Span noRecursos = new Span("No hay recursos asignados");
+                noRecursos.getStyle()
                         .set("font-size", "12px")
-                        .set("min-width", "120px");
-
-                // Barra de progreso
-                Div progressBar = new Div();
-                progressBar.setWidthFull();
-                progressBar.setHeight("8px");
-                progressBar.getStyle()
-                        .set("background-color", "#e9ecef")
-                        .set("border-radius", "4px")
-                        .set("overflow", "hidden");
-
-                // Parte llena de la barra
-                Div progressFill = new Div();
-                progressFill.setHeight("100%");
-                // Ancho basado en la cantidad (máximo 100%)
-                int widthPercent = Math.min((int) (cantidad * 20), 100); // 20% por cada recurso, máximo 100%
-                progressFill.setWidth(widthPercent + "%");
-                progressFill.getStyle()
-                        .set("background-color", getColorForResourceType(entry.getKey()))
-                        .set("border-radius", "4px");
-
-                progressBar.add(progressFill);
-                progressLayout.add(tipoLabel, progressBar);
-                progressBarContainer.add(progressLayout);
+                        .set("color", "#6c757d");
+                recursosContainer.add(noRecursos);
             }
-        } else {
-            // Si no hay recursos asignados, mostrar un mensaje
-            Span noRecursosLabel = new Span("No hay recursos asignados");
-            noRecursosLabel.getStyle()
+        } catch (Exception e) {
+            Span error = new Span("Error al cargar recursos");
+            error.getStyle()
                     .set("font-size", "12px")
-                    .set("color", "#6c757d")
-                    .set("display", "block")
-                    .set("text-align", "center");
-            progressBarContainer.add(noRecursosLabel);
+                    .set("color", "red");
+            recursosContainer.add(error);
         }
 
         // Añadir todos los componentes a la tarjeta
-        contenido.add(descripcion, infoContainer, progressBarContainer, botonesLayout);
+        contenido.add(descripcion, infoContainer, recursosContainer, botonesLayout);
         estructura.add(layoutTitulo, contenido);
         tarjeta.add(estructura);
 
@@ -1129,9 +1115,7 @@ public class TareasView extends VerticalLayout {
 
         // Verificar si hay recursos disponibles
         if (recursosNoAsignados.isEmpty()) {
-            // Notification.show("No hay recursos disponibles para asignar", 3000,
-            // Notification.Position.MIDDLE);
-            // También puedes mostrar un mensaje en el propio diálogo
+            // Mostrar un mensaje en el propio diálogo
             Label mensaje = new Label("No hay recursos disponibles para asignar");
             mensaje.getStyle().set("color", "red");
             formLayout.add(mensaje);
