@@ -4,6 +4,7 @@ import SolidarityHub.controllers.UsuarioControlador;
 import SolidarityHub.factories.FabricaUsuario;
 import SolidarityHub.models.*;
 
+import SolidarityHub.repository.TareaRepositorio;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
@@ -38,9 +39,7 @@ import org.springframework.web.client.RestTemplate;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 @Route("registro")
@@ -48,6 +47,7 @@ import java.util.stream.Stream;
 public class RegistroView extends VerticalLayout {
 
     private final UsuarioControlador usuarioControlador;
+    private final TareaRepositorio tareaRepositorio;
 
     private RadioButtonGroup<String> tipoUsuarioRadio;
 
@@ -72,7 +72,7 @@ public class RegistroView extends VerticalLayout {
     // Logo
     private Image logo;
 
-    public RegistroView(UsuarioControlador usuarioControlador) {
+    public RegistroView(UsuarioControlador usuarioControlador, TareaRepositorio tareaRepositorio) {
         setSizeFull();
         setSpacing(false);
         setPadding(false);
@@ -114,6 +114,7 @@ public class RegistroView extends VerticalLayout {
 
         add(formCard);
         configureVisibility();
+        this.tareaRepositorio = tareaRepositorio;
     }
 
     private Component createLogo() {
@@ -447,7 +448,35 @@ public class RegistroView extends VerticalLayout {
         String url = "http://localhost:8080/api/usuarios/registrar";
 
         Usuario usuarioRegistrado = restTemplate.postForObject(url, usuario, Usuario.class);
+
+        if (usuarioRegistrado instanceof Voluntario) {
+            Voluntario voluntario = (Voluntario) usuarioRegistrado;
+            suscribirVoluntario(voluntario);
+        }
         return usuarioControlador.crearUsuario(usuarioRegistrado) != null;
+    }
+
+    private void suscribirVoluntario(Voluntario voluntario) {
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "http://localhost:8080/api/tareas/";
+
+        Map<Necesidad.TipoNecesidad, Habilidad> mapeoHabilidades = new HashMap<>();
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.PRIMEROS_AUXILIOS, Habilidad.PRIMEROS_AUXILIOS);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.ALIMENTACION, Habilidad.COCINA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.ALIMENTACION_BEBE, Habilidad.COCINA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.SERVICIO_LIMPIEZA, Habilidad.LIMPIEZA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_PSICOLOGICA, Habilidad.AYUDA_PSICOLOGICA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_CARPINTERIA, Habilidad.CARPINTERIA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD, Habilidad.ELECTICISTA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_FONTANERIA, Habilidad.FONTANERIA);
+
+        List<Tarea> listaTareas = tareaRepositorio.findAll();
+        for (Tarea tarea : listaTareas) {
+            Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
+            if (voluntario.getHabilidades().contains(habilidadRequerida)) {
+                restTemplate.postForEntity(url + tarea.getId() + "/suscribir/" + voluntario.getId(), null, Void.class);
+            }
+        }
     }
 
     private void mostrarError(String mensaje) {

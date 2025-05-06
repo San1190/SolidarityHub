@@ -28,6 +28,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.format.DateTimeFormatter;
@@ -46,11 +47,11 @@ public class NotificacionesView extends VerticalLayout {
     private Dialog detallesTareaDialog;
     private List<Notificacion> notificaciones;
     private final RestTemplate restTemplate = new RestTemplate();
-    private final String apiUrl = "http://localhost:8080/api/notificaciones";
+    private final String apiUrl = "http://localhost:8080/api";
     
     public NotificacionesView() {
         this.usuarioActual = (Usuario) VaadinSession.getCurrent().getAttribute("usuario");
-
+        this.restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
         // Configuración del layout principal
         setSizeFull();
         setSpacing(true);
@@ -82,7 +83,7 @@ public class NotificacionesView extends VerticalLayout {
         try {
             // Obtener notificaciones del usuario actual usando REST API
             ResponseEntity<List<Notificacion>> response = restTemplate.exchange(
-                apiUrl + "/usuario/" + usuarioActual.getId(),
+                apiUrl + "/usuarios/" + usuarioActual.getId() + "/notificaciones",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<Notificacion>>() {}
@@ -185,7 +186,7 @@ public class NotificacionesView extends VerticalLayout {
         // Verificar si es una notificación relacionada con una tarea
         Tarea tarea = notificacion.getTarea();
         boolean esTareaAsignada = tarea != null && 
-                                 notificacion.getTitulo().contains("Nueva tarea disponible");
+                                 notificacion.getTitulo().contains("Nueva tarea");
         boolean esRecordatorio = tarea != null && 
                                notificacion.getTitulo().contains("Recordatorio");
 
@@ -207,14 +208,14 @@ public class NotificacionesView extends VerticalLayout {
                 
                 try {
                     ResponseEntity<Map> response = restTemplate.postForEntity(
-                        apiUrl + "/responder-tarea", 
+                        apiUrl + "/notificaciones/responder-tarea",
                         requestBody, 
                         Map.class
                     );
                     
                     if (response.getStatusCode().is2xxSuccessful()) {
                         // Eliminar la notificación
-                        restTemplate.delete(apiUrl + "/" + notificacion.getId());
+                        restTemplate.delete(apiUrl + "notificaciones/" + notificacion.getId());
                         cargarNotificaciones();
                         
                         Notification notif = new Notification("Has aceptado la tarea: " + tarea.getNombre());
@@ -252,14 +253,15 @@ public class NotificacionesView extends VerticalLayout {
                 
                 try {
                     ResponseEntity<Map> response = restTemplate.postForEntity(
-                        apiUrl + "/responder-tarea", 
+                        apiUrl + "/notificaciones/responder-tarea",
                         requestBody, 
                         Map.class
                     );
                     
                     if (response.getStatusCode().is2xxSuccessful()) {
                         // Eliminar la notificación
-                        restTemplate.delete(apiUrl + "/" + notificacion.getId());
+                        restTemplate.delete(apiUrl + "/notificaciones/" + notificacion.getId());
+                        restTemplate.postForEntity(apiUrl + "/tareas/" + notificacion.getTarea().getId() + "/dessuscribir/", notificacion.getUsuario().getId(), Void.class);
                         cargarNotificaciones();
                         
                         Notification notif = new Notification("Has rechazado la tarea: " + tarea.getNombre());
@@ -291,7 +293,7 @@ public class NotificacionesView extends VerticalLayout {
             verDetallesBtn.addClickListener(e -> {
                 try {
                     // Marcar como leída usando API REST
-                    restTemplate.delete(apiUrl + "/" + notificacion.getId());
+                    restTemplate.delete(apiUrl + "/notificaciones/" + notificacion.getId());
                     cargarNotificaciones();
                     
                     // Navegar a la vista de tareas
@@ -310,7 +312,7 @@ public class NotificacionesView extends VerticalLayout {
             marcarLeidaBtn.addClickListener(e -> {
                 try {
                     // Marcar como leída usando API REST
-                    restTemplate.delete(apiUrl + "/" + notificacion.getId());
+                    restTemplate.delete(apiUrl + "/notificaciones/" + notificacion.getId());
                     cargarNotificaciones();
                     
                     Notification notif = new Notification("Notificación marcada como leída");
@@ -335,7 +337,7 @@ public class NotificacionesView extends VerticalLayout {
             marcarLeidaBtn.addClickListener(e -> {
                 try {
                     // Marcar como leída usando API REST
-                    restTemplate.delete(apiUrl + "/" + notificacion.getId());
+                    restTemplate.delete(apiUrl + "/notificaciones/" + notificacion.getId());
                     cargarNotificaciones();
                     
                     Notification notif = new Notification("Notificación marcada como leída");

@@ -9,6 +9,7 @@ import SolidarityHub.models.Tarea.EstadoTarea;
 import SolidarityHub.models.Recursos;
 import SolidarityHub.models.Recursos.TipoRecurso;
 
+import SolidarityHub.models.dtos.NotificacionDTO;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ShortcutEvent;
 import com.vaadin.flow.component.button.Button;
@@ -359,10 +360,19 @@ public class TareasView extends VerticalLayout {
                     if (tareaActual.getId() == null) {
                         // Crear nueva tarea
                         restTemplate.postForObject(apiUrl, tareaActual, Tarea.class);
+                        NotificacionDTO notificacionDTO = new NotificacionDTO();
+                        notificacionDTO.setTitulo("Nueva Tarea");
+                        notificacionDTO.setMensaje("Se ha creado la tarea " + tareaActual.getNombre());
+                        restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO, Void.class);
+
                         Notification.show("Tarea creada correctamente", 3000, Position.BOTTOM_START);
                     } else {
                         // Actualizar tarea existente
                         restTemplate.put(apiUrl + "/" + tareaActual.getId(), tareaActual);
+                        NotificacionDTO notificacionDTO = new NotificacionDTO();
+                        notificacionDTO.setTitulo("Tarea actualizada");
+                        notificacionDTO.setMensaje("Se ha actualizado la tarea " + tareaActual.getNombre());
+                        restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO, Void.class);
                         Notification.show("Tarea actualizada correctamente", 3000, Position.BOTTOM_START);
                     }
                     formDialog.close();

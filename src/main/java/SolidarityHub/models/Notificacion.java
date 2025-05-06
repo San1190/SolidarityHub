@@ -1,9 +1,11 @@
 package SolidarityHub.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Notificacion {
 
     @Id
@@ -17,6 +19,8 @@ public class Notificacion {
     private String titulo;
     private String mensaje;
     private LocalDateTime fechaCreacion;
+
+    @Enumerated(EnumType.STRING)
     private EstadoNotificacion estado;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -31,25 +31,6 @@ public class NotificacionServicio {
     public void crearNotificacion(Notificacion notificacion) {
         notificacionRepositorio.save(notificacion);
     }
-    
-    /**
-     * Método para crear una notificación con parámetros individuales
-     * @param titulo Título de la notificación
-     * @param mensaje Mensaje de la notificación
-     * @param usuario Usuario destinatario
-     * @param tarea Tarea relacionada
-     * @return La notificación creada
-     */
-    public Notificacion crearNotificacion(String titulo, String mensaje, Usuario usuario, Tarea tarea) {
-        Notificacion notificacion = new Notificacion(titulo, mensaje, usuario, tarea, Notificacion.EstadoNotificacion.PENDIENTE);
-        notificacionRepositorio.save(notificacion);
-        return notificacion;
-    }
-
-    public void actualizarEstado(Notificacion notificacion, Notificacion.EstadoNotificacion estado) {
-        notificacion.setEstado(estado);
-        notificacionRepositorio.save(notificacion);
-    }
 
     public List<Notificacion> findByVoluntarioAndEstado(Usuario usuario, Notificacion.EstadoNotificacion estado) {
         return notificacionRepositorio.findByVoluntarioAndEstado(usuario, estado);
