@@ -193,7 +193,7 @@ public class UsuarioControlador {
         return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(foto);
     }
 
-    @GetMapping("/{id}/actualizar-notificaciones")
+    @GetMapping(value = "/{id}/actualizar-notificaciones", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Notificacion>> actualizarNotificaciones(@PathVariable long id) {
         Optional<Usuario> usuarioOpt = usuarioRepositorio.findById(id);
         if (usuarioOpt.isPresent()) {

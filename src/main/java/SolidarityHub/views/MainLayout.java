@@ -224,9 +224,22 @@ public class MainLayout extends AppLayout implements RouterLayout {
         if (usuario == null) return;
         
         try {
-            // Obtener notificaciones no leídas del usuario
+            // Configurar el RestTemplate para manejar respuestas HTML
+            if (restTemplate.getMessageConverters().stream()
+                    .noneMatch(converter -> converter instanceof org.springframework.http.converter.json.MappingJackson2HttpMessageConverter)) {
+                org.springframework.http.converter.json.MappingJackson2HttpMessageConverter converter = 
+                    new org.springframework.http.converter.json.MappingJackson2HttpMessageConverter();
+                List<org.springframework.http.MediaType> mediaTypes = new java.util.ArrayList<>();
+                mediaTypes.add(org.springframework.http.MediaType.APPLICATION_JSON);
+                mediaTypes.add(org.springframework.http.MediaType.TEXT_HTML);
+                mediaTypes.add(org.springframework.http.MediaType.TEXT_PLAIN);
+                converter.setSupportedMediaTypes(mediaTypes);
+                restTemplate.getMessageConverters().add(converter);
+            }
+            
+            // Obtener notificaciones no leídas del usuario usando la URL correcta
             ResponseEntity<List<Notificacion>> response = restTemplate.exchange(
-                apiUrl + "/usuario/" + usuario.getId() + "/pendientes",
+                "http://localhost:8080/api/usuarios/" + usuario.getId() + "/actualizar-notificaciones",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<Notificacion>>() {}

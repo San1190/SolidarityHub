@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import SolidarityHub.models.Habilidad;
+import SolidarityHub.models.Notificacion;
 import SolidarityHub.models.Recursos;
 import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Usuario;
@@ -14,6 +15,7 @@ import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Tarea.EstadoTarea;
 import SolidarityHub.services.AsignacionTareaServicio;
 import SolidarityHub.services.AutomatizacionServicio;
+import SolidarityHub.services.NotificacionServicio;
 import SolidarityHub.services.RecursoServicio;
 import SolidarityHub.services.TareaServicio;
 import SolidarityHub.services.UsuarioServicio;
@@ -34,16 +36,19 @@ public class TareaControlador {
     private final AutomatizacionServicio automatizacionServicio;
     private final AsignacionTareaServicio asignacionTareaServicio;
     private final RecursoServicio recursoServicio;
+    private final NotificacionServicio notificacionServicio;
 
     public TareaControlador(TareaServicio tareaServicio, UsuarioServicio usuarioServicio, 
                            AutomatizacionServicio automatizacionServicio,
                            AsignacionTareaServicio asignacionTareaServicio,
-                           RecursoServicio recursoServicio) {
+                           RecursoServicio recursoServicio,
+                           NotificacionServicio notificacionServicio) {
         this.tareaServicio = tareaServicio;
         this.usuarioServicio = usuarioServicio;
         this.automatizacionServicio = automatizacionServicio;
         this.asignacionTareaServicio = asignacionTareaServicio;
         this.recursoServicio = recursoServicio;
+        this.notificacionServicio = notificacionServicio;
     }
 
     @GetMapping
@@ -164,6 +169,18 @@ public class TareaControlador {
         if (!tarea.getVoluntariosAsignados().contains(voluntario)) {
             tarea.getVoluntariosAsignados().add(voluntario);
             tarea = tareaServicio.actualizarTarea(tarea);
+            
+            // Crear una notificación para el voluntario
+            Notificacion notificacion = new Notificacion(
+                "Nueva tarea asignada",
+                "Se te ha asignado la tarea: " + tarea.getNombre() + ". Por favor, revisa los detalles y confirma tu participación.",
+                voluntario,
+                tarea,
+                Notificacion.EstadoNotificacion.PENDIENTE
+            );
+            
+            // Guardar la notificación
+            notificacionServicio.crearNotificacion(notificacion);
         }
         
         return new ResponseEntity<>(tarea, HttpStatus.OK);

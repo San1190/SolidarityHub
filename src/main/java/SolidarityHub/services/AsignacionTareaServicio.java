@@ -79,6 +79,28 @@ public class AsignacionTareaServicio {
         int voluntariosNecesarios = tarea.getNumeroVoluntariosNecesarios();
         int voluntariosAAsignar = Math.min(voluntariosCompatibles.size(), voluntariosNecesarios);
         
+        // Asignar voluntarios y crear notificaciones
+        for (int i = 0; i < voluntariosAAsignar; i++) {
+            Voluntario voluntario = voluntariosCompatibles.get(i);
+            
+            // Verificar que el voluntario no esté ya asignado a la tarea
+            if (!tarea.getVoluntariosAsignados().contains(voluntario)) {
+                // Añadir el voluntario a la tarea
+                tarea.getVoluntariosAsignados().add(voluntario);
+                
+                // Crear una notificación para el voluntario
+                SolidarityHub.models.Notificacion notificacion = new SolidarityHub.models.Notificacion(
+                    "Nueva tarea asignada",
+                    "Se te ha asignado la tarea: " + tarea.getNombre() + ". Por favor, revisa los detalles y confirma tu participación.",
+                    voluntario,
+                    tarea,
+                    SolidarityHub.models.Notificacion.EstadoNotificacion.PENDIENTE
+                );
+                
+                // Guardar la notificación
+                notificacionServicio.crearNotificacion(notificacion);
+            }
+        }
         
     }
 
