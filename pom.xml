@@ -23,11 +23,31 @@
         <vaadin.version>24.6.5</vaadin.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>vaadin-addons</id>
+            <url>https://maven.vaadin.com/vaadin-addons</url>
+        </repository>
+        <repository>
+            <id>xdev</id>
+            <url>https://nexus.xdev.software/repository/public/</url>
+        </repository>
+        <repository>
+            <id>vaadin-snapshots</id>
+            <url>https://maven.vaadin.com/vaadin-snapshots</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!-- Spring Boot starters -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.xdev</groupId>
+            <artifactId>vaadin-maps-leaflet-flow</artifactId>
+            <version>4.4.0</version>
         </dependency>
 
         <dependency>
