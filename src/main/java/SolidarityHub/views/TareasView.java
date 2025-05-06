@@ -472,13 +472,52 @@ public class TareasView extends VerticalLayout {
             crearInfoItem(VaadinIcon.CALENDAR, 
                 "Inicio: " + (tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "No definida") + 
                 "\nFin: " + (tarea.getFechaFin() != null ? formatter.format(tarea.getFechaFin()) : "No definida")),
-            crearInfoItem(VaadinIcon.USERS, tarea.getNumeroVoluntariosNecesarios() + " voluntarios"),
-            crearInfoItem(VaadinIcon.PACKAGE, "Recursos: " + (obtenerRecursosAsignados(tarea) != null && !obtenerRecursosAsignados(tarea).isEmpty() ?
-                obtenerRecursosAsignados(tarea).stream().<Recursos>map(r -> (Recursos) r)
-                    .map(r -> ((Recursos)r).getTipoRecurso().name())
-                    .collect(Collectors.joining(", ")) 
-                : "Sin recursos asignados"))
+            crearInfoItem(VaadinIcon.USERS, tarea.getNumeroVoluntariosNecesarios() + " voluntarios")
         );
+        Div recursosContainer = new Div();
+        recursosContainer.getStyle()            
+                             .set("margin-top", "12px")
+                             .set("margin-bottom", "8px");
+        try {
+                List<Recursos> recursosAsignados = tarea.getRecursosAsignados();
+                if (recursosAsignados != null && !recursosAsignados.isEmpty()) {
+                    VerticalLayout listaLayout = new VerticalLayout();
+                    listaLayout.setSpacing(false);
+                    listaLayout.setPadding(false);
+                    
+                    Span titulorecursos = new Span("Recursos Asignados");
+                    titulorecursos.getStyle()
+                                .set("font-weight", "bold")
+                                .set("font-size", "14px");
+                                listaLayout.add(titulorecursos);
+
+                    VerticalLayout listaRecursos = new VerticalLayout();
+                    for (Recursos recurso : recursosAsignados) {
+                        Span descripcionRecurso = new Span("- " + recurso.getDescripcion());
+                    
+                        descripcionRecurso.getStyle()
+                                        .set("font-size", "12px")
+                                        .set("color", "#6c757d")
+                                        .set("matgin-left", "8px");
+                        listaRecursos.add(descripcionRecurso);  
+                    }
+                    listaLayout.add(listaRecursos);
+                    recursosContainer.add(listaLayout);
+                } else {
+                    Span sinRecursos = new Span("No hay recursos asignados");
+                    sinRecursos.getStyle()
+                           .set("font-size", "12px")
+                           .set("color", "#6c757d");
+                    recursosContainer.add(sinRecursos);
+                }
+        } catch (Exception ex) {
+                Span error = new Span("No hay recursos asignados");
+                error.getStyle()
+                          .set("font-size", "12px")
+                          .set("color", "#red");
+                recursosContainer.add(error);
+        }
+        infoGrid.add(recursosContainer);
     
         cuerpo.add(desc, infoGrid);
     
