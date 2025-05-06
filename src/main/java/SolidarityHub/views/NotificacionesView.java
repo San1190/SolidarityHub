@@ -83,7 +83,7 @@ public class NotificacionesView extends VerticalLayout {
         try {
             // Obtener notificaciones del usuario actual usando REST API
             ResponseEntity<List<Notificacion>> response = restTemplate.exchange(
-                apiUrl + "/usuarios/" + usuarioActual.getId() + "/notificaciones",
+                apiUrl + "/notificaciones/usuario/" + usuarioActual.getId(),
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<Notificacion>>() {}
