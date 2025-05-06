@@ -2,6 +2,7 @@ package SolidarityHub.controllers;
 
 import SolidarityHub.models.Notificacion;
 import SolidarityHub.repository.UsuarioRepositorio;
+import SolidarityHub.services.NotificacionServicio;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,16 +24,30 @@ import java.util.Optional;
 public class UsuarioControlador {
     private final UsuarioServicio usuarioServicio;
     private final UsuarioRepositorio usuarioRepositorio;
+    private final NotificacionServicio notificacionServicio;
 
-    public UsuarioControlador(UsuarioServicio usuarioServicio, UsuarioRepositorio usuarioRepositorio) {
+    public UsuarioControlador(UsuarioServicio usuarioServicio, UsuarioRepositorio usuarioRepositorio, NotificacionServicio notificacionServicio) {
         this.usuarioServicio = usuarioServicio;
         this.usuarioRepositorio = usuarioRepositorio;
+        this.notificacionServicio = notificacionServicio;
     }
 
     // 🔹 Obtener todos los usuarios
     @GetMapping
     public List<Usuario> obtenerUsuarios() {
         return usuarioServicio.listarUsuarios();
+    }
+    
+    // 🔹 Obtener notificaciones de un usuario
+    @GetMapping("/{usuarioId}/notificaciones")
+    public ResponseEntity<List<Notificacion>> obtenerNotificacionesUsuario(@PathVariable Long usuarioId) {
+        Usuario usuario = usuarioServicio.obtenerUsuarioPorId(usuarioId);
+        if (usuario == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        
+        List<Notificacion> notificaciones = notificacionServicio.findByVoluntarioAndEstado(usuario, Notificacion.EstadoNotificacion.PENDIENTE);
+        return new ResponseEntity<>(notificaciones, HttpStatus.OK);
     }
 
     // 🔹 Crear un nuevo usuario
@@ -178,7 +193,7 @@ public class UsuarioControlador {
         return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(foto);
     }
 
-    @GetMapping("/{id}/notificaciones")
+    @GetMapping("/{id}/actualizar-notificaciones")
     public ResponseEntity<List<Notificacion>> actualizarNotificaciones(@PathVariable long id) {
         Optional<Usuario> usuarioOpt = usuarioRepositorio.findById(id);
         if (usuarioOpt.isPresent()) {
