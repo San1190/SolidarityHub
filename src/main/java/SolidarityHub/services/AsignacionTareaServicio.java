@@ -1,6 +1,5 @@
 package SolidarityHub.services;
 
-import SolidarityHub.events.TareaCreadaEvent;
 import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Voluntario;
 import org.springframework.beans.factory.annotation.Autowired;

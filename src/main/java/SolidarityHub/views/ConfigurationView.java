@@ -1,5 +1,7 @@
 package SolidarityHub.views;
 
+import SolidarityHub.models.*;
+import SolidarityHub.repository.TareaRepositorio;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -22,13 +24,11 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import SolidarityHub.models.Usuario;
-import SolidarityHub.models.Habilidad;
 
 import SolidarityHub.services.UsuarioServicio;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.ArrayList;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.*;
 import java.util.stream.Stream;
 
 @Route(value = "configuracion", layout = MainLayout.class)
@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 public class ConfigurationView extends VerticalLayout {
 
     private final UsuarioServicio usuarioServicio;
+    private final TareaRepositorio tareaRepositorio;
     private Usuario usuario;
 
     // Campos del formulario de datos personales (comunes)
@@ -51,9 +52,9 @@ public class ConfigurationView extends VerticalLayout {
 
     // Ya no necesitamos campos para afectados, se gestionan en otra vista
 
-    public ConfigurationView(UsuarioServicio usuarioServicio) {
+    public ConfigurationView(UsuarioServicio usuarioServicio, TareaRepositorio tareaRepositorio) {
         this.usuarioServicio = usuarioServicio;
-
+        this.tareaRepositorio = tareaRepositorio;
         // Recuperar el usuario actual desde la sesión
         usuario = (Usuario) VaadinSession.getCurrent().getAttribute("usuario");
         if (usuario == null) {
@@ -451,6 +452,7 @@ public class ConfigurationView extends VerticalLayout {
                         // Agregar las habilidades seleccionadas a la lista del voluntario
                         if (habilidadesSeleccionadas != null && !habilidadesSeleccionadas.isEmpty()) {
                             voluntario.getHabilidades().addAll(habilidadesSeleccionadas);
+
                         }
                     } catch (ClassCastException e) {
                         // Manejar el caso en que el usuario no sea un Voluntario
@@ -476,6 +478,29 @@ public class ConfigurationView extends VerticalLayout {
             }
         });
         return guardarBtn;
+    }
+
+    private void suscribirVoluntario(Voluntario voluntario) {
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "http://localhost:8080/api/tareas/";
+
+        Map<Necesidad.TipoNecesidad, Habilidad> mapeoHabilidades = new HashMap<>();
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.PRIMEROS_AUXILIOS, Habilidad.PRIMEROS_AUXILIOS);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.ALIMENTACION, Habilidad.COCINA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.ALIMENTACION_BEBE, Habilidad.COCINA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.SERVICIO_LIMPIEZA, Habilidad.LIMPIEZA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_PSICOLOGICA, Habilidad.AYUDA_PSICOLOGICA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_CARPINTERIA, Habilidad.CARPINTERIA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD, Habilidad.ELECTICISTA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_FONTANERIA, Habilidad.FONTANERIA);
+
+        List<Tarea> listaTareas = tareaRepositorio.findAll();
+        for (Tarea tarea : listaTareas) {
+            Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
+            if (voluntario.getHabilidades().contains(habilidadRequerida)) {
+                restTemplate.postForEntity(url + tarea.getId() + "/suscribir/" + voluntario.getId(), null, Void.class);
+            }
+        }
     }
 
     private Component crearCancelarBtn() {

@@ -1,6 +1,5 @@
 package SolidarityHub.services;
 
-import SolidarityHub.events.TareaCreadaEvent;
 import SolidarityHub.models.Notificacion;
 import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Usuario;
