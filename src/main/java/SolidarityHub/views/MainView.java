@@ -5,22 +5,26 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 import software.xdev.vaadin.maps.leaflet.MapContainer;
 import software.xdev.vaadin.maps.leaflet.basictypes.LLatLng;
 import software.xdev.vaadin.maps.leaflet.layer.raster.LTileLayer;
+import software.xdev.vaadin.maps.leaflet.layer.ui.LMarker;
 import software.xdev.vaadin.maps.leaflet.map.LMap;
 import software.xdev.vaadin.maps.leaflet.registry.LComponentManagementRegistry;
 import software.xdev.vaadin.maps.leaflet.registry.LDefaultComponentManagementRegistry;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Route(value = "main", layout = MainLayout.class)
 @PageTitle("Main | SolidarityHub")
 public class MainView extends VerticalLayout {
-
-    private Image logo;
 
     public MainView(UsuarioServicio usuarioServicio) {
         setSizeFull();
@@ -42,65 +46,57 @@ public class MainView extends VerticalLayout {
         title.addClassName(LumoUtility.TextAlignment.CENTER);
         title.addClassName(LumoUtility.Margin.Bottom.LARGE);
 
-        var usuario = usuarioServicio.obtenerUsuarioPorId(1L);
+        
 
-        H3 nombre = new H3("Nombre: " + usuario.getNombre() + " " + usuario.getApellidos());
-        nombre.addClassName(LumoUtility.FontSize.MEDIUM);
-        nombre.addClassName(LumoUtility.TextAlignment.CENTER);
-        nombre.addClassName(LumoUtility.Margin.Bottom.SMALL);
-
-        H3 email = new H3("Email: " + usuario.getEmail());
-        email.addClassName(LumoUtility.FontSize.MEDIUM);
-        email.addClassName(LumoUtility.TextAlignment.CENTER);
-        email.addClassName(LumoUtility.Margin.Bottom.SMALL);
-
-        H3 telefono = new H3("Teléfono: " + usuario.getTelefono());
-        telefono.addClassName(LumoUtility.FontSize.MEDIUM);
-        telefono.addClassName(LumoUtility.TextAlignment.CENTER);
-        telefono.addClassName(LumoUtility.Margin.Bottom.SMALL);
-
-        H3 rol = new H3("Rol: " + usuario.getTipoUsuario());
-        rol.addClassName(LumoUtility.FontSize.MEDIUM);
-        rol.addClassName(LumoUtility.TextAlignment.CENTER);
-        rol.addClassName(LumoUtility.Margin.Bottom.LARGE);
-
-        card.add(title, nombre, email, telefono, rol, crearLogo());
-        add(card);
-
-        // Añadir el mapa
+        add(title);
         add(crearMapaContainer());
     }
 
-    private Image crearLogo() {
-        logo = new Image(
-                "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/7dcef7b2-6389-45f4-9961-8741a558c286.png/LogoSH-transparent.png",
-                "Solidarity Hub Logo");
-        logo.setWidth("220px");
-        logo.setHeight("auto");
-        logo.getStyle().set("margin", "0 auto")
-                       .set("display", "block")
-                       .set("padding", "1rem")
-                       .set("align-items", "center")
-                       .set("justify-content", "center")
-                       .set("margin-top", "2rem");
-        return logo;
-    }
+    
 
     private Component crearMapaContainer() {
-        // 1) crea el registry para gestión de componentes
         LComponentManagementRegistry registry = new LDefaultComponentManagementRegistry(this);
-
-        // 2) crea el contenedor del mapa y añade al layout
         MapContainer container = new MapContainer(registry);
         container.setSizeFull();
+        container.getElement().getStyle()
+            .set("border-radius", "8px")
+            .set("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
+            .set("margin", "1rem auto")
+            .set("max-width", "1200px")
+            .set("width", "95%")
+            .set("min-height", "500px");
 
-        // 3) obtén el LMap y configúralo
         LMap map = container.getlMap();
-        // añade capa de OpenStreetMap
         map.addLayer(LTileLayer.createDefaultForOpenStreetMapTileServer(registry));
-        // centra en Madrid con zoom 6
-        map.setView(new LLatLng(registry, 40.4168, -3.7038), 6);
-
+        map.setView(new LLatLng(registry, 39.4699, -0.3763), 10);
+        añadirMarcadoresValencia(map, registry);
         return container;
+    }
+
+    private void añadirMarcadoresValencia(LMap map, LComponentManagementRegistry registry) {
+        Map<String, double[]> ubicaciones = new HashMap<>();
+        ubicaciones.put("Centro de distribución de alimentos", new double[]{39.4683, -0.3768});
+        ubicaciones.put("Albergue temporal",             new double[]{39.4720, -0.3820});
+        ubicaciones.put("Punto de asistencia médica",    new double[]{39.4650, -0.3730});
+        ubicaciones.put("Almacén de suministros",        new double[]{39.4750, -0.3680});
+        ubicaciones.put("Centro logístico",             new double[]{39.4630, -0.3850});
+        ubicaciones.put("Centro de coordinación",       new double[]{39.4699, -0.3763});
+        ubicaciones.put("Punto de encuentro voluntarios",new double[]{39.4670, -0.3790});
+        ubicaciones.put("Zona inundada",                new double[]{39.4580, -0.3700});
+        ubicaciones.put("Área de evacuación",           new double[]{39.4620, -0.3650});
+
+        for (Map.Entry<String, double[]> entry : ubicaciones.entrySet()) {
+            String nombre = entry.getKey();
+            double[] coords = entry.getValue();
+            LLatLng ll = new LLatLng(registry, coords[0], coords[1]);
+            LMarker marker = new LMarker(registry, ll);
+            marker.bindPopup("<b>" + nombre + "</b>");
+            marker.addTo(map);
+        }
+
+        Notification notification = new Notification(
+            "Mapa cargado con puntos de interés en Valencia", 3000, Notification.Position.BOTTOM_CENTER);
+        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        notification.open();
     }
 }
