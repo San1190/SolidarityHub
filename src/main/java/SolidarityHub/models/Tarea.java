@@ -26,6 +26,8 @@ public class Tarea {
     private Necesidad.TipoNecesidad tipo;
     
     private String localizacion;
+    private double latitud;
+    private double longitud;
     private int numeroVoluntariosNecesarios;
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;
@@ -85,7 +87,7 @@ public class Tarea {
                 String localizacion, int numeroVoluntariosNecesarios, 
                 LocalDateTime fechaInicio, LocalDateTime fechaFin, 
                 EstadoTarea estado, Usuario creador, List<Afectado> afectados, 
-                List<Voluntario> voluntariosAsignados, List<Habilidad> habilidadesRequeridas, List<Voluntario> suscriptores) {
+                List<Voluntario> voluntariosAsignados, List<Habilidad> habilidadesRequeridas, List<Voluntario> suscriptores, double latitud, double longitud) {
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.tipo = tipo;
@@ -99,6 +101,8 @@ public class Tarea {
         this.voluntariosAsignados = voluntariosAsignados;
         this.habilidadesRequeridas = habilidadesRequeridas;
         this.suscriptores = suscriptores;
+        this.latitud = latitud;
+        this.longitud = longitud;
     }
     
     // Getters y Setters
@@ -174,10 +178,28 @@ public class Tarea {
         this.estado = estado;
     }
 
+    public double getLatitud() {
+        return latitud;
+    }
+
+    public void setLatitud(double latitud) {
+        this.latitud = latitud;
+    }
+
+    public double getLongitud() {
+        return longitud;
+    }
+
+    public void setLongitud(double longitud) {
+        this.longitud = longitud;
+    }
+
     public void suscribirVoluntario(Voluntario voluntario) {
         suscriptores.add(voluntario);
     }
     public void dessuscribirVoluntario(Voluntario voluntario) {
         suscriptores.remove(voluntario);
     }
+    
+    
 }
