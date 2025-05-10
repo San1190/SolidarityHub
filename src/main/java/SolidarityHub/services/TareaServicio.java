@@ -164,15 +164,14 @@ public class TareaServicio {
 
     @Transactional
     public void notificarSuscritores(Tarea tarea, String titulo, String mensaje) {
-        System.out.println("Suscriptores de la tarea: " + tarea.getSuscriptores());
         for (Voluntario voluntario : tarea.getSuscriptores()) {
+            voluntario.actualizar(); //Manda el mesaje al voluntario
             Notificacion notificacion = new Notificacion();
             notificacion.setUsuario(voluntario);
             notificacion.setTarea(tarea);
             notificacion.setTitulo(titulo);
             notificacion.setMensaje(mensaje);
             notificacionRepositorio.save(notificacion);
-            System.out.println("/ln Se ha creado una notificación para la tarea " + tarea.getNombre() + "  y para el voluntario " + voluntario.getNombre());
         }
     }
 
@@ -183,7 +182,6 @@ public class TareaServicio {
             tarea.suscribirObservador(voluntario);
         }
         tareaRepositorio.save(tarea);
-        System.out.println("voluntario " + usuario.getNombre() + " suscrito");
     }
 
     public void dessuscribirVoluntario(Long tareaId, Long voluntarioId) {
@@ -193,6 +191,5 @@ public class TareaServicio {
             tarea.dessuscribirObservador(voluntario);
         }
         tareaRepositorio.save(tarea);
-        System.out.println("voluntario " + usuario.getNombre() + " dessuscrito");
     }
 }

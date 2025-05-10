@@ -865,13 +865,10 @@ public class TareasView extends VerticalLayout {
                     Tarea tarea = restTemplate.postForObject(apiUrl + "/crear", tareaActual, Tarea.class);
                     if (usuarioActual instanceof Voluntario voluntario) {
                         suscribirVoluntario(voluntario, tarea);
-                        System.out.println("Suscribir voluntario");
                         tarea = restTemplate.getForObject(apiUrl + "/" + tarea.getId(), Tarea.class);
-                        System.out.println("Suscriptores tarea" + tarea.getSuscriptores());
                         NotificacionDTO notificacionDTO = new NotificacionDTO();
                         notificacionDTO.setTitulo("Nueva Tarea");
                         notificacionDTO.setMensaje("Se ha creado la tarea " + tareaActual.getNombre());
-                        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
                         restTemplate.postForEntity(apiUrl + "/" + tarea.getId() + "/notificar", notificacionDTO, Void.class);
                         Notification.show("Tarea creada correctamente", 3000, Position.BOTTOM_START);
                     }
@@ -881,7 +878,6 @@ public class TareasView extends VerticalLayout {
                     NotificacionDTO notificacionDTO = new NotificacionDTO();
                     notificacionDTO.setTitulo("Tarea actualizada");
                     notificacionDTO.setMensaje("Se ha actualizado la tarea " + tareaActual.getNombre());
-                    System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
                     restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO, Void.class);
                     Notification.show("Tarea actualizada correctamente", 3000, Position.BOTTOM_START);
                 }
