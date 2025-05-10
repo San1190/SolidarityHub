@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import SolidarityHub.models.Necesidad.TipoNecesidad;
 
 @Entity
-public class Tarea {
+public class Tarea implements Observado {
 
     public enum EstadoTarea {
         PREPARADA, EN_CURSO, FINALIZADA
@@ -174,10 +174,16 @@ public class Tarea {
         this.estado = estado;
     }
 
-    public void suscribirVoluntario(Voluntario voluntario) {
-        suscriptores.add(voluntario);
+    public void suscribirObservador(Observador observador) {
+        if (observador instanceof Voluntario voluntario) {
+            suscriptores.add(voluntario);
+        }
     }
-    public void dessuscribirVoluntario(Voluntario voluntario) {
-        suscriptores.remove(voluntario);
+    public void dessuscribirObservador(Observador observador) {
+        if (observador instanceof Voluntario voluntario){
+            suscriptores.remove(voluntario);
+        }
     }
+
+    public void notificarSuscriptores() {}
 }

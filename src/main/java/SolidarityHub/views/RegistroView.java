@@ -470,7 +470,7 @@ public class RegistroView extends VerticalLayout {
         mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD, Habilidad.ELECTICISTA);
         mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_FONTANERIA, Habilidad.FONTANERIA);
 
-        List<Tarea> listaTareas = tareaRepositorio.findAll();
+        List<Tarea> listaTareas = tareaRepositorio.findAllWithSuscriptores();
         for (Tarea tarea : listaTareas) {
             Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
             if (voluntario.getHabilidades().contains(habilidadRequerida)) {

@@ -1,6 +1,7 @@
 package SolidarityHub.controllers;
 
 import SolidarityHub.models.dtos.NotificacionDTO;
+import SolidarityHub.repository.TareaRepositorio;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,18 +38,20 @@ public class TareaControlador {
     private final AsignacionTareaServicio asignacionTareaServicio;
     private final RecursoServicio recursoServicio;
     private final NotificacionServicio notificacionServicio;
+    private final TareaRepositorio tareaRepositorio;
 
-    public TareaControlador(TareaServicio tareaServicio, UsuarioServicio usuarioServicio, 
-                           AutomatizacionServicio automatizacionServicio,
-                           AsignacionTareaServicio asignacionTareaServicio,
-                           RecursoServicio recursoServicio,
-                           NotificacionServicio notificacionServicio) {
+    public TareaControlador(TareaServicio tareaServicio, UsuarioServicio usuarioServicio,
+                            AutomatizacionServicio automatizacionServicio,
+                            AsignacionTareaServicio asignacionTareaServicio,
+                            RecursoServicio recursoServicio,
+                            NotificacionServicio notificacionServicio, TareaRepositorio tareaRepositorio) {
         this.tareaServicio = tareaServicio;
         this.usuarioServicio = usuarioServicio;
         this.automatizacionServicio = automatizacionServicio;
         this.asignacionTareaServicio = asignacionTareaServicio;
         this.recursoServicio = recursoServicio;
         this.notificacionServicio = notificacionServicio;
+        this.tareaRepositorio = tareaRepositorio;
     }
 
     @GetMapping
@@ -372,7 +375,11 @@ public class TareaControlador {
             return ResponseEntity.badRequest().build();
         }
 
-        tareaOpt.ifPresent(tarea -> tareaServicio.notificarSuscritores(tarea, dto.getTitulo(), dto.getMensaje()));
+        tareaOpt.ifPresent(t ->{
+            Tarea tareaActualizada = tareaRepositorio.obtenerTareaPorIdConSuscriptores(t.getId());
+            tareaServicio.notificarSuscritores(tareaActualizada, dto.getTitulo(), dto.getMensaje());
+        });
+
 
         if(tareaOpt.isPresent()){
             return ResponseEntity.ok().build();

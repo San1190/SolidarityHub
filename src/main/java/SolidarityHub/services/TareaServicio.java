@@ -164,6 +164,7 @@ public class TareaServicio {
 
     @Transactional
     public void notificarSuscritores(Tarea tarea, String titulo, String mensaje) {
+        System.out.println("Suscriptores de la tarea: " + tarea.getSuscriptores());
         for (Voluntario voluntario : tarea.getSuscriptores()) {
             Notificacion notificacion = new Notificacion();
             notificacion.setUsuario(voluntario);
@@ -171,6 +172,7 @@ public class TareaServicio {
             notificacion.setTitulo(titulo);
             notificacion.setMensaje(mensaje);
             notificacionRepositorio.save(notificacion);
+            System.out.println("/ln Se ha creado una notificación para la tarea " + tarea.getNombre() + "  y para el voluntario " + voluntario.getNombre());
         }
     }
 
@@ -178,17 +180,19 @@ public class TareaServicio {
         Tarea tarea = tareaRepositorio.findById(tareaId).orElseThrow();
         Usuario usuario = usuarioRepositorio.findById(voluntarioId).orElseThrow();
         if (usuario instanceof Voluntario voluntario) {
-            tarea.suscribirVoluntario(voluntario);
+            tarea.suscribirObservador(voluntario);
         }
         tareaRepositorio.save(tarea);
+        System.out.println("voluntario " + usuario.getNombre() + " suscrito");
     }
 
     public void dessuscribirVoluntario(Long tareaId, Long voluntarioId) {
         Tarea tarea = tareaRepositorio.findById(tareaId).orElseThrow();
         Usuario usuario = usuarioRepositorio.findById(voluntarioId).orElseThrow();
         if (usuario instanceof Voluntario voluntario) {
-            tarea.dessuscribirVoluntario(voluntario);
+            tarea.dessuscribirObservador(voluntario);
         }
         tareaRepositorio.save(tarea);
+        System.out.println("voluntario " + usuario.getNombre() + " dessuscrito");
     }
 }

@@ -495,11 +495,13 @@ public class ConfigurationView extends VerticalLayout {
         mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD, Habilidad.ELECTICISTA);
         mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_FONTANERIA, Habilidad.FONTANERIA);
 
-        List<Tarea> listaTareas = tareaRepositorio.findAll();
+        List<Tarea> listaTareas = tareaRepositorio.findAllWithSuscriptores();
         for (Tarea tarea : listaTareas) {
-            Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
-            if (voluntario.getHabilidades().contains(habilidadRequerida)) {
-                restTemplate.postForEntity(url + tarea.getId() + "/dessuscribir/" + voluntario.getId(), null, Void.class);
+            if (tarea.getSuscriptores().contains(voluntario)) {
+                Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
+                if (voluntario.getHabilidades().contains(habilidadRequerida)) {
+                    restTemplate.postForEntity(url + tarea.getId() + "/dessuscribir/" + voluntario.getId(), null, Void.class);
+                }
             }
         }
     }
@@ -518,7 +520,7 @@ public class ConfigurationView extends VerticalLayout {
         mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD, Habilidad.ELECTICISTA);
         mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_FONTANERIA, Habilidad.FONTANERIA);
 
-        List<Tarea> listaTareas = tareaRepositorio.findAll();
+        List<Tarea> listaTareas = tareaRepositorio.findAllWithSuscriptores();
         for (Tarea tarea : listaTareas) {
             Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
             if (voluntario.getHabilidades().contains(habilidadRequerida)) {
