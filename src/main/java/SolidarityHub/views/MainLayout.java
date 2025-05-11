@@ -107,37 +107,6 @@ public class MainLayout extends AppLayout implements RouterLayout {
         divisorDer.setWidthFull();
 
         navbar.setFlexGrow(1, divisorIzq, divisorDer);
-
-        /*
-         * notificacionesDialog = new Dialog();
-         * notificacionesDialog.setWidth("400px");
-         * notificacionesDialog.setCloseOnEsc(true);
-         * notificacionesDialog.setCloseOnOutsideClick(true);
-         * 
-         * // Configurar el diálogo de notificaciones
-         * configurarDialogoNotificaciones();
-         * 
-         * // Botón de notificaciones
-         * Button notificacionesBtn = new Button(new Icon(VaadinIcon.BELL));
-         * notificacionesBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-         * notificacionesBtn.getElement().getStyle().set("position", "relative");
-         * 
-         * // Añadir el badge al botón
-         * notificacionesBtn.getElement().appendChild(notificacionesBadge.getElement());
-         * 
-         * // Abrir el diálogo al hacer clic en el botón
-         * notificacionesBtn.addClickListener(e -> {
-         * actualizarDialogoNotificaciones();
-         * notificacionesDialog.open();
-         * });
-         * 
-         * // Añadir el botón de notificaciones al navbar
-         * divisorDer.add(notificacionesBtn, titulo, avatar);
-         * avatar.getElement().addEventListener("click", event -> {
-         * UI.getCurrent().navigate("perfil");
-         * });
-         */
-
         navbar.setWidthFull();
         navbar.setPadding(true);
         navbar.setAlignItems(FlexComponent.Alignment.CENTER);
