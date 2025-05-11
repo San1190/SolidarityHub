@@ -391,7 +391,7 @@ public class NotificacionesView extends VerticalLayout {
         
         // Añadir detalles de la tarea
         infoLayout.add(crearInfoItem("Tipo", tarea.getTipoNecesidad() != null ? tarea.getTipoNecesidad().name() : "No especificado"));
-        infoLayout.add(crearInfoItem("Ubicación", tarea.getLocalizacion()));
+        infoLayout.add(crearInfoItem("Ubicación", tarea.getLatitud() + ", " + tarea.getLongitud()));
         infoLayout.add(crearInfoItem("Fecha de inicio", tarea.getFechaInicio() != null ? 
                 tarea.getFechaInicio().format(formatter) : "No especificada"));
         infoLayout.add(crearInfoItem("Fecha de fin", tarea.getFechaFin() != null ? 
