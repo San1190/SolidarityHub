@@ -208,8 +208,8 @@ public class AutomatizacionServicio implements ApplicationListener<ContextRefres
                 nuevaTarea.setDescripcion("Atender necesidad: " + necesidad.getDescripcion());
                 nuevaTarea.setTipo(necesidad.getTipoNecesidad());
                 nuevaTarea.setLocalizacion(necesidad.getUbicacion() != null ? necesidad.getUbicacion() : "Sin ubicación especificada");
-                nuevaTarea.setFechaInicio(necesidad.getFechaInicio());
-                nuevaTarea.setFechaFin(necesidad.getFechaFinalizacion());
+                // Asignar la fecha de inicio sin la hora (aunque ya viene sin hora desde el DatePicker)
+                nuevaTarea.setFechaInicio(necesidad.getFechaInicio() != null ? necesidad.getFechaInicio() : LocalDateTime.now().toLocalDate().atStartOfDay());
                 nuevaTarea.setCreador(necesidad.getCreador());
                 
                 
