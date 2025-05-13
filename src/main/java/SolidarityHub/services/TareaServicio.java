@@ -165,6 +165,7 @@ public class TareaServicio {
     @Transactional
     public void notificarSuscritores(Tarea tarea, String titulo, String mensaje) {
         for (Voluntario voluntario : tarea.getSuscriptores()) {
+            voluntario.actualizar(); //Manda el mesaje al voluntario
             Notificacion notificacion = new Notificacion();
             notificacion.setUsuario(voluntario);
             notificacion.setTarea(tarea);
@@ -178,7 +179,7 @@ public class TareaServicio {
         Tarea tarea = tareaRepositorio.findById(tareaId).orElseThrow();
         Usuario usuario = usuarioRepositorio.findById(voluntarioId).orElseThrow();
         if (usuario instanceof Voluntario voluntario) {
-            tarea.suscribirVoluntario(voluntario);
+            tarea.suscribirObservador(voluntario);
         }
         tareaRepositorio.save(tarea);
     }
@@ -187,7 +188,7 @@ public class TareaServicio {
         Tarea tarea = tareaRepositorio.findById(tareaId).orElseThrow();
         Usuario usuario = usuarioRepositorio.findById(voluntarioId).orElseThrow();
         if (usuario instanceof Voluntario voluntario) {
-            tarea.dessuscribirVoluntario(voluntario);
+            tarea.dessuscribirObservador(voluntario);
         }
         tareaRepositorio.save(tarea);
     }

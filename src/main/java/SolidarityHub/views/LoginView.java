@@ -1,5 +1,7 @@
 package SolidarityHub.views;
 
+import SolidarityHub.models.*;
+import SolidarityHub.repository.TareaRepositorio;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
@@ -19,13 +21,13 @@ import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import SolidarityHub.models.Gestor;
 
 import org.springframework.web.client.RestTemplate;
-import SolidarityHub.models.Voluntario;
 import SolidarityHub.utils.handlerRegistrarBtn;
-import SolidarityHub.models.Afectado;
-import SolidarityHub.models.Usuario;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Route("/")
 @PageTitle("Login | SolidarityHub")
@@ -38,8 +40,9 @@ public class LoginView extends VerticalLayout {
     private Anchor contraseñaOlvidadaLink;
     private Button iniciarSesionBtn;
     private Button registrarBtn;
+    private TareaRepositorio tareaRepositorio;
 
-    public LoginView() {
+    public LoginView(TareaRepositorio tareaRepositorio) {
         // Configuración del diseño principal (similar a RegistroView)
         setSizeFull();
         setSpacing(false);
@@ -47,6 +50,7 @@ public class LoginView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
+        this.tareaRepositorio = tareaRepositorio;
         // Estilos consistentes con RegistroView
         getElement().getStyle().set("background", "white");
         getElement().getStyle().set("height", "100%");
@@ -280,13 +284,42 @@ public class LoginView extends VerticalLayout {
             Usuario response = restTemplate.postForObject(url, usuario, Usuario.class);
 
             if (response != null) {
+                if (response instanceof Voluntario voluntario){
+                    suscribirVoluntario(voluntario);
+                }
                 VaadinSession.getCurrent().setAttribute("usuario", response);
                 UI.getCurrent().navigate("main");
             } else {
                 mostrarError("Credenciales incorrectas");
             }
         } catch (Exception e) {
+            e.printStackTrace();
             mostrarError("Las credenciales son incorrectas");
+        }
+    }
+
+    private void suscribirVoluntario(Voluntario voluntario) {
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "http://localhost:8080/api/tareas/";
+
+        Map<Necesidad.TipoNecesidad, Habilidad> mapeoHabilidades = new HashMap<>();
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.PRIMEROS_AUXILIOS, Habilidad.PRIMEROS_AUXILIOS);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.ALIMENTACION, Habilidad.COCINA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.ALIMENTACION_BEBE, Habilidad.COCINA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.SERVICIO_LIMPIEZA, Habilidad.LIMPIEZA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_PSICOLOGICA, Habilidad.AYUDA_PSICOLOGICA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_CARPINTERIA, Habilidad.CARPINTERIA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD, Habilidad.ELECTICISTA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_FONTANERIA, Habilidad.FONTANERIA);
+
+        List<Tarea> listaTareas = tareaRepositorio.findAllWithSuscriptores();
+        for (Tarea tarea : listaTareas) {
+            if(!tarea.getSuscriptores().contains(voluntario)) {
+                Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
+                if (voluntario.getHabilidades().contains(habilidadRequerida)) {
+                    restTemplate.postForEntity(url + tarea.getId() + "/suscribir/" + voluntario.getId(), null, Void.class);
+                }
+            }
         }
     }
 
