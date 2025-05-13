@@ -10,6 +10,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.checkbox.CheckboxGroupVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
@@ -369,11 +370,20 @@ public class ConfigurationView extends VerticalLayout {
         emailField = new TextField("Email:");
         emailField.setValue(usuario.getEmail() != null ? usuario.getEmail() : "");
 
-        passwordField = new PasswordField("Contraseña:");
-        passwordField.setValue(usuario.getPassword() != null ? usuario.getPassword() : "");
+        // Reemplazar el campo de contraseña por un botón
+        Button cambiarPasswordBtn = new Button("Cambiar Contraseña");
+        cambiarPasswordBtn.getStyle()
+                .set("margin-top", "1em")
+                .set("background-color", "#3498db")
+                .set("color", "white")
+                .set("border-radius", "6px")
+                .set("font-weight", "500")
+                .set("box-shadow", "0 2px 4px rgba(52, 152, 219, 0.2)");
+        
+        cambiarPasswordBtn.addClickListener(event -> abrirDialogoCambioPassword());
 
         // Aplicar estilos consistentes a todos los campos
-        Stream.of(nombreField, apellidosField, emailField, passwordField)
+        Stream.of(nombreField, apellidosField, emailField)
                 .forEach(field -> {
                     field.setWidthFull();
                     field.getStyle()
@@ -387,10 +397,102 @@ public class ConfigurationView extends VerticalLayout {
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("500px", 2));
 
-        formLayout.add(nombreField, apellidosField, emailField, passwordField);
+        formLayout.add(nombreField, apellidosField, emailField, cambiarPasswordBtn);
         return formLayout;
     }
 
+    // Método para abrir el diálogo de cambio de contraseña
+    private void abrirDialogoCambioPassword() {
+        Dialog dialog = new Dialog();
+        dialog.setCloseOnEsc(true);
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setWidth("400px");
+        
+        // Título del diálogo
+        H1 titulo = new H1("Cambiar Contraseña");
+        titulo.getStyle()
+                .set("color", "#2c3e50")
+                .set("font-size", "1.5em")
+                .set("margin", "0.5em 0")
+                .set("font-weight", "600")
+                .set("text-align", "center");
+        
+        // Campos para la nueva contraseña
+        PasswordField nuevaPasswordField = new PasswordField("Nueva Contraseña");
+        nuevaPasswordField.setWidthFull();
+        nuevaPasswordField.getStyle()
+                .set("border-radius", "6px")
+                .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
+                .set("--lumo-primary-color", "#3498db")
+                .set("margin-bottom", "1em");
+        
+        PasswordField confirmarPasswordField = new PasswordField("Confirmar Contraseña");
+        confirmarPasswordField.setWidthFull();
+        confirmarPasswordField.getStyle()
+                .set("border-radius", "6px")
+                .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
+                .set("--lumo-primary-color", "#3498db")
+                .set("margin-bottom", "1em");
+        
+        // Botones de acción
+        Button aceptarBtn = new Button("Aceptar", e -> {
+            String nuevaPassword = nuevaPasswordField.getValue();
+            String confirmarPassword = confirmarPasswordField.getValue();
+            
+            // Verificar que las contraseñas coincidan
+            if (nuevaPassword == null || nuevaPassword.isEmpty()) {
+                Notification.show("La contraseña no puede estar vacía", 
+                        3000, Notification.Position.MIDDLE);
+                return;
+            }
+            
+            if (!nuevaPassword.equals(confirmarPassword)) {
+                Notification.show("Las contraseñas no coinciden", 
+                        3000, Notification.Position.MIDDLE);
+                return;
+            }
+            
+            try {
+                // Actualizar la contraseña del usuario localmente
+                usuario.setPassword(nuevaPassword);
+                
+                // Guardar la contraseña en la base de datos a través del servicio
+                usuarioServicio.guardarUsuario(usuario);
+                
+                // Actualizar la sesión con el usuario actualizado
+                VaadinSession.getCurrent().setAttribute("usuario", usuario);
+                
+                Notification.show("Contraseña actualizada correctamente", 
+                        3000, Notification.Position.BOTTOM_CENTER);
+                dialog.close();
+            } catch (Exception ex) {
+                Notification.show("Error al actualizar la contraseña: " + ex.getMessage(), 
+                        3000, Notification.Position.MIDDLE);
+            }
+        });
+        aceptarBtn.getStyle()
+                .set("background-color", "#3498db")
+                .set("color", "white")
+                .set("border-radius", "6px")
+                .set("font-weight", "500");
+        
+        Button cancelarBtn = new Button("Cancelar", e -> dialog.close());
+        
+        HorizontalLayout botonesLayout = new HorizontalLayout(aceptarBtn, cancelarBtn);
+        botonesLayout.setWidthFull();
+        botonesLayout.setJustifyContentMode(JustifyContentMode.END);
+        botonesLayout.setSpacing(true);
+        
+        // Añadir componentes al diálogo
+        VerticalLayout dialogLayout = new VerticalLayout(titulo, nuevaPasswordField, confirmarPasswordField, botonesLayout);
+        dialogLayout.setPadding(true);
+        dialogLayout.setSpacing(true);
+        dialogLayout.setAlignItems(Alignment.CENTER);
+        
+        dialog.add(dialogLayout);
+        dialog.open();
+    }
+    
     private Component crearGuardarInfoBtn() {
         Button guardarBtn = new Button("Guardar Cambios");
         guardarBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -408,8 +510,8 @@ public class ConfigurationView extends VerticalLayout {
                 usuario.setNombre(nombreField.getValue());
                 usuario.setApellidos(apellidosField.getValue());
                 usuario.setEmail(emailField.getValue());
-                usuario.setPassword(passwordField.getValue());
-
+                // Ya no actualizamos la contraseña aquí, se hace en el diálogo
+                
                 // Si el usuario es un voluntario, actualizar sus días, turno y habilidades
                 // disponibles
                 if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario") &&
