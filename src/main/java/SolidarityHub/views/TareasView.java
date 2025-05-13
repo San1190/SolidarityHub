@@ -1,15 +1,12 @@
 package SolidarityHub.views;
 
-import SolidarityHub.models.Tarea;
-import SolidarityHub.models.Usuario;
-import SolidarityHub.models.Voluntario;
-import SolidarityHub.models.Afectado;
+import SolidarityHub.models.*;
 import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Tarea.EstadoTarea;
-import SolidarityHub.models.Recursos;
 import SolidarityHub.models.Recursos.TipoRecurso;
 
 import SolidarityHub.models.dtos.NotificacionDTO;
+import SolidarityHub.services.NotificacionServicio;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ShortcutEvent;
 import com.vaadin.flow.component.button.Button;
@@ -47,10 +44,7 @@ import org.springframework.web.client.RestClientException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Route(value = "tareas", layout = MainLayout.class)
@@ -60,6 +54,7 @@ public class TareasView extends VerticalLayout {
     private final RestTemplate restTemplate = new RestTemplate();
     private final String apiUrl = "http://localhost:8080/api/tareas";
     private final Binder<Tarea> binder = new Binder<>(Tarea.class);
+    private final NotificacionServicio notificacionServicio;
     private Dialog formDialog;
     private Tarea tareaActual;
     private Usuario usuarioActual;
@@ -67,7 +62,8 @@ public class TareasView extends VerticalLayout {
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private Grid<Tarea> tablaTareas; // Referencia a la tabla para actualizarla
 
-    public TareasView() {
+    public TareasView(NotificacionServicio notificacionServicio) {
+        this.notificacionServicio = notificacionServicio;
         setSizeFull();
         setPadding(true);
         setSpacing(true);
@@ -408,12 +404,12 @@ public class TareasView extends VerticalLayout {
                 if (binder.writeBeanIfValid(tareaActual)) {
                     if (tareaActual.getId() == null) {
                         // Crear nueva tarea
-                        restTemplate.postForObject(apiUrl, tareaActual, Tarea.class);
+                        Tarea tareaAct = restTemplate.postForObject(apiUrl, tareaActual, Tarea.class);
                         NotificacionDTO notificacionDTO = new NotificacionDTO();
                         notificacionDTO.setTitulo("Nueva Tarea");
                         notificacionDTO.setMensaje("Se ha creado la tarea " + tareaActual.getNombre());
-                        restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO, Void.class);
-
+                        System.out.println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+                        restTemplate.postForEntity(apiUrl + "/" + tareaAct.getId() + "/notificar", notificacionDTO, Void.class);
                         Notification.show("Tarea creada correctamente", 3000, Position.BOTTOM_START);
                     } else {
                         // Actualizar tarea existente
@@ -422,6 +418,7 @@ public class TareasView extends VerticalLayout {
                         notificacionDTO.setTitulo("Tarea actualizada");
                         notificacionDTO.setMensaje("Se ha actualizado la tarea " + tareaActual.getNombre());
                         restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO, Void.class);
+                        System.out.println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
                         Notification.show("Tarea actualizada correctamente", 3000, Position.BOTTOM_START);
                     }
                     formDialog.close();
@@ -922,11 +919,23 @@ public class TareasView extends VerticalLayout {
 
                 if (tareaActual.getId() == null) {
                     // Crear nueva tarea
-                    restTemplate.postForObject(apiUrl + "/crear", tareaActual, Tarea.class);
-                    Notification.show("Tarea creada correctamente", 3000, Position.BOTTOM_START);
+                    Tarea tarea = restTemplate.postForObject(apiUrl + "/crear", tareaActual, Tarea.class);
+                    if (usuarioActual instanceof Voluntario voluntario) {
+                        suscribirVoluntario(voluntario, tarea);
+                        tarea = restTemplate.getForObject(apiUrl + "/" + tarea.getId(), Tarea.class);
+                        NotificacionDTO notificacionDTO = new NotificacionDTO();
+                        notificacionDTO.setTitulo("Nueva Tarea");
+                        notificacionDTO.setMensaje("Se ha creado la tarea " + tareaActual.getNombre());
+                        restTemplate.postForEntity(apiUrl + "/" + tarea.getId() + "/notificar", notificacionDTO, Void.class);
+                        Notification.show("Tarea creada correctamente", 3000, Position.BOTTOM_START);
+                    }
                 } else {
                     // Actualizar tarea existente
                     restTemplate.put(apiUrl + "/" + tareaActual.getId(), tareaActual);
+                    NotificacionDTO notificacionDTO = new NotificacionDTO();
+                    notificacionDTO.setTitulo("Tarea actualizada");
+                    notificacionDTO.setMensaje("Se ha actualizado la tarea " + tareaActual.getNombre());
+                    restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO, Void.class);
                     Notification.show("Tarea actualizada correctamente", 3000, Position.BOTTOM_START);
                 }
                 formDialog.close();
@@ -935,6 +944,28 @@ public class TareasView extends VerticalLayout {
                 Notification.show("Error al guardar la tarea: " + ex.getMessage(), 3000, Position.BOTTOM_START);
             }
         }
+    }
+
+    private void suscribirVoluntario(Voluntario voluntario, Tarea tarea) {
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "http://localhost:8080/api/tareas/";
+
+        Map<Necesidad.TipoNecesidad, Habilidad> mapeoHabilidades = new HashMap<>();
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.PRIMEROS_AUXILIOS, Habilidad.PRIMEROS_AUXILIOS);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.ALIMENTACION, Habilidad.COCINA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.ALIMENTACION_BEBE, Habilidad.COCINA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.SERVICIO_LIMPIEZA, Habilidad.LIMPIEZA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_PSICOLOGICA, Habilidad.AYUDA_PSICOLOGICA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_CARPINTERIA, Habilidad.CARPINTERIA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD, Habilidad.ELECTICISTA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_FONTANERIA, Habilidad.FONTANERIA);
+
+        Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
+
+        if (voluntario.getHabilidades().contains(habilidadRequerida)) {
+            restTemplate.postForEntity(url + tarea.getId() + "/suscribir/" + voluntario.getId(), null, Void.class);
+        }
+
     }
 
     private void eliminarTarea(Tarea tarea) {

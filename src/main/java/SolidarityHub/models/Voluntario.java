@@ -7,7 +7,7 @@ import jakarta.persistence.DiscriminatorValue;
 
 @Entity
 @DiscriminatorValue("voluntario")
-public class Voluntario extends Usuario {
+public class Voluntario extends Usuario implements Observador {
 
     private List<Habilidad> habilidades;
     
@@ -18,7 +18,8 @@ public class Voluntario extends Usuario {
     private String turnoDisponibilidad; // Por ejemplo: "Mañana", "Tarde", "Día Entero"
     
     private Double radioAccion; // Radio de acción en kilómetros para asignación de tareas
-    
+
+    private Boolean notificacionesPendientes;
 
     public Voluntario() {}
 
@@ -29,14 +30,13 @@ public class Voluntario extends Usuario {
         this.diasDisponibles = diasDisponibles;
         this.turnoDisponibilidad = turnoDisponibilidad;
         this.radioAccion = radioAccion;
+        this.notificacionesPendientes = false;
     }
 
     @Override
     public String getTipoUsuario() {
         return "voluntario";
     }
-
-    // Getters y setters para habilidades, días y turno
 
     public List<Habilidad> getHabilidades() {
         return habilidades;
@@ -65,5 +65,12 @@ public class Voluntario extends Usuario {
 
     public void setRadioAccion(Double radioAccion) {
         this.radioAccion = radioAccion;
+    }
+
+    public Boolean getNotificacionesPendientes() {return notificacionesPendientes;}
+    public void setNotificacionesPendientes(Boolean notificacionesPendientes) {this.notificacionesPendientes = notificacionesPendientes;}
+
+    public void actualizar() {
+        setNotificacionesPendientes(true);
     }
 }

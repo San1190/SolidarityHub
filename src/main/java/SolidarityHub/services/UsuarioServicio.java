@@ -86,6 +86,7 @@ public class UsuarioServicio {
     }
 
     public List<Notificacion> actualizarNotificaciones(Voluntario voluntario) {
+        voluntario.actualizar();
         return notificacionServicio.findByVoluntarioAndEstado(voluntario, Notificacion.EstadoNotificacion.PENDIENTE);
     }
 }
