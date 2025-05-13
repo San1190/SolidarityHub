@@ -80,15 +80,11 @@ public class TareasView extends VerticalLayout {
         tablaTareas = new Grid<>(Tarea.class, false);
         tablaTareas.setWidthFull();
         tablaTareas.addColumn(Tarea::getNombre).setHeader("Nombre").setSortable(true);
-        tablaTareas.addColumn(Tarea::getDescripcion).setHeader("Descripción").setSortable(true);
         tablaTareas.addColumn(tarea -> tarea.getTipo() != null ? tarea.getTipo().name() : "").setHeader("Tipo").setSortable(true);
         tablaTareas.addColumn(Tarea::getLocalizacion).setHeader("Localización").setSortable(true);
-        tablaTareas.addColumn(Tarea::getPuntoEncuentro).setHeader("Punto de Encuentro").setSortable(true);
         tablaTareas.addColumn(Tarea::getTurno).setHeader("Turno").setSortable(true);
         tablaTareas.addColumn(tarea -> tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "").setHeader("Fecha Inicio").setSortable(true);
-        tablaTareas.addColumn(tarea -> tarea.getFechaFin() != null ? formatter.format(tarea.getFechaFin()) : "").setHeader("Fecha Fin").setSortable(true);
         tablaTareas.addColumn(tarea -> tarea.getEstado() != null ? tarea.getEstado().name() : "").setHeader("Estado").setSortable(true);
-        tablaTareas.addColumn(Tarea::getNumeroVoluntariosNecesarios).setHeader("Voluntarios").setSortable(true);
         
         // Columna de acciones
         tablaTareas.addComponentColumn(tarea -> {
@@ -111,7 +107,7 @@ public class TareasView extends VerticalLayout {
         
         // Configuración de la tabla
         tablaTareas.setPageSize(10);
-        tablaTareas.getStyle().set("margin-top", "20px");
+        tablaTareas.getStyle().set("margin-top", "60px");
         
         // Guardar referencia a la tabla para actualizarla
         // No need to store grid reference since we can refresh via refreshTareas()
