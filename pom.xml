@@ -47,7 +47,7 @@
         <dependency>
             <groupId>software.xdev</groupId>
             <artifactId>vaadin-maps-leaflet-flow</artifactId>
-            <version>4.4.0</version>
+            <version>6.1.0</version>
         </dependency>
 
         <dependency>

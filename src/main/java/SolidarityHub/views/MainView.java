@@ -5,10 +5,21 @@ import SolidarityHub.services.UsuarioServicio;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
+import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
@@ -49,6 +60,11 @@ public class MainView extends VerticalLayout {
     private List<Tarea> tareas;
     private List<LMarker> marcadores = new ArrayList<>();
     private Registration geolocalizacionRegistration;
+    
+    // Capas para dibujo y almacenamiento de elementos
+    private LFeatureGroup drawnItems;
+    private LFeatureGroup resourceAreas;
+    private LFeatureGroup criticalAreas;
 
     public MainView(UsuarioServicio usuarioServicio) {
         setSizeFull();
@@ -64,9 +80,9 @@ public class MainView extends VerticalLayout {
         title.addClassName(LumoUtility.TextColor.SUCCESS);
         title.addClassName(LumoUtility.TextAlignment.CENTER);
         title.addClassName(LumoUtility.Margin.Bottom.MEDIUM);
-
+        
         add(title);
-        add(descripcion);
+        add(crearDescripcion());
         add(crearControlesMapa());
         add(crearMapaContainer());
     }
@@ -88,8 +104,29 @@ public class MainView extends VerticalLayout {
 
     private void inicializarTareasEjemplo() {
         tareas = new ArrayList<>();
-        // ... crear y agregar 9 tareas como en tu ejemplo previo ...
-        // Para brevedad, se omiten; asume que tareas tiene localización, nombre, descripción y voluntarios necesarios
+        
+        // Crear tareas de ejemplo con ubicaciones reales
+        Tarea tarea1 = new Tarea();
+        tarea1.setNombre("Distribución de alimentos");
+        tarea1.setDescripcion("Entrega de alimentos básicos a familias afectadas");
+        tarea1.setLocalizacion("39.4699,-0.3763"); // Valencia
+        tarea1.setNumeroVoluntariosNecesarios(5);
+        
+        Tarea tarea2 = new Tarea();
+        tarea2.setNombre("Limpieza de escombros");
+        tarea2.setDescripcion("Ayuda para limpiar calles después de inundaciones");
+        tarea2.setLocalizacion("39.4821,-0.3843"); // Cerca de Valencia
+        tarea2.setNumeroVoluntariosNecesarios(10);
+        
+        Tarea tarea3 = new Tarea();
+        tarea3.setNombre("Asistencia médica");
+        tarea3.setDescripcion("Atención médica básica para personas afectadas");
+        tarea3.setLocalizacion("39.4569,-0.3525"); // Otra ubicación en Valencia
+        tarea3.setNumeroVoluntariosNecesarios(3);
+        
+        tareas.add(tarea1);
+        tareas.add(tarea2);
+        tareas.add(tarea3);
     }
 
     private Component crearMapaContainer() {
@@ -107,6 +144,14 @@ public class MainView extends VerticalLayout {
         map = container.getlMap();
         map.addLayer(LTileLayer.createDefaultForOpenStreetMapTileServer(registry));
         map.setView(new LLatLng(registry, userLatitude, userLongitude), 10);
+        
+        // Exponer el mapa a JavaScript para poder acceder desde los botones
+        UI.getCurrent().getPage().executeJs(
+            "window.map = document.querySelector('vaadin-map').map;");
+        
+        // Añadir controles de dibujo al mapa
+        configurarControlesDibujo();
+        
         return container;
     }
 
@@ -211,5 +256,179 @@ public class MainView extends VerticalLayout {
                  * Math.sin(dLon/2) * Math.sin(dLon/2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
+    }
+    
+    private Component crearDescripcion() {
+        VerticalLayout descripcionLayout = new VerticalLayout();
+        descripcionLayout.setSpacing(false);
+        descripcionLayout.setPadding(false);
+        descripcionLayout.setAlignItems(Alignment.CENTER);
+        
+        Paragraph descripcion = new Paragraph(
+            "Este mapa muestra tareas cercanas a tu ubicación y te permite crear áreas críticas y zonas de recursos. "
+            + "Utiliza las herramientas de dibujo para marcar áreas importantes en el mapa.");
+        descripcion.getStyle()
+            .set("color", "var(--lumo-secondary-text-color)")
+            .set("max-width", "800px")
+            .set("text-align", "center");
+        
+        descripcionLayout.add(descripcion);
+        return descripcionLayout;
+    }
+    
+    private Component crearControlesMapa() {
+        HorizontalLayout controlesLayout = new HorizontalLayout();
+        controlesLayout.setWidthFull();
+        controlesLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        controlesLayout.setSpacing(true);
+        controlesLayout.setPadding(true);
+        
+        Button btnAreaCritica = new Button("Crear Área Crítica", new Icon(VaadinIcon.EXCLAMATION_CIRCLE));
+        btnAreaCritica.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+        btnAreaCritica.addClickListener(e -> activarDibujoPoligono("critica"));
+        
+        Button btnAreaRecursos = new Button("Crear Zona de Recursos", new Icon(VaadinIcon.PACKAGE));
+        btnAreaRecursos.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        btnAreaRecursos.addClickListener(e -> activarDibujoPoligono("recursos"));
+        
+        Button btnLimpiar = new Button("Limpiar Dibujos", new Icon(VaadinIcon.ERASER));
+        btnLimpiar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        btnLimpiar.addClickListener(e -> limpiarDibujos());
+        
+        controlesLayout.add(btnAreaCritica, btnAreaRecursos, btnLimpiar);
+        return controlesLayout;
+    }
+    
+    private void configurarControlesDibujo() {
+        // Crear capas para almacenar elementos dibujados
+        drawnItems = new LFeatureGroup(registry);
+        resourceAreas = new LFeatureGroup(registry);
+        criticalAreas = new LFeatureGroup(registry);
+        
+        // Añadir capas al mapa
+        drawnItems.addTo(map);
+        resourceAreas.addTo(map);
+        criticalAreas.addTo(map);
+        
+        // Configurar opciones de dibujo
+        LDrawOptions drawOptions = new LDrawOptions(registry);
+        drawOptions.setPolyline(false);
+        drawOptions.setCircle(true);
+        drawOptions.setCircleMarker(false);
+        drawOptions.setRectangle(true);
+        drawOptions.setPolygon(true);
+        
+        // Configurar control de dibujo
+        LDrawControlOptions drawControlOptions = new LDrawControlOptions(registry);
+        drawControlOptions.setDraw(drawOptions);
+        drawControlOptions.setEdit(new LDrawOptions(registry));
+        
+        LDrawControl drawControl = new LDrawControl(registry, drawControlOptions);
+        drawControl.addTo(map);
+        
+        // Configurar eventos de dibujo
+        map.on(LDrawEvents.CREATED, event -> {
+            LDrawEvent drawEvent = (LDrawEvent) event;
+            LLayer layer = drawEvent.getLayer();
+            
+            // Añadir la capa dibujada al grupo de elementos dibujados
+            drawnItems.addLayer(layer);
+            
+            // Mostrar diálogo para clasificar el área
+            mostrarDialogoClasificacionArea(layer);
+        });
+    }
+    
+    private void activarDibujoPoligono(String tipo) {
+        // Activar herramienta de dibujo de polígono y guardar el tipo para usarlo después
+        UI.getCurrent().getPage().executeJs(
+            "if (window.drawingType) { window.drawingType = $0; }"
+            + "else { window.drawingType = $0; }"
+            + "if (window.map) { new L.Draw.Polygon(window.map).enable(); }",
+            tipo);
+        
+        Notification.show("Dibuja un polígono en el mapa para marcar el área", 
+                          3000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_PRIMARY);
+    }
+    
+    private void limpiarDibujos() {
+        if (drawnItems != null) {
+            drawnItems.clearLayers();
+        }
+        if (resourceAreas != null) {
+            resourceAreas.clearLayers();
+        }
+        if (criticalAreas != null) {
+            criticalAreas.clearLayers();
+        }
+        
+        Notification.show("Se han eliminado todas las áreas dibujadas", 
+                          3000, Notification.Position.BOTTOM_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    }
+    
+    private void mostrarDialogoClasificacionArea(LLayer layer) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Clasificar Área");
+        
+        VerticalLayout dialogLayout = new VerticalLayout();
+        dialogLayout.setPadding(true);
+        dialogLayout.setSpacing(true);
+        dialogLayout.setAlignItems(Alignment.STRETCH);
+        
+        TextField nombreField = new TextField("Nombre del área");
+        nombreField.setRequired(true);
+        nombreField.setWidthFull();
+        
+        TextArea descripcionField = new TextArea("Descripción");
+        descripcionField.setWidthFull();
+        descripcionField.setHeight("100px");
+        
+        RadioButtonGroup<String> tipoGroup = new RadioButtonGroup<>();
+        tipoGroup.setLabel("Tipo de área");
+        tipoGroup.setItems("Área Crítica", "Zona de Recursos");
+        tipoGroup.setValue("Área Crítica");
+        
+        dialogLayout.add(nombreField, descripcionField, tipoGroup);
+        
+        Button guardarBtn = new Button("Guardar", e -> {
+            if (nombreField.getValue().isEmpty()) {
+                Notification.show("El nombre es obligatorio", 
+                                  3000, Notification.Position.MIDDLE)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
+            
+            // Añadir el área a la capa correspondiente según el tipo
+            if ("Zona de Recursos".equals(tipoGroup.getValue())) {
+                layer.bindPopup("<div><h3>" + nombreField.getValue() + "</h3>"
+                               + "<p>" + descripcionField.getValue() + "</p>"
+                               + "<p><strong>Tipo:</strong> Zona de Recursos</p></div>");
+                resourceAreas.addLayer(layer);
+                layer.setStyle("{color: '#28a745', fillColor: '#28a745', fillOpacity: 0.3}");
+            } else {
+                layer.bindPopup("<div><h3>" + nombreField.getValue() + "</h3>"
+                               + "<p>" + descripcionField.getValue() + "</p>"
+                               + "<p><strong>Tipo:</strong> Área Crítica</p></div>");
+                criticalAreas.addLayer(layer);
+                layer.setStyle("{color: '#dc3545', fillColor: '#dc3545', fillOpacity: 0.3}");
+            }
+            
+            dialog.close();
+            Notification.show("Área guardada correctamente", 
+                              3000, Notification.Position.BOTTOM_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        });
+        
+        Button cancelarBtn = new Button("Cancelar", e -> {
+            drawnItems.removeLayer(layer);
+            dialog.close();
+        });
+        cancelarBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        
+        dialog.getFooter().add(cancelarBtn, guardarBtn);
+        dialog.add(dialogLayout);
+        dialog.open();
     }
 }
