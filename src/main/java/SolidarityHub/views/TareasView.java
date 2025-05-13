@@ -63,8 +63,9 @@ public class TareasView extends VerticalLayout {
     private Dialog formDialog;
     private Tarea tareaActual;
     private Usuario usuarioActual;
-    private VerticalLayout tareasContainer;
+    private VerticalLayout tareasContainer = new VerticalLayout(); // Inicializar para evitar NullPointerException
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private Grid<Tarea> tablaTareas; // Referencia a la tabla para actualizarla
 
     public TareasView() {
         setSizeFull();
@@ -79,18 +80,48 @@ public class TareasView extends VerticalLayout {
         add(crearEncabezado());
         add(crearContenedorPrincipal());
 
-        // Crear el contenedor para las tarjetas de tareas
-        tareasContainer = new VerticalLayout();
-        tareasContainer.setWidthFull();
-        tareasContainer.setPadding(false);
-        tareasContainer.setSpacing(true);
-        tareasContainer.getStyle()
-                .set("flex-wrap", "wrap")
-                .set("gap", "16px")
-                .set("box-shadow", "none");
-        tareasContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
-
-        add(tareasContainer);
+        // Crear la tabla de tareas
+        tablaTareas = new Grid<>(Tarea.class, false);
+        tablaTareas.setWidthFull();
+        tablaTareas.addColumn(Tarea::getNombre).setHeader("Nombre").setSortable(true);
+        tablaTareas.addColumn(Tarea::getDescripcion).setHeader("Descripción").setSortable(true);
+        tablaTareas.addColumn(tarea -> tarea.getTipo() != null ? tarea.getTipo().name() : "").setHeader("Tipo").setSortable(true);
+        tablaTareas.addColumn(Tarea::getLocalizacion).setHeader("Localización").setSortable(true);
+        tablaTareas.addColumn(Tarea::getPuntoEncuentro).setHeader("Punto de Encuentro").setSortable(true);
+        tablaTareas.addColumn(Tarea::getTurno).setHeader("Turno").setSortable(true);
+        tablaTareas.addColumn(tarea -> tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "").setHeader("Fecha Inicio").setSortable(true);
+        tablaTareas.addColumn(tarea -> tarea.getFechaFin() != null ? formatter.format(tarea.getFechaFin()) : "").setHeader("Fecha Fin").setSortable(true);
+        tablaTareas.addColumn(tarea -> tarea.getEstado() != null ? tarea.getEstado().name() : "").setHeader("Estado").setSortable(true);
+        tablaTareas.addColumn(Tarea::getNumeroVoluntariosNecesarios).setHeader("Voluntarios").setSortable(true);
+        
+        // Columna de acciones
+        tablaTareas.addComponentColumn(tarea -> {
+            HorizontalLayout actions = new HorizontalLayout();
+            Button detallesBtn = new Button(new Icon(VaadinIcon.SEARCH), e -> mostrarDetallesTarea(tarea));
+            detallesBtn.getElement().setAttribute("title", "Ver detalles");
+            actions.add(detallesBtn);
+            
+            if (usuarioActual instanceof Voluntario && esCreador(tarea, usuarioActual)) {
+                Button editarBtn = new Button(new Icon(VaadinIcon.EDIT), e -> abrirFormularioTarea(tarea));
+                editarBtn.getElement().setAttribute("title", "Editar");
+                Button eliminarBtn = new Button(new Icon(VaadinIcon.TRASH), e -> eliminarTarea(tarea));
+                eliminarBtn.getElement().setAttribute("title", "Eliminar");
+                eliminarBtn.getElement().getThemeList().add("error");
+                actions.add(editarBtn, eliminarBtn);
+            }
+            
+            return actions;
+        }).setHeader("Acciones").setAutoWidth(true);
+        
+        // Configuración de la tabla
+        tablaTareas.setPageSize(10);
+        tablaTareas.getStyle().set("margin-top", "20px");
+        
+        // Guardar referencia a la tabla para actualizarla
+        // No need to store grid reference since we can refresh via refreshTareas()
+        refreshTareas();
+        
+        add(tablaTareas);
 
         refreshTareas();
     }
@@ -309,6 +340,23 @@ public class TareasView extends VerticalLayout {
         binder.forField(localizacionField)
                 .asRequired("La localización es requerida")
                 .bind(Tarea::getLocalizacion, Tarea::setLocalizacion);
+                
+        // Campo: Punto de Encuentro
+        TextField puntoEncuentroField = new TextField("Punto de Encuentro");
+        puntoEncuentroField.setRequired(true);
+        puntoEncuentroField.setHelperText("Especifique el lugar exacto donde se reunirán los voluntarios");
+        binder.forField(puntoEncuentroField)
+                .asRequired("El punto de encuentro es requerido")
+                .bind(Tarea::getPuntoEncuentro, Tarea::setPuntoEncuentro);
+
+        // Campo: Turno
+        ComboBox<String> turnoField = new ComboBox<>("Turno");
+        turnoField.setItems("Mañana", "Tarde", "Noche", "Completo");
+        turnoField.setRequired(true);
+        turnoField.setHelperText("Seleccione el turno para esta tarea");
+        binder.forField(turnoField)
+                .asRequired("El turno es requerido")
+                .bind(Tarea::getTurno, Tarea::setTurno);
 
         // Campo: Número de voluntarios
         IntegerField voluntariosField = new IntegerField("Número de voluntarios necesarios");
@@ -336,7 +384,8 @@ public class TareasView extends VerticalLayout {
         campos.add(
                 nombreField, descripcionField,
                 tipoField, estadoField,
-                localizacionField, voluntariosField,
+                localizacionField, puntoEncuentroField,
+                turnoField, voluntariosField,
                 fechaInicioField, fechaFinField);
 
         formLayout.add(campos);
@@ -713,6 +762,14 @@ public class TareasView extends VerticalLayout {
         // Localización
         Span localizacion = new Span(tarea.getLocalizacion());
         infoLayout.addFormItem(localizacion, "Localización");
+        
+        // Punto de encuentro
+        Span puntoEncuentro = new Span(tarea.getPuntoEncuentro() != null ? tarea.getPuntoEncuentro() : "No definido");
+        infoLayout.addFormItem(puntoEncuentro, "Punto de encuentro");
+        
+        // Turno
+        Span turno = new Span(tarea.getTurno() != null ? tarea.getTurno() : "No definido");
+        infoLayout.addFormItem(turno, "Turno");
 
         // Fechas
         String fechaInicio = tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "No definida";
@@ -952,6 +1009,11 @@ public class TareasView extends VerticalLayout {
     private void mostrarTareas(List<Tarea> tareas) {
         // Limpiar el contenedor
         tareasContainer.removeAll();
+
+        // Actualizar la tabla de tareas
+        if (tablaTareas != null) {
+            tablaTareas.setItems(tareas);
+        }
 
         if (tareas.isEmpty()) {
             Div mensajeVacio = new Div();
