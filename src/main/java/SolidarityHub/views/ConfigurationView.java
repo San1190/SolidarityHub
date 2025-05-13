@@ -107,7 +107,7 @@ public class ConfigurationView extends VerticalLayout {
                 .set("display", "flex")
                 .set("flex-direction", "column")
                 .set("align-items", "center")
-                .set("margin-top", "45em")
+                .set("margin-top", "35em")
                 .set("margin-bottom", "5em");
         formCard.setHeight("auto");
 
@@ -143,7 +143,7 @@ public class ConfigurationView extends VerticalLayout {
         panel.getStyle().set("margin", "0 auto");
         panel.setHeight("auto");
 
-        // Panel izquierdo: se muestra según el tipo de usuario
+        // Panel izquierdo: se muestra solo para voluntarios
         VerticalLayout panelIzq = new VerticalLayout();
         panelIzq.setWidth("48%");
         panelIzq.setSpacing(true);
@@ -160,15 +160,10 @@ public class ConfigurationView extends VerticalLayout {
         if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario")) {
             panelIzq.add(crearDiasHorario(), crearTurnoHorario(), crearHabilidades());
         }
-        // Para usuarios afectados, mostramos información sobre la gestión de
-        // necesidades
-        else if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("afectado")) {
-            panelIzq.add(crearInfoNecesidades());
-        }
 
         // Panel derecho: Avatar y formulario de datos personales
         VerticalLayout panelDer = new VerticalLayout();
-        panelDer.setWidth("48%");
+        panelDer.setWidth(usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario") ? "48%" : "100%");
         panelDer.setSpacing(true);
         panelDer.setPadding(true);
         panelDer.setAlignItems(Alignment.CENTER);
@@ -191,7 +186,13 @@ public class ConfigurationView extends VerticalLayout {
         panelBtns.add(crearCancelarBtn(), crearGuardarInfoBtn());
         panelBtns.setHeight("auto");
 
-        panel.add(panelIzq, panelDer);
+        // Añadir paneles según el tipo de usuario
+        if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario")) {
+            panel.add(panelIzq, panelDer);
+        } else {
+            panel.add(panelDer);
+        }
+        
         formCard.add(title, separador, panel, panelBtns);
         add(formCard);
     }
@@ -498,8 +499,8 @@ public class ConfigurationView extends VerticalLayout {
         guardarBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         guardarBtn.getStyle()
                 .set("border-radius", "6px")
+                .set("background-color", "#3498db")
                 .set("font-weight", "600")
-                .set("box-shadow", "0 4px 6px rgba(52, 152, 219, 0.2)")
                 .set("transition", "transform 0.1s ease-in-out")
                 .set("padding", "0.5rem 1.5rem");
         guardarBtn.getElement().getThemeList().add("primary");
@@ -633,6 +634,7 @@ public class ConfigurationView extends VerticalLayout {
         Button cancelarBtn = new Button("Cancelar");
         cancelarBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         cancelarBtn.getStyle()
+                .set("color", "#3498db")
                 .set("font-weight", "600")
                 .set("border-radius", "6px")
                 .set("padding", "0.5rem 1.5rem");
@@ -640,7 +642,7 @@ public class ConfigurationView extends VerticalLayout {
         return cancelarBtn;
     }
 
-    // Método para crear el panel informativo sobre la gestión de necesidades
+    // Eliminamos el método crearInfoNecesidades() ya que no lo necesitamos más
     private Component crearInfoNecesidades() {
         // Contenedor principal con estilo mejorado
         Div infoContainer = new Div();
