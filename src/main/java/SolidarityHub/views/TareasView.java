@@ -1183,22 +1183,32 @@ public class TareasView extends VerticalLayout {
     // Al final de la clase, agregar el método para el gestor
     private void abrirDialogoAsignarRecursos() {
         Dialog dialog = new Dialog();
-        dialog.setWidth("500px");
+        dialog.setWidth("700px");
         dialog.setCloseOnEsc(true);
         dialog.setCloseOnOutsideClick(false);
 
-        H3 titulo = new H3("Asignar Recursos a Tarea");
+        H3 titulo = new H3("Asignar Recursos y Configurar Tarea");
         titulo.getStyle().set("margin-top", "0").set("color", "#3498db");
 
         FormLayout formLayout = new FormLayout();
+        formLayout.setResponsiveSteps(
+                new FormLayout.ResponsiveStep("0", 1),
+                new FormLayout.ResponsiveStep("500px", 2));
+
+        // Selección de tarea
         ComboBox<Tarea> tareaCombo = new ComboBox<>("Tarea");
         tareaCombo.setItems(obtenerTodasLasTareas());
         tareaCombo.setItemLabelGenerator(Tarea::getNombre);
+        tareaCombo.setWidthFull();
+        tareaCombo.setRequired(true);
 
+        // Selección de recurso
         ComboBox<Recursos> recursoCombo = new ComboBox<>("Recurso");
         List<Recursos> recursosNoAsignados = obtenerRecursosNoAsignados();
         recursoCombo.setItems(recursosNoAsignados);
         recursoCombo.setItemLabelGenerator(Recursos::getDescripcion);
+        recursoCombo.setWidthFull();
+        recursoCombo.setRequired(true);
 
         // Verificar si hay recursos disponibles
         if (recursosNoAsignados.isEmpty()) {
@@ -1211,25 +1221,69 @@ public class TareasView extends VerticalLayout {
             recursoCombo.setEnabled(false);
         }
 
-        formLayout.add(tareaCombo, recursoCombo);
+        // Campos para el punto de encuentro
+        TextField puntoEncuentroField = new TextField("Punto de Encuentro");
+        puntoEncuentroField.setWidthFull();
+        puntoEncuentroField.setRequired(true);
+        puntoEncuentroField.setHelperText("Especifique el lugar exacto donde se reunirán los voluntarios");
 
-        Button asignarButton = new Button("Asignar", event -> {
+        // Campos de fecha 
+        DateTimePicker fechaEncuentroField = new DateTimePicker("Fecha y Hora de Encuentro");
+        fechaEncuentroField.setWidthFull();
+        fechaEncuentroField.setRequiredIndicatorVisible(true);
+        fechaEncuentroField.setHelperText("Seleccione cuándo deben reunirse los voluntarios");
+
+        // Turno
+        ComboBox<String> turnoField = new ComboBox<>("Turno");
+        turnoField.setItems("Mañana", "Tarde", "Noche", "Completo");
+        turnoField.setWidthFull();
+        turnoField.setRequired(true);
+        turnoField.setHelperText("Seleccione el turno para esta tarea");
+
+        // Añadir todos los campos al formulario
+        formLayout.add(tareaCombo, recursoCombo, puntoEncuentroField, fechaEncuentroField, turnoField);
+
+        // Botones de acción
+        Button asignarButton = new Button("Asignar y Configurar", event -> {
             Tarea tareaSeleccionada = tareaCombo.getValue();
             Recursos recursoSeleccionado = recursoCombo.getValue();
-            if (tareaSeleccionada != null && recursoSeleccionado != null) {
+            String puntoEncuentro = puntoEncuentroField.getValue();
+            LocalDateTime fechaEncuentro = fechaEncuentroField.getValue();
+            String turno = turnoField.getValue();
+            
+            if (tareaSeleccionada != null && recursoSeleccionado != null && 
+                puntoEncuentro != null && !puntoEncuentro.isEmpty() && 
+                fechaEncuentro != null && turno != null) {
                 try {
+                    // Actualizar la tarea con el punto de encuentro y fecha
+                    tareaSeleccionada.setPuntoEncuentro(puntoEncuentro);
+                    tareaSeleccionada.setFechaInicio(fechaEncuentro);
+                    tareaSeleccionada.setTurno(turno);
+                    
+                    // Actualizar la tarea primero
+                    restTemplate.put(apiUrl + "/" + tareaSeleccionada.getId(), tareaSeleccionada);
+                    
+                    // Luego asignar el recurso manualmente
                     recursoSeleccionado.setTareaAsignada(tareaSeleccionada);
-                    recursoSeleccionado.setEstado(Recursos.EstadoRecurso.ASIGNADO); // Cambiar estado a 'asignado'
+                    recursoSeleccionado.setEstado(Recursos.EstadoRecurso.ASIGNADO);
                     restTemplate.put("http://localhost:8080/api/recursos/" + recursoSeleccionado.getId(),
                             recursoSeleccionado);
-                    Notification.show("Recurso asignado correctamente");
+                    
+                    // Notificar a los voluntarios sobre la actualización
+                    NotificacionDTO notificacionDTO = new NotificacionDTO();
+                    notificacionDTO.setTitulo("Tarea actualizada por gestor");
+                    notificacionDTO.setMensaje("Se ha actualizado la tarea '" + tareaSeleccionada.getNombre() + 
+                                             "' con nuevo punto de encuentro: " + puntoEncuentro);
+                    restTemplate.postForEntity(apiUrl + "/" + tareaSeleccionada.getId() + "/notificar", notificacionDTO, Void.class);
+                    
+                    Notification.show("Tarea configurada y recurso asignado correctamente", 3000, Position.BOTTOM_START);
                     dialog.close();
                     refreshTareas();
                 } catch (Exception ex) {
-                    Notification.show("Error al asignar el recurso: " + ex.getMessage());
+                    Notification.show("Error al configurar la tarea: " + ex.getMessage(), 3000, Position.BOTTOM_START);
                 }
             } else {
-                Notification.show("Seleccione una tarea y un recurso");
+                Notification.show("Por favor, complete todos los campos requeridos", 3000, Position.BOTTOM_START);
             }
         });
         asignarButton.getStyle().set("background-color", "#3498db").set("color", "white");
