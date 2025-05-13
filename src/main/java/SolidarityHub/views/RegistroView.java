@@ -188,7 +188,7 @@ public class RegistroView extends VerticalLayout {
         dniField = new TextField("DNI");
         dniField.setRequired(true);
         dniField.setPattern("\\d{8}[A-Za-z]");
-        dniField.setErrorMessage("DNI con letra.");
+        dniField.setErrorMessage("DNI con letra (8 números y una letra)");
 
         nombreField = new TextField("Nombre");
         nombreField.setRequired(true);
@@ -215,7 +215,7 @@ public class RegistroView extends VerticalLayout {
         telefonoField = new TextField("Teléfono");
         telefonoField.setRequired(true);
         telefonoField.setPattern("\\d{5,}$");
-        telefonoField.setErrorMessage("Teléfono debe tener al menos 5 digitos.");
+        telefonoField.setErrorMessage("Teléfono debe tener al menos 5 números.");
 
         direccionField = new TextField("Dirección");
         direccionField.setRequired(true);
