@@ -213,19 +213,19 @@ public class AutomatizacionServicio implements ApplicationListener<ContextRefres
                 nuevaTarea.setCreador(necesidad.getCreador());
                 
                 
-                //dependiendo de la urgencia de la tarea  se asignara voluntarios numero distinto:
-                // 1. Urgencia baja: 1 voluntario
-                // 2. Urgencia media: 2 voluntarios
-                // 3. Urgencia alta: 3 voluntarios
+                ;
                 switch (necesidad.getUrgencia()) {
                     case BAJA:
-                        nuevaTarea.setNumeroVoluntariosNecesarios(1);
-                        break;
-                    case MEDIA:
+                        nuevaTarea.setFechaFin(necesidad.getFechaInicio()!= null? necesidad.getFechaInicio().plusDays(1) : LocalDateTime.now().toLocalDate().atStartOfDay().plusDays(3));
                         nuevaTarea.setNumeroVoluntariosNecesarios(2);
                         break;
-                    case ALTA:
+                    case MEDIA:
+                        nuevaTarea.setFechaFin(necesidad.getFechaInicio()!= null? necesidad.getFechaInicio().plusDays(2) : LocalDateTime.now().toLocalDate().atStartOfDay().plusDays(2));
                         nuevaTarea.setNumeroVoluntariosNecesarios(3);
+                        break;
+                    case ALTA:
+                        nuevaTarea.setFechaFin(necesidad.getFechaInicio()!= null? necesidad.getFechaInicio().plusDays(3) : LocalDateTime.now().toLocalDate().atStartOfDay().plusDays(1));
+                        nuevaTarea.setNumeroVoluntariosNecesarios(5);
                         break;
                 }
                 // Establecer estado inicial
