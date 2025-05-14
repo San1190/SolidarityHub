@@ -7,8 +7,10 @@ import org.springframework.data.repository.query.Param;
 import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Tarea.EstadoTarea;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TareaRepositorio extends JpaRepository<Tarea, Long> {
     
@@ -29,4 +31,11 @@ public interface TareaRepositorio extends JpaRepository<Tarea, Long> {
      */
     @Query("SELECT DISTINCT t FROM Tarea t LEFT JOIN FETCH t.voluntariosAsignados")
     List<Tarea> findAllWithVoluntariosAsignados();
+
+    @Query("SELECT DISTINCT t FROM Tarea t LEFT JOIN FETCH t.suscriptores")
+    List<Tarea> findAllWithSuscriptores();
+
+    @Query("SELECT t FROM Tarea t LEFT JOIN FETCH t.suscriptores WHERE t.id = :id")
+    @Transactional(readOnly = true)
+    Tarea obtenerTareaPorIdConSuscriptores(@Param("id") Long id);
 }

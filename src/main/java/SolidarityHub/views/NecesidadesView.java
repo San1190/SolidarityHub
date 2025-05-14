@@ -4,7 +4,7 @@ import SolidarityHub.models.Afectado;
 import SolidarityHub.models.Necesidad;
 import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Necesidad.Urgencia;
-import com.vaadin.flow.component.datetimepicker.DateTimePicker;
+import com.vaadin.flow.component.datepicker.DatePicker;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -47,6 +47,59 @@ public class NecesidadesView extends VerticalLayout {
 
         add(crearTitulo());
 
+        // Filtros
+        HorizontalLayout filtrosLayout = new HorizontalLayout();
+        filtrosLayout.setWidthFull();
+        filtrosLayout.setSpacing(true);
+        filtrosLayout.setAlignItems(Alignment.CENTER);
+        filtrosLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        filtrosLayout.getStyle()
+            .set("background-color", "#f3f3f3")
+            .set("border-radius", "10px")
+            .set("padding", "18px 12px 12px 12px")
+            .set("margin-bottom", "18px")
+            .set("box-shadow", "0 2px 8px rgba(0,0,0,0.04)");
+
+        ComboBox<TipoNecesidad> filtroTipo = new ComboBox<>("Tipo de Necesidad");
+        filtroTipo.setItems(TipoNecesidad.values());
+        filtroTipo.setClearButtonVisible(true);
+        filtroTipo.setPlaceholder("Todos");
+        filtroTipo.setWidth("180px");
+
+        ComboBox<Urgencia> filtroUrgencia = new ComboBox<>("Urgencia");
+        filtroUrgencia.setItems(Urgencia.values());
+        filtroUrgencia.setClearButtonVisible(true);
+        filtroUrgencia.setPlaceholder("Todas");
+        filtroUrgencia.setWidth("150px");
+
+        TextField filtroUbicacion = new TextField("Ubicación");
+        filtroUbicacion.setPlaceholder("Cualquier ubicación");
+        filtroUbicacion.setWidth("180px");
+
+        Button btnFiltrar = new Button("Filtrar", e -> refreshGridFiltrado(filtroTipo.getValue(), filtroUrgencia.getValue(), filtroUbicacion.getValue()));
+        btnFiltrar.getElement().getThemeList().add("primary");
+        btnFiltrar.getStyle()
+            .set("margin-left", "8px")
+            .set("margin-right", "8px")
+            .set("font-weight", "bold");
+
+        Button btnLimpiar = new Button("Limpiar", e -> {
+            filtroTipo.clear();
+            filtroUrgencia.clear();
+            filtroUbicacion.clear();
+            refreshGrid();
+        });
+        btnLimpiar.getStyle()
+            .set("margin-right", "8px")
+            .set("font-weight", "bold");
+
+        HorizontalLayout botonesLayout = new HorizontalLayout(btnFiltrar, btnLimpiar);
+        botonesLayout.setAlignItems(Alignment.CENTER);
+        botonesLayout.setSpacing(true);
+        botonesLayout.getStyle().set("margin-left", "12px");
+
+        filtrosLayout.add(filtroTipo, filtroUrgencia, filtroUbicacion, botonesLayout);
+        add(filtrosLayout);
         FormLayout formLayout = createFormLayout();
         add(formLayout);
 
@@ -85,17 +138,16 @@ public class NecesidadesView extends VerticalLayout {
                 Necesidad::setUbicacion);
 
         //Añadir los campos de fecha de inicio y fecha de fin
-        DateTimePicker fechaInicioField = new DateTimePicker("Fecha de Inicio");
+        DatePicker fechaInicioField = new DatePicker("Fecha de Inicio");
         binder.forField(fechaInicioField)
               .asRequired("La fecha de inicio es obligatoria")
+              .withConverter(
+                  date -> date != null ? date.atStartOfDay() : null,
+                  dateTime -> dateTime != null ? dateTime.toLocalDate() : null
+              )
               .bind(Necesidad::getFechaInicio, Necesidad::setFechaInicio);
             
-        DateTimePicker fechaFinField = new DateTimePicker("Fecha de Fin");
-        binder.forField(fechaFinField)
-              .asRequired("La fecha de fin es obligatoria")
-              .bind(Necesidad::getFechaFinalizacion, Necesidad::setFechaFinalizacion);
-            
-
+        
         //guardar el usuario que ha creado la necesidad
        
 
@@ -123,7 +175,7 @@ public class NecesidadesView extends VerticalLayout {
         botonLayout.setJustifyContentMode(JustifyContentMode.END);
 
         // Añadir campos al formulario
-        formLayout.add(tipoNecesidadField, descripcionField, urgenciaField, ubicacionField, fechaInicioField, fechaFinField, botonLayout);
+        formLayout.add(tipoNecesidadField, descripcionField, urgenciaField, ubicacionField, fechaInicioField, botonLayout);
         return formLayout;
     }
 
@@ -137,8 +189,7 @@ public class NecesidadesView extends VerticalLayout {
         grid.addColumn(Necesidad::getUbicacion).setHeader("Ubicación");
         grid.addColumn(necesidad -> necesidad.getUrgencia().name()).setHeader("Urgencia").setAutoWidth(true).setFlexGrow(0);
         grid.addColumn(necesidad -> necesidad.getFechaCreacion().format(formatter)).setHeader("Fecha de Creación").setAutoWidth(true).setFlexGrow(0);
-        grid.addColumn(necesidad -> necesidad.getFechaInicio().format(formatter)).setHeader("Fecha de Inicio").setAutoWidth(true).setFlexGrow(0);
-        grid.addColumn(necesidad -> necesidad.getFechaFinalizacion().format(formatter)).setHeader("Fecha de Fin").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(necesidad -> necesidad.getFechaInicio() != null ? necesidad.getFechaInicio().toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "").setHeader("Fecha de Inicio").setAutoWidth(true).setFlexGrow(0);
 
         gridLayout.add(grid);
         return gridLayout;
@@ -161,6 +212,28 @@ public class NecesidadesView extends VerticalLayout {
         }
     }
 
+    private void refreshGridFiltrado(TipoNecesidad tipo, Urgencia urgencia, String ubicacion) {
+        List<Necesidad> necesidades = restTemplate.exchange(
+                apiUrl,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Necesidad>>() {
+                }).getBody();
+        if (necesidades != null) {
+            if (tipo != null) {
+                necesidades = necesidades.stream().filter(n -> n.getTipoNecesidad() == tipo).toList();
+            }
+            if (urgencia != null) {
+                necesidades = necesidades.stream().filter(n -> n.getUrgencia() == urgencia).toList();
+            }
+            if (ubicacion != null && !ubicacion.isEmpty()) {
+                necesidades = necesidades.stream().filter(n -> n.getUbicacion() != null && n.getUbicacion().toLowerCase().contains(ubicacion.toLowerCase())).toList();
+            }
+            grid.setItems(necesidades);
+        } else {
+            Notification.show("No se pudieron cargar las necesidades");
+        }
+    }
     private Component crearTitulo() {
         H3 titulo = new H3("Añada su Necesidad:");
         titulo.getStyle().set("text-align", "center").set("color", "#1676F3");

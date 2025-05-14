@@ -188,7 +188,7 @@ public class RegistroView extends VerticalLayout {
         dniField = new TextField("DNI");
         dniField.setRequired(true);
         dniField.setPattern("\\d{8}[A-Za-z]");
-        dniField.setErrorMessage("DNI con letra.");
+        dniField.setErrorMessage("DNI con letra (8 números y una letra)");
 
         nombreField = new TextField("Nombre");
         nombreField.setRequired(true);
@@ -215,7 +215,7 @@ public class RegistroView extends VerticalLayout {
         telefonoField = new TextField("Teléfono");
         telefonoField.setRequired(true);
         telefonoField.setPattern("\\d{5,}$");
-        telefonoField.setErrorMessage("Teléfono debe tener al menos 5 digitos.");
+        telefonoField.setErrorMessage("Teléfono debe tener al menos 5 números.");
 
         direccionField = new TextField("Dirección");
         direccionField.setRequired(true);
@@ -380,6 +380,11 @@ public class RegistroView extends VerticalLayout {
     }
 
     private void onRegistrar() {
+        // Validar campos antes de intentar el registro
+        if (!validarCampos()) {
+            return;
+        }
+
         if (!passwordField.getValue().equals(confirmPasswordField.getValue())) {
             mostrarError("Las contraseñas no coinciden");
             return;
@@ -398,11 +403,94 @@ public class RegistroView extends VerticalLayout {
 
                 UI.getCurrent().navigate("/");
             } else {
-                mostrarError("Error al registrar: El email o DNI ya existe");
+                mostrarError("Ha ocurrido un error durante el registro. Por favor, inténtalo de nuevo más tarde.");
             }
         } catch (Exception e) {
-            mostrarError("Error en el registro: " + e.getMessage());
+            String mensajeError = e.getMessage();
+            if (mensajeError != null && mensajeError.contains("Ya existe un usuario")) {
+                mostrarError("Ya existe una cuenta con este correo electrónico. Por favor, utiliza otro correo o inicia sesión.");
+            } else if (mensajeError != null && mensajeError.contains("DNI")) {
+                mostrarError("Ya existe una cuenta con este DNI. Por favor, verifica tus datos.");
+            } else {
+                mostrarError("Ha ocurrido un error durante el registro. Por favor, inténtalo de nuevo más tarde.");
+            }
         }
+    }
+
+    // Método para validar los campos del formulario
+    private boolean validarCampos() {
+        // Validar DNI
+        if (dniField.getValue() == null || dniField.getValue().isEmpty()) {
+            mostrarError("El DNI es un campo obligatorio");
+            return false;
+        }
+        if (!dniField.getValue().matches("\\d{8}[A-Za-z]")) {
+            mostrarError("Formato de DNI no válido. Debe contener 8 números seguidos de una letra");
+            return false;
+        }
+
+        // Validar nombre
+        if (nombreField.getValue() == null || nombreField.getValue().isEmpty()) {
+            mostrarError("El nombre es un campo obligatorio");
+            return false;
+        }
+
+        // Validar apellidos
+        if (apellidosField.getValue() == null || apellidosField.getValue().isEmpty()) {
+            mostrarError("Los apellidos son un campo obligatorio");
+            return false;
+        }
+
+        // Validar email
+        if (emailField.getValue() == null || emailField.getValue().isEmpty()) {
+            mostrarError("El email es un campo obligatorio");
+            return false;
+        }
+        if (!emailField.getValue().matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
+            mostrarError("Formato de email no válido");
+            return false;
+        }
+
+        // Validar teléfono
+        if (telefonoField.getValue() == null || telefonoField.getValue().isEmpty()) {
+            mostrarError("El teléfono es un campo obligatorio");
+            return false;
+        }
+        if (!telefonoField.getValue().matches("\\d{5,}$")) {
+            mostrarError("Formato de teléfono no válido. Debe contener al menos 5 números");
+            return false;
+        }
+
+        // Validar dirección
+        if (direccionField.getValue() == null || direccionField.getValue().isEmpty()) {
+            mostrarError("La dirección es un campo obligatorio");
+            return false;
+        }
+
+        // Validar contraseña
+        if (passwordField.getValue() == null || passwordField.getValue().isEmpty()) {
+            mostrarError("La contraseña es un campo obligatorio");
+            return false;
+        }
+        if (passwordField.getValue().length() < 8) {
+            mostrarError("La contraseña debe tener al menos 8 caracteres");
+            return false;
+        }
+
+        // Si es voluntario, validar campos adicionales
+        if ("Voluntario".equals(tipoUsuarioRadio.getValue())) {
+            if (turnoDisponibilidadCombo.getValue() == null || turnoDisponibilidadCombo.getValue().isEmpty()) {
+                mostrarError("Debe seleccionar un turno de disponibilidad");
+                return false;
+            }
+            
+            if (diasDisponiblesGroup.getValue() == null || diasDisponiblesGroup.getValue().isEmpty()) {
+                mostrarError("Debe seleccionar al menos un día de disponibilidad");
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private Boolean registroUsuario(FabricaUsuario fabricaUsuario) {
@@ -470,7 +558,7 @@ public class RegistroView extends VerticalLayout {
         mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD, Habilidad.ELECTICISTA);
         mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_FONTANERIA, Habilidad.FONTANERIA);
 
-        List<Tarea> listaTareas = tareaRepositorio.findAll();
+        List<Tarea> listaTareas = tareaRepositorio.findAllWithSuscriptores();
         for (Tarea tarea : listaTareas) {
             Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
             if (voluntario.getHabilidades().contains(habilidadRequerida)) {

@@ -55,6 +55,60 @@ public class RecursosView extends VerticalLayout {
 
         add(crearTitulo());
 
+        // Filtros
+        HorizontalLayout filtrosLayout = new HorizontalLayout();
+        filtrosLayout.setWidthFull();
+        filtrosLayout.setSpacing(true);
+        filtrosLayout.setAlignItems(Alignment.CENTER);
+        filtrosLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        filtrosLayout.getStyle()
+            .set("background-color", "#f3f3f3")
+            .set("border-radius", "10px")
+            .set("padding", "18px 12px 12px 12px")
+            .set("margin-bottom", "18px")
+            .set("box-shadow", "0 2px 8px rgba(0,0,0,0.04)");
+
+        ComboBox<TipoRecurso> filtroTipo = new ComboBox<>("Tipo de Recurso");
+        filtroTipo.setItems(TipoRecurso.values());
+        filtroTipo.setClearButtonVisible(true);
+        filtroTipo.setPlaceholder("Todos");
+        filtroTipo.setWidth("180px");
+
+        ComboBox<EstadoRecurso> filtroEstado = new ComboBox<>("Estado");
+        filtroEstado.setItems(EstadoRecurso.values());
+        filtroEstado.setClearButtonVisible(true);
+        filtroEstado.setPlaceholder("Todos");
+        filtroEstado.setWidth("150px");
+
+        TextField filtroUbicacion = new TextField("Ubicación");
+        filtroUbicacion.setPlaceholder("Cualquier ubicación");
+        filtroUbicacion.setWidth("180px");
+
+        Button btnFiltrar = new Button("Filtrar", e -> refreshGridFiltrado(filtroTipo.getValue(), filtroEstado.getValue(), filtroUbicacion.getValue()));
+        btnFiltrar.getElement().getThemeList().add("primary");
+        btnFiltrar.getStyle()
+            .set("margin-left", "8px")
+            .set("margin-right", "8px")
+            .set("font-weight", "bold");
+
+        Button btnLimpiar = new Button("Limpiar", e -> {
+            filtroTipo.clear();
+            filtroEstado.clear();
+            filtroUbicacion.clear();
+            refreshGrid();
+        });
+        btnLimpiar.getStyle()
+            .set("margin-right", "8px")
+            .set("font-weight", "bold");
+
+        HorizontalLayout botonesLayout = new HorizontalLayout(btnFiltrar, btnLimpiar);
+        botonesLayout.setAlignItems(Alignment.CENTER);
+        botonesLayout.setSpacing(true);
+        botonesLayout.getStyle().set("margin-left", "12px");
+
+        filtrosLayout.add(filtroTipo, filtroEstado, filtroUbicacion, botonesLayout);
+        add(filtrosLayout);
+
         // Layout para el formulario
         FormLayout formLayout = createFormLayout();
         add(formLayout);
@@ -294,6 +348,37 @@ public class RecursosView extends VerticalLayout {
         } catch (Exception e) {
             Notification.show("Error al cargar los recursos: " + e.getMessage());
             e.printStackTrace(); // Add this to see more details in the console
+        }
+    }
+    // Añadir método para refrescar el grid filtrado
+    private void refreshGridFiltrado(TipoRecurso tipo, EstadoRecurso estado, String ubicacion) {
+        try {
+            String url = apiUrl + "/filtrar?";
+            boolean primero = true;
+            if (tipo != null) {
+                url += "tipo=" + tipo.name();
+                primero = false;
+            }
+            if (estado != null) {
+                url += (primero ? "" : "&") + "estado=" + estado.name();
+                primero = false;
+            }
+            if (ubicacion != null && !ubicacion.trim().isEmpty()) {
+                url += (primero ? "" : "&") + "ubicacion=" + ubicacion.trim();
+            }
+            List<Recursos> recursos = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<Recursos>>() {
+                    }).getBody();
+            if (recursos != null) {
+                grid.setItems(recursos);
+            } else {
+                Notification.show("No se encontraron recursos con esos filtros");
+            }
+        } catch (Exception e) {
+            Notification.show("Error al filtrar los recursos: " + e.getMessage());
         }
     }
 }

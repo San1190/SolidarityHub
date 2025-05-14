@@ -1,15 +1,12 @@
 package SolidarityHub.views;
 
-import SolidarityHub.models.Tarea;
-import SolidarityHub.models.Usuario;
-import SolidarityHub.models.Voluntario;
-import SolidarityHub.models.Afectado;
+import SolidarityHub.models.*;
 import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Tarea.EstadoTarea;
-import SolidarityHub.models.Recursos;
 import SolidarityHub.models.Recursos.TipoRecurso;
 
 import SolidarityHub.models.dtos.NotificacionDTO;
+import SolidarityHub.services.NotificacionServicio;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ShortcutEvent;
 import com.vaadin.flow.component.button.Button;
@@ -47,10 +44,7 @@ import org.springframework.web.client.RestClientException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Route(value = "tareas", layout = MainLayout.class)
@@ -60,13 +54,16 @@ public class TareasView extends VerticalLayout {
     private final RestTemplate restTemplate = new RestTemplate();
     private final String apiUrl = "http://localhost:8080/api/tareas";
     private final Binder<Tarea> binder = new Binder<>(Tarea.class);
+    private final NotificacionServicio notificacionServicio;
     private Dialog formDialog;
     private Tarea tareaActual;
     private Usuario usuarioActual;
-    private VerticalLayout tareasContainer;
+    private VerticalLayout tareasContainer = new VerticalLayout(); // Inicializar para evitar NullPointerException
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private Grid<Tarea> tablaTareas; // Referencia a la tabla para actualizarla
 
-    public TareasView() {
+    public TareasView(NotificacionServicio notificacionServicio) {
+        this.notificacionServicio = notificacionServicio;
         setSizeFull();
         setPadding(true);
         setSpacing(true);
@@ -79,18 +76,44 @@ public class TareasView extends VerticalLayout {
         add(crearEncabezado());
         add(crearContenedorPrincipal());
 
-        // Crear el contenedor para las tarjetas de tareas
-        tareasContainer = new VerticalLayout();
-        tareasContainer.setWidthFull();
-        tareasContainer.setPadding(false);
-        tareasContainer.setSpacing(true);
-        tareasContainer.getStyle()
-                .set("flex-wrap", "wrap")
-                .set("gap", "16px")
-                .set("box-shadow", "none");
-        tareasContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
-
-        add(tareasContainer);
+        // Crear la tabla de tareas
+        tablaTareas = new Grid<>(Tarea.class, false);
+        tablaTareas.setWidthFull();
+        tablaTareas.addColumn(Tarea::getNombre).setHeader("Nombre").setSortable(true);
+        tablaTareas.addColumn(tarea -> tarea.getTipo() != null ? tarea.getTipo().name() : "").setHeader("Tipo").setSortable(true);
+        tablaTareas.addColumn(Tarea::getLocalizacion).setHeader("Localización").setSortable(true);
+        tablaTareas.addColumn(Tarea::getTurno).setHeader("Turno").setSortable(true);
+        tablaTareas.addColumn(tarea -> tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "").setHeader("Fecha Inicio").setSortable(true);
+        tablaTareas.addColumn(tarea -> tarea.getEstado() != null ? tarea.getEstado().name() : "").setHeader("Estado").setSortable(true);
+        
+        // Columna de acciones
+        tablaTareas.addComponentColumn(tarea -> {
+            HorizontalLayout actions = new HorizontalLayout();
+            Button detallesBtn = new Button(new Icon(VaadinIcon.SEARCH), e -> mostrarDetallesTarea(tarea));
+            detallesBtn.getElement().setAttribute("title", "Ver detalles");
+            actions.add(detallesBtn);
+            
+            if (usuarioActual instanceof Voluntario && esCreador(tarea, usuarioActual)) {
+                Button editarBtn = new Button(new Icon(VaadinIcon.EDIT), e -> abrirFormularioTarea(tarea));
+                editarBtn.getElement().setAttribute("title", "Editar");
+                Button eliminarBtn = new Button(new Icon(VaadinIcon.TRASH), e -> eliminarTarea(tarea));
+                eliminarBtn.getElement().setAttribute("title", "Eliminar");
+                eliminarBtn.getElement().getThemeList().add("error");
+                actions.add(editarBtn, eliminarBtn);
+            }
+            
+            return actions;
+        }).setHeader("Acciones").setAutoWidth(true);
+        
+        // Configuración de la tabla
+        tablaTareas.setPageSize(10);
+        tablaTareas.getStyle().set("margin-top", "60px");
+        
+        // Guardar referencia a la tabla para actualizarla
+        // No need to store grid reference since we can refresh via refreshTareas()
+        refreshTareas();
+        
+        add(tablaTareas);
 
         refreshTareas();
     }
@@ -309,6 +332,23 @@ public class TareasView extends VerticalLayout {
         binder.forField(localizacionField)
                 .asRequired("La localización es requerida")
                 .bind(Tarea::getLocalizacion, Tarea::setLocalizacion);
+                
+        // Campo: Punto de Encuentro
+        TextField puntoEncuentroField = new TextField("Punto de Encuentro");
+        puntoEncuentroField.setRequired(true);
+        puntoEncuentroField.setHelperText("Especifique el lugar exacto donde se reunirán los voluntarios");
+        binder.forField(puntoEncuentroField)
+                .asRequired("El punto de encuentro es requerido")
+                .bind(Tarea::getPuntoEncuentro, Tarea::setPuntoEncuentro);
+
+        // Campo: Turno
+        ComboBox<String> turnoField = new ComboBox<>("Turno");
+        turnoField.setItems("Mañana", "Tarde", "Noche", "Completo");
+        turnoField.setRequired(true);
+        turnoField.setHelperText("Seleccione el turno para esta tarea");
+        binder.forField(turnoField)
+                .asRequired("El turno es requerido")
+                .bind(Tarea::getTurno, Tarea::setTurno);
 
         // Campo: Número de voluntarios
         IntegerField voluntariosField = new IntegerField("Número de voluntarios necesarios");
@@ -336,7 +376,8 @@ public class TareasView extends VerticalLayout {
         campos.add(
                 nombreField, descripcionField,
                 tipoField, estadoField,
-                localizacionField, voluntariosField,
+                localizacionField, puntoEncuentroField,
+                turnoField, voluntariosField,
                 fechaInicioField, fechaFinField);
 
         formLayout.add(campos);
@@ -359,12 +400,12 @@ public class TareasView extends VerticalLayout {
                 if (binder.writeBeanIfValid(tareaActual)) {
                     if (tareaActual.getId() == null) {
                         // Crear nueva tarea
-                        restTemplate.postForObject(apiUrl, tareaActual, Tarea.class);
+                        Tarea tareaAct = restTemplate.postForObject(apiUrl, tareaActual, Tarea.class);
                         NotificacionDTO notificacionDTO = new NotificacionDTO();
                         notificacionDTO.setTitulo("Nueva Tarea");
                         notificacionDTO.setMensaje("Se ha creado la tarea " + tareaActual.getNombre());
-                        restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO, Void.class);
-
+                        System.out.println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+                        restTemplate.postForEntity(apiUrl + "/" + tareaAct.getId() + "/notificar", notificacionDTO, Void.class);
                         Notification.show("Tarea creada correctamente", 3000, Position.BOTTOM_START);
                     } else {
                         // Actualizar tarea existente
@@ -373,6 +414,7 @@ public class TareasView extends VerticalLayout {
                         notificacionDTO.setTitulo("Tarea actualizada");
                         notificacionDTO.setMensaje("Se ha actualizado la tarea " + tareaActual.getNombre());
                         restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO, Void.class);
+                        System.out.println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
                         Notification.show("Tarea actualizada correctamente", 3000, Position.BOTTOM_START);
                     }
                     formDialog.close();
@@ -713,6 +755,14 @@ public class TareasView extends VerticalLayout {
         // Localización
         Span localizacion = new Span(tarea.getLocalizacion());
         infoLayout.addFormItem(localizacion, "Localización");
+        
+        // Punto de encuentro
+        Span puntoEncuentro = new Span(tarea.getPuntoEncuentro() != null ? tarea.getPuntoEncuentro() : "No definido");
+        infoLayout.addFormItem(puntoEncuentro, "Punto de encuentro");
+        
+        // Turno
+        Span turno = new Span(tarea.getTurno() != null ? tarea.getTurno() : "No definido");
+        infoLayout.addFormItem(turno, "Turno");
 
         // Fechas
         String fechaInicio = tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "No definida";
@@ -865,11 +915,23 @@ public class TareasView extends VerticalLayout {
 
                 if (tareaActual.getId() == null) {
                     // Crear nueva tarea
-                    restTemplate.postForObject(apiUrl + "/crear", tareaActual, Tarea.class);
-                    Notification.show("Tarea creada correctamente", 3000, Position.BOTTOM_START);
+                    Tarea tarea = restTemplate.postForObject(apiUrl + "/crear", tareaActual, Tarea.class);
+                    if (usuarioActual instanceof Voluntario voluntario) {
+                        suscribirVoluntario(voluntario, tarea);
+                        tarea = restTemplate.getForObject(apiUrl + "/" + tarea.getId(), Tarea.class);
+                        NotificacionDTO notificacionDTO = new NotificacionDTO();
+                        notificacionDTO.setTitulo("Nueva Tarea");
+                        notificacionDTO.setMensaje("Se ha creado la tarea " + tareaActual.getNombre());
+                        restTemplate.postForEntity(apiUrl + "/" + tarea.getId() + "/notificar", notificacionDTO, Void.class);
+                        Notification.show("Tarea creada correctamente", 3000, Position.BOTTOM_START);
+                    }
                 } else {
                     // Actualizar tarea existente
                     restTemplate.put(apiUrl + "/" + tareaActual.getId(), tareaActual);
+                    NotificacionDTO notificacionDTO = new NotificacionDTO();
+                    notificacionDTO.setTitulo("Tarea actualizada");
+                    notificacionDTO.setMensaje("Se ha actualizado la tarea " + tareaActual.getNombre());
+                    restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO, Void.class);
                     Notification.show("Tarea actualizada correctamente", 3000, Position.BOTTOM_START);
                 }
                 formDialog.close();
@@ -878,6 +940,28 @@ public class TareasView extends VerticalLayout {
                 Notification.show("Error al guardar la tarea: " + ex.getMessage(), 3000, Position.BOTTOM_START);
             }
         }
+    }
+
+    private void suscribirVoluntario(Voluntario voluntario, Tarea tarea) {
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "http://localhost:8080/api/tareas/";
+
+        Map<Necesidad.TipoNecesidad, Habilidad> mapeoHabilidades = new HashMap<>();
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.PRIMEROS_AUXILIOS, Habilidad.PRIMEROS_AUXILIOS);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.ALIMENTACION, Habilidad.COCINA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.ALIMENTACION_BEBE, Habilidad.COCINA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.SERVICIO_LIMPIEZA, Habilidad.LIMPIEZA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_PSICOLOGICA, Habilidad.AYUDA_PSICOLOGICA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_CARPINTERIA, Habilidad.CARPINTERIA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD, Habilidad.ELECTICISTA);
+        mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_FONTANERIA, Habilidad.FONTANERIA);
+
+        Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
+
+        if (voluntario.getHabilidades().contains(habilidadRequerida)) {
+            restTemplate.postForEntity(url + tarea.getId() + "/suscribir/" + voluntario.getId(), null, Void.class);
+        }
+
     }
 
     private void eliminarTarea(Tarea tarea) {
@@ -952,6 +1036,11 @@ public class TareasView extends VerticalLayout {
     private void mostrarTareas(List<Tarea> tareas) {
         // Limpiar el contenedor
         tareasContainer.removeAll();
+
+        // Actualizar la tabla de tareas
+        if (tablaTareas != null) {
+            tablaTareas.setItems(tareas);
+        }
 
         if (tareas.isEmpty()) {
             Div mensajeVacio = new Div();
@@ -1121,22 +1210,32 @@ public class TareasView extends VerticalLayout {
     // Al final de la clase, agregar el método para el gestor
     private void abrirDialogoAsignarRecursos() {
         Dialog dialog = new Dialog();
-        dialog.setWidth("500px");
+        dialog.setWidth("700px");
         dialog.setCloseOnEsc(true);
         dialog.setCloseOnOutsideClick(false);
 
-        H3 titulo = new H3("Asignar Recursos a Tarea");
+        H3 titulo = new H3("Asignar Recursos y Configurar Tarea");
         titulo.getStyle().set("margin-top", "0").set("color", "#3498db");
 
         FormLayout formLayout = new FormLayout();
+        formLayout.setResponsiveSteps(
+                new FormLayout.ResponsiveStep("0", 1),
+                new FormLayout.ResponsiveStep("500px", 2));
+
+        // Selección de tarea
         ComboBox<Tarea> tareaCombo = new ComboBox<>("Tarea");
         tareaCombo.setItems(obtenerTodasLasTareas());
         tareaCombo.setItemLabelGenerator(Tarea::getNombre);
+        tareaCombo.setWidthFull();
+        tareaCombo.setRequired(true);
 
+        // Selección de recurso
         ComboBox<Recursos> recursoCombo = new ComboBox<>("Recurso");
         List<Recursos> recursosNoAsignados = obtenerRecursosNoAsignados();
         recursoCombo.setItems(recursosNoAsignados);
         recursoCombo.setItemLabelGenerator(Recursos::getDescripcion);
+        recursoCombo.setWidthFull();
+        recursoCombo.setRequired(true);
 
         // Verificar si hay recursos disponibles
         if (recursosNoAsignados.isEmpty()) {
@@ -1149,25 +1248,69 @@ public class TareasView extends VerticalLayout {
             recursoCombo.setEnabled(false);
         }
 
-        formLayout.add(tareaCombo, recursoCombo);
+        // Campos para el punto de encuentro
+        TextField puntoEncuentroField = new TextField("Punto de Encuentro");
+        puntoEncuentroField.setWidthFull();
+        puntoEncuentroField.setRequired(true);
+        puntoEncuentroField.setHelperText("Especifique el lugar exacto donde se reunirán los voluntarios");
 
-        Button asignarButton = new Button("Asignar", event -> {
+        // Campos de fecha 
+        DateTimePicker fechaEncuentroField = new DateTimePicker("Fecha y Hora de Encuentro");
+        fechaEncuentroField.setWidthFull();
+        fechaEncuentroField.setRequiredIndicatorVisible(true);
+        fechaEncuentroField.setHelperText("Seleccione cuándo deben reunirse los voluntarios");
+
+        // Turno
+        ComboBox<String> turnoField = new ComboBox<>("Turno");
+        turnoField.setItems("Mañana", "Tarde", "Noche", "Completo");
+        turnoField.setWidthFull();
+        turnoField.setRequired(true);
+        turnoField.setHelperText("Seleccione el turno para esta tarea");
+
+        // Añadir todos los campos al formulario
+        formLayout.add(tareaCombo, recursoCombo, puntoEncuentroField, fechaEncuentroField, turnoField);
+
+        // Botones de acción
+        Button asignarButton = new Button("Asignar y Configurar", event -> {
             Tarea tareaSeleccionada = tareaCombo.getValue();
             Recursos recursoSeleccionado = recursoCombo.getValue();
-            if (tareaSeleccionada != null && recursoSeleccionado != null) {
+            String puntoEncuentro = puntoEncuentroField.getValue();
+            LocalDateTime fechaEncuentro = fechaEncuentroField.getValue();
+            String turno = turnoField.getValue();
+            
+            if (tareaSeleccionada != null && recursoSeleccionado != null && 
+                puntoEncuentro != null && !puntoEncuentro.isEmpty() && 
+                fechaEncuentro != null && turno != null) {
                 try {
+                    // Actualizar la tarea con el punto de encuentro y fecha
+                    tareaSeleccionada.setPuntoEncuentro(puntoEncuentro);
+                    tareaSeleccionada.setFechaInicio(fechaEncuentro);
+                    tareaSeleccionada.setTurno(turno);
+                    
+                    // Actualizar la tarea primero
+                    restTemplate.put(apiUrl + "/" + tareaSeleccionada.getId(), tareaSeleccionada);
+                    
+                    // Luego asignar el recurso manualmente
                     recursoSeleccionado.setTareaAsignada(tareaSeleccionada);
-                    recursoSeleccionado.setEstado(Recursos.EstadoRecurso.ASIGNADO); // Cambiar estado a 'asignado'
+                    recursoSeleccionado.setEstado(Recursos.EstadoRecurso.ASIGNADO);
                     restTemplate.put("http://localhost:8080/api/recursos/" + recursoSeleccionado.getId(),
                             recursoSeleccionado);
-                    Notification.show("Recurso asignado correctamente");
+                    
+                    // Notificar a los voluntarios sobre la actualización
+                    NotificacionDTO notificacionDTO = new NotificacionDTO();
+                    notificacionDTO.setTitulo("Tarea actualizada por gestor");
+                    notificacionDTO.setMensaje("Se ha actualizado la tarea '" + tareaSeleccionada.getNombre() + 
+                                             "' con nuevo punto de encuentro: " + puntoEncuentro);
+                    restTemplate.postForEntity(apiUrl + "/" + tareaSeleccionada.getId() + "/notificar", notificacionDTO, Void.class);
+                    
+                    Notification.show("Tarea configurada y recurso asignado correctamente", 3000, Position.BOTTOM_START);
                     dialog.close();
                     refreshTareas();
                 } catch (Exception ex) {
-                    Notification.show("Error al asignar el recurso: " + ex.getMessage());
+                    Notification.show("Error al configurar la tarea: " + ex.getMessage(), 3000, Position.BOTTOM_START);
                 }
             } else {
-                Notification.show("Seleccione una tarea y un recurso");
+                Notification.show("Por favor, complete todos los campos requeridos", 3000, Position.BOTTOM_START);
             }
         });
         asignarButton.getStyle().set("background-color", "#3498db").set("color", "white");

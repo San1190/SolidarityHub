@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import SolidarityHub.models.Necesidad.TipoNecesidad;
 
 @Entity
-public class Tarea {
+public class Tarea implements Observado {
 
     public enum EstadoTarea {
         PREPARADA, EN_CURSO, FINALIZADA
@@ -31,6 +31,12 @@ public class Tarea {
     private int numeroVoluntariosNecesarios;
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;
+    
+    // Punto de encuentro para la tarea
+    private String puntoEncuentro;
+    
+    // Información de turnos en lugar de horas
+    private String turno; // Ejemplo: "Mañana", "Tarde", "Noche"
     
     @Enumerated(EnumType.STRING)
     private EstadoTarea estado;
@@ -85,7 +91,7 @@ public class Tarea {
     // Constructor con todos los campos
     public Tarea(String nombre, String descripcion, Necesidad.TipoNecesidad tipo, 
                 String localizacion, int numeroVoluntariosNecesarios, 
-                LocalDateTime fechaInicio, LocalDateTime fechaFin, 
+                LocalDateTime fechaInicio, LocalDateTime fechaFin, String puntoEncuentro, String turno,
                 EstadoTarea estado, Usuario creador, List<Afectado> afectados, 
                 List<Voluntario> voluntariosAsignados, List<Habilidad> habilidadesRequeridas, List<Voluntario> suscriptores, double latitud, double longitud) {
         this.nombre = nombre;
@@ -95,6 +101,8 @@ public class Tarea {
         this.numeroVoluntariosNecesarios = numeroVoluntariosNecesarios;
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
+        this.puntoEncuentro = puntoEncuentro;
+        this.turno = turno;
         this.estado = estado;
         this.creador = creador;
         this.afectados = afectados;
@@ -131,6 +139,12 @@ public class Tarea {
     
     public LocalDateTime getFechaFin() { return fechaFin; }
     public void setFechaFin(LocalDateTime fechaFin) { this.fechaFin = fechaFin; }
+    
+    public String getPuntoEncuentro() { return puntoEncuentro; }
+    public void setPuntoEncuentro(String puntoEncuentro) { this.puntoEncuentro = puntoEncuentro; }
+    
+    public String getTurno() { return turno; }
+    public void setTurno(String turno) { this.turno = turno; }
     
     public EstadoTarea getEstado() { return estado; }
     public void setEstado(EstadoTarea estado) { this.estado = estado; }

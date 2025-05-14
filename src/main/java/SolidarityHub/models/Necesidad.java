@@ -43,7 +43,6 @@ public class Necesidad {
     private String ubicacion;
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaInicio;
-    private LocalDateTime fechaFinalizacion;
     
 
 
@@ -51,7 +50,7 @@ public class Necesidad {
 
     public Necesidad() {}
 
-    public Necesidad(TipoNecesidad tipoNecesidad, String descripcion,Afectado creador, EstadoNecesidad estadoNecesidad, Urgencia urgencia, String ubicacion, LocalDateTime fechaCreacion, LocalDateTime fechaInicio, LocalDateTime fechaFinalizacion) {
+    public Necesidad(TipoNecesidad tipoNecesidad, String descripcion,Afectado creador, EstadoNecesidad estadoNecesidad, Urgencia urgencia, String ubicacion, LocalDateTime fechaCreacion, LocalDateTime fechaInicio) {
         this.tipoNecesidad = tipoNecesidad;
         this.descripcion = descripcion;
         this.creador = creador;
@@ -60,7 +59,6 @@ public class Necesidad {
         this.ubicacion = ubicacion;
         this.fechaCreacion = fechaCreacion;
         this.fechaInicio = fechaInicio;
-        this.fechaFinalizacion = fechaFinalizacion;
     }
 
 
@@ -90,9 +88,6 @@ public class Necesidad {
 
     public LocalDateTime getFechaInicio() { return fechaInicio; }
     public void setFechaInicio(LocalDateTime fechaInicio) { this.fechaInicio = fechaInicio; }
-
-    public LocalDateTime getFechaFinalizacion() { return fechaFinalizacion; }
-    public void setFechaFinalizacion(LocalDateTime fechaFinalizacion) { this.fechaFinalizacion = fechaFinalizacion; }
 
 
 }

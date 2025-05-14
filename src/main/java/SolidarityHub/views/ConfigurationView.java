@@ -10,6 +10,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.checkbox.CheckboxGroupVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
@@ -106,7 +107,7 @@ public class ConfigurationView extends VerticalLayout {
                 .set("display", "flex")
                 .set("flex-direction", "column")
                 .set("align-items", "center")
-                .set("margin-top", "45em")
+                .set("margin-top", "35em")
                 .set("margin-bottom", "5em");
         formCard.setHeight("auto");
 
@@ -142,7 +143,7 @@ public class ConfigurationView extends VerticalLayout {
         panel.getStyle().set("margin", "0 auto");
         panel.setHeight("auto");
 
-        // Panel izquierdo: se muestra según el tipo de usuario
+        // Panel izquierdo: se muestra solo para voluntarios
         VerticalLayout panelIzq = new VerticalLayout();
         panelIzq.setWidth("48%");
         panelIzq.setSpacing(true);
@@ -159,15 +160,10 @@ public class ConfigurationView extends VerticalLayout {
         if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario")) {
             panelIzq.add(crearDiasHorario(), crearTurnoHorario(), crearHabilidades());
         }
-        // Para usuarios afectados, mostramos información sobre la gestión de
-        // necesidades
-        else if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("afectado")) {
-            panelIzq.add(crearInfoNecesidades());
-        }
 
         // Panel derecho: Avatar y formulario de datos personales
         VerticalLayout panelDer = new VerticalLayout();
-        panelDer.setWidth("48%");
+        panelDer.setWidth(usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario") ? "48%" : "100%");
         panelDer.setSpacing(true);
         panelDer.setPadding(true);
         panelDer.setAlignItems(Alignment.CENTER);
@@ -190,7 +186,13 @@ public class ConfigurationView extends VerticalLayout {
         panelBtns.add(crearCancelarBtn(), crearGuardarInfoBtn());
         panelBtns.setHeight("auto");
 
-        panel.add(panelIzq, panelDer);
+        // Añadir paneles según el tipo de usuario
+        if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario")) {
+            panel.add(panelIzq, panelDer);
+        } else {
+            panel.add(panelDer);
+        }
+        
         formCard.add(title, separador, panel, panelBtns);
         add(formCard);
     }
@@ -369,11 +371,20 @@ public class ConfigurationView extends VerticalLayout {
         emailField = new TextField("Email:");
         emailField.setValue(usuario.getEmail() != null ? usuario.getEmail() : "");
 
-        passwordField = new PasswordField("Contraseña:");
-        passwordField.setValue(usuario.getPassword() != null ? usuario.getPassword() : "");
+        // Reemplazar el campo de contraseña por un botón
+        Button cambiarPasswordBtn = new Button("Cambiar Contraseña");
+        cambiarPasswordBtn.getStyle()
+                .set("margin-top", "1em")
+                .set("background-color", "#3498db")
+                .set("color", "white")
+                .set("border-radius", "6px")
+                .set("font-weight", "500")
+                .set("box-shadow", "0 2px 4px rgba(52, 152, 219, 0.2)");
+        
+        cambiarPasswordBtn.addClickListener(event -> abrirDialogoCambioPassword());
 
         // Aplicar estilos consistentes a todos los campos
-        Stream.of(nombreField, apellidosField, emailField, passwordField)
+        Stream.of(nombreField, apellidosField, emailField)
                 .forEach(field -> {
                     field.setWidthFull();
                     field.getStyle()
@@ -387,17 +398,109 @@ public class ConfigurationView extends VerticalLayout {
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("500px", 2));
 
-        formLayout.add(nombreField, apellidosField, emailField, passwordField);
+        formLayout.add(nombreField, apellidosField, emailField, cambiarPasswordBtn);
         return formLayout;
     }
 
+    // Método para abrir el diálogo de cambio de contraseña
+    private void abrirDialogoCambioPassword() {
+        Dialog dialog = new Dialog();
+        dialog.setCloseOnEsc(true);
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setWidth("400px");
+        
+        // Título del diálogo
+        H1 titulo = new H1("Cambiar Contraseña");
+        titulo.getStyle()
+                .set("color", "#2c3e50")
+                .set("font-size", "1.5em")
+                .set("margin", "0.5em 0")
+                .set("font-weight", "600")
+                .set("text-align", "center");
+        
+        // Campos para la nueva contraseña
+        PasswordField nuevaPasswordField = new PasswordField("Nueva Contraseña");
+        nuevaPasswordField.setWidthFull();
+        nuevaPasswordField.getStyle()
+                .set("border-radius", "6px")
+                .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
+                .set("--lumo-primary-color", "#3498db")
+                .set("margin-bottom", "1em");
+        
+        PasswordField confirmarPasswordField = new PasswordField("Confirmar Contraseña");
+        confirmarPasswordField.setWidthFull();
+        confirmarPasswordField.getStyle()
+                .set("border-radius", "6px")
+                .set("--lumo-contrast-10pct", "rgba(44, 62, 80, 0.1)")
+                .set("--lumo-primary-color", "#3498db")
+                .set("margin-bottom", "1em");
+        
+        // Botones de acción
+        Button aceptarBtn = new Button("Aceptar", e -> {
+            String nuevaPassword = nuevaPasswordField.getValue();
+            String confirmarPassword = confirmarPasswordField.getValue();
+            
+            // Verificar que las contraseñas coincidan
+            if (nuevaPassword == null || nuevaPassword.isEmpty()) {
+                Notification.show("La contraseña no puede estar vacía", 
+                        3000, Notification.Position.MIDDLE);
+                return;
+            }
+            
+            if (!nuevaPassword.equals(confirmarPassword)) {
+                Notification.show("Las contraseñas no coinciden", 
+                        3000, Notification.Position.MIDDLE);
+                return;
+            }
+            
+            try {
+                // Actualizar la contraseña del usuario localmente
+                usuario.setPassword(nuevaPassword);
+                
+                // Guardar la contraseña en la base de datos a través del servicio
+                usuarioServicio.guardarUsuario(usuario);
+                
+                // Actualizar la sesión con el usuario actualizado
+                VaadinSession.getCurrent().setAttribute("usuario", usuario);
+                
+                Notification.show("Contraseña actualizada correctamente", 
+                        3000, Notification.Position.BOTTOM_CENTER);
+                dialog.close();
+            } catch (Exception ex) {
+                Notification.show("Error al actualizar la contraseña: " + ex.getMessage(), 
+                        3000, Notification.Position.MIDDLE);
+            }
+        });
+        aceptarBtn.getStyle()
+                .set("background-color", "#3498db")
+                .set("color", "white")
+                .set("border-radius", "6px")
+                .set("font-weight", "500");
+        
+        Button cancelarBtn = new Button("Cancelar", e -> dialog.close());
+        
+        HorizontalLayout botonesLayout = new HorizontalLayout(aceptarBtn, cancelarBtn);
+        botonesLayout.setWidthFull();
+        botonesLayout.setJustifyContentMode(JustifyContentMode.END);
+        botonesLayout.setSpacing(true);
+        
+        // Añadir componentes al diálogo
+        VerticalLayout dialogLayout = new VerticalLayout(titulo, nuevaPasswordField, confirmarPasswordField, botonesLayout);
+        dialogLayout.setPadding(true);
+        dialogLayout.setSpacing(true);
+        dialogLayout.setAlignItems(Alignment.CENTER);
+        
+        dialog.add(dialogLayout);
+        dialog.open();
+    }
+    
     private Component crearGuardarInfoBtn() {
         Button guardarBtn = new Button("Guardar Cambios");
         guardarBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         guardarBtn.getStyle()
                 .set("border-radius", "6px")
+                .set("background-color", "#3498db")
                 .set("font-weight", "600")
-                .set("box-shadow", "0 4px 6px rgba(52, 152, 219, 0.2)")
                 .set("transition", "transform 0.1s ease-in-out")
                 .set("padding", "0.5rem 1.5rem");
         guardarBtn.getElement().getThemeList().add("primary");
@@ -408,8 +511,8 @@ public class ConfigurationView extends VerticalLayout {
                 usuario.setNombre(nombreField.getValue());
                 usuario.setApellidos(apellidosField.getValue());
                 usuario.setEmail(emailField.getValue());
-                usuario.setPassword(passwordField.getValue());
-
+                // Ya no actualizamos la contraseña aquí, se hace en el diálogo
+                
                 // Si el usuario es un voluntario, actualizar sus días, turno y habilidades
                 // disponibles
                 if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().equalsIgnoreCase("voluntario") &&
@@ -495,11 +598,13 @@ public class ConfigurationView extends VerticalLayout {
         mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD, Habilidad.ELECTICISTA);
         mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_FONTANERIA, Habilidad.FONTANERIA);
 
-        List<Tarea> listaTareas = tareaRepositorio.findAll();
+        List<Tarea> listaTareas = tareaRepositorio.findAllWithSuscriptores();
         for (Tarea tarea : listaTareas) {
-            Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
-            if (voluntario.getHabilidades().contains(habilidadRequerida)) {
-                restTemplate.postForEntity(url + tarea.getId() + "/dessuscribir/" + voluntario.getId(), null, Void.class);
+            if (tarea.getSuscriptores().contains(voluntario)) {
+                Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
+                if (voluntario.getHabilidades().contains(habilidadRequerida)) {
+                    restTemplate.postForEntity(url + tarea.getId() + "/dessuscribir/" + voluntario.getId(), null, Void.class);
+                }
             }
         }
     }
@@ -518,7 +623,7 @@ public class ConfigurationView extends VerticalLayout {
         mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_ELECTRICIDAD, Habilidad.ELECTICISTA);
         mapeoHabilidades.put(Necesidad.TipoNecesidad.AYUDA_FONTANERIA, Habilidad.FONTANERIA);
 
-        List<Tarea> listaTareas = tareaRepositorio.findAll();
+        List<Tarea> listaTareas = tareaRepositorio.findAllWithSuscriptores();
         for (Tarea tarea : listaTareas) {
             Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
             if (voluntario.getHabilidades().contains(habilidadRequerida)) {
@@ -531,6 +636,7 @@ public class ConfigurationView extends VerticalLayout {
         Button cancelarBtn = new Button("Cancelar");
         cancelarBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         cancelarBtn.getStyle()
+                .set("color", "#3498db")
                 .set("font-weight", "600")
                 .set("border-radius", "6px")
                 .set("padding", "0.5rem 1.5rem");
@@ -538,7 +644,7 @@ public class ConfigurationView extends VerticalLayout {
         return cancelarBtn;
     }
 
-    // Método para crear el panel informativo sobre la gestión de necesidades
+    // Eliminamos el método crearInfoNecesidades() ya que no lo necesitamos más
     private Component crearInfoNecesidades() {
         // Contenedor principal con estilo mejorado
         Div infoContainer = new Div();
