@@ -10,6 +10,7 @@ import SolidarityHub.models.Necesidad.TipoNecesidad;
 
 @Entity
 public class Tarea implements Observado {
+    
 
     public enum EstadoTarea {
         PREPARADA, EN_CURSO, FINALIZADA
@@ -213,6 +214,24 @@ public class Tarea implements Observado {
     }
     public void dessuscribirVoluntario(Voluntario voluntario) {
         suscriptores.remove(voluntario);
+    }
+
+    @Override
+    public void suscribirObservador(Observador observador) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'suscribirObservador'");
+    }
+
+    @Override
+    public void dessuscribirObservador(Observador observador) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'dessuscribirObservador'");
+    }
+
+    @Override
+    public void notificarSuscriptores() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'notificarSuscriptores'");
     }
     
     
