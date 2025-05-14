@@ -47,6 +47,13 @@
             <version>${vaadin.version}</version> <!-- Asegúrate de que la versión sea la correcta -->
         </dependency>
 
+        <!-- Vaadin Charts para dashboards visuales -->
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-charts-flow</artifactId>
+            <version>${vaadin.version}</version>
+        </dependency>
+
         <!-- MySQL Connector -->
         <dependency>
             <groupId>com.mysql</groupId>

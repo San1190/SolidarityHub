@@ -8,8 +8,14 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.charts.Chart;
+import com.vaadin.flow.component.charts.model.ChartType;
+import com.vaadin.flow.component.charts.model.Configuration;
+import com.vaadin.flow.component.charts.model.DataSeries;
+import com.vaadin.flow.component.charts.model.DataSeriesItem;
 
-@Route(value= "main" , layout = MainLayout.class)
+@Route(value = "main", layout = MainLayout.class)
 @PageTitle("Main | SolidarityHub")
 public class MainView extends VerticalLayout {
 
@@ -58,7 +64,7 @@ public class MainView extends VerticalLayout {
                 rol.addClassName(LumoUtility.Margin.Bottom.LARGE);
 
                 card.add(title, nombre, email, telefono, rol, crearLogo());
-                add(card);
+                add(card, crearDashboard());
         }
 
         private Image crearLogo() {
@@ -72,6 +78,25 @@ public class MainView extends VerticalLayout {
                                 .set("align-items", "center").set("justify-content", "center")
                                 .set("margin-top", "2rem");
                 return logo;
+        }
+
+        private Chart crearDashboard() {
+                // Dashboard visual: gráfica de barras
+                Chart chart = new Chart(ChartType.COLUMN);
+                Configuration conf = chart.getConfiguration();
+                conf.setTitle("Tareas completadas por mes");
+                DataSeries series = new DataSeries();
+                series.add(new DataSeriesItem("Enero", 10));
+                series.add(new DataSeriesItem("Febrero", 15));
+                series.add(new DataSeriesItem("Marzo", 8));
+                series.add(new DataSeriesItem("Abril", 20));
+                conf.addSeries(series);
+                chart.setWidth("600px");
+                chart.setHeight("350px");
+                HorizontalLayout dashboard = new HorizontalLayout(chart);
+                dashboard.setWidthFull();
+                dashboard.setJustifyContentMode(JustifyContentMode.CENTER);
+                return chart;
         }
 
 }
