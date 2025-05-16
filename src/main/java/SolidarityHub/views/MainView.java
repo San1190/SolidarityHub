@@ -4,6 +4,7 @@ import SolidarityHub.commands.CreateHexagonCommand;
 import SolidarityHub.commands.CreatePointCommand;
 import SolidarityHub.commands.MapCommand;
 import SolidarityHub.commands.MarkStoreCommand;
+import SolidarityHub.commands.CreateAreaCriticaCommand;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
@@ -19,9 +20,11 @@ import software.xdev.vaadin.maps.leaflet.basictypes.LLatLng;
 import software.xdev.vaadin.maps.leaflet.layer.ui.LMarker;
 import software.xdev.vaadin.maps.leaflet.layer.vector.LCircle;
 import software.xdev.vaadin.maps.leaflet.layer.vector.LCircleMarker;
+import software.xdev.vaadin.maps.leaflet.layer.vector.LPolygon;
 import software.xdev.vaadin.maps.leaflet.layer.raster.LTileLayer;
 import software.xdev.vaadin.maps.leaflet.registry.LComponentManagementRegistry;
 import software.xdev.vaadin.maps.leaflet.registry.LDefaultComponentManagementRegistry;
+import com.vaadin.flow.component.UI;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +37,7 @@ public class MainView extends VerticalLayout {
     private final List<LMarker> markers = new ArrayList<>();
     private final List<LCircle> circles = new ArrayList<>();
     private final List<LCircleMarker> stores = new ArrayList<>();
+    private final List<LPolygon> areasCriticas = new ArrayList<>();
 
     private static final double UPV_LAT = 39.4815;
     private static final double UPV_LNG = -0.3419;
@@ -86,28 +90,29 @@ public class MainView extends VerticalLayout {
         // Notificación para indicar al usuario que puede interactuar con el mapa
         Notification.show("Mapa cargado. Selecciona una acción y haz clic en el mapa para ejecutarla.");
     
+        // ID para identificar este componente desde JavaScript
+        setId("main-view");
         
-        container.getElement().executeJs(
-    "const host = this;" +
-    // Esperamos a que el mapa esté completamente inicializado
-    "setTimeout(() => {" +
-    
-    "  const mapEl = this.querySelector('vaadin-map');" +
-    "  console.log('vaadin-map element:', mapEl);" +
-    
-    "  if (mapEl && mapEl._leafletMap) {" +
-    "    console.log('Leaflet map found:', mapEl._leafletMap);" +
-    
-    "    mapEl._leafletMap.on('click', function(e) {" +
-    "      console.log('Leaflet click!', e.latlng);" +
-    "      host.$server.mapClicked(e.latlng.lat, e.latlng.lng);" +
-    "    });" +
-    "  } else {" +
-    "    console.error('No se pudo encontrar el mapa Leaflet');" +
-    "  }" +
-    "}, 500);"
-);
-
+        // Registrar evento de clic directamente en el mapa usando la API de Leaflet
+        map.on("click", "e => document.getElementById('" + getId().orElse("main-view") + "').$server.mapClicked(e.latlng.lat, e.latlng.lng)");
+        
+        // Método adicional para capturar clics usando el ID del contenedor del mapa
+        String js = String.format(
+            "setTimeout(() => {" +
+                "const mapContainer = document.querySelector('.leaflet-container');" +
+                "if (mapContainer && mapContainer._leaflet_id) {" +
+                    "const mapId = mapContainer._leaflet_id;" +
+                    "if (L && L.map && L.map._instances && L.map._instances[mapId]) {" +
+                        "console.log('Método directo: Mapa Leaflet encontrado');" +
+                        "L.map._instances[mapId].on('click', function(e) {" +
+                            "console.log('Método directo: Click en mapa', e.latlng);" +
+                            "document.getElementById('%s').$server.mapClicked(e.latlng.lat, e.latlng.lng);" +
+                        "});" +
+                    "}" +
+                "}" +
+            "}, 1000);", getId().orElse("main-view"));
+        
+        UI.getCurrent().getPage().executeJs(js);
     }
     
     
@@ -120,6 +125,9 @@ public class MainView extends VerticalLayout {
         CreatePointCommand pointCommand = new CreatePointCommand(markers);
         MarkStoreCommand storeCommand = new MarkStoreCommand(stores);
         CreateHexagonCommand hexagonCommand = new CreateHexagonCommand(circles, UPV_LAT, UPV_LNG, RADIUS_KM);
+        
+        // Inicializar el comando para áreas críticas (usando el atributo de la clase)
+        CreateAreaCriticaCommand areaCriticaCommand = new CreateAreaCriticaCommand(areasCriticas);
 
         Button btnPoint = new Button("Crear Punto", e -> {
             activeCommand = pointCommand;
@@ -136,9 +144,15 @@ public class MainView extends VerticalLayout {
             hexagonCommand.execute(map, registry, UPV_LAT, UPV_LNG);
         });
         
+        // Botón para crear áreas críticas
+        Button btnAreaCritica = new Button("Crear Área Crítica", e -> {
+            activeCommand = areaCriticaCommand;
+            Notification.show(areaCriticaCommand.getDescription());
+        });
+        
         Button btnClear = new Button("Limpiar Mapa", e -> clearMap());
 
-        hl.add(btnPoint, btnStore, btnVol, btnClear);
+        hl.add(btnPoint, btnStore, btnVol, btnAreaCritica, btnClear);
         add(hl);
         
         // Establecer el comando por defecto
@@ -160,6 +174,11 @@ public class MainView extends VerticalLayout {
         markers.forEach(m -> map.removeLayer(m)); markers.clear();
         circles.forEach(c -> map.removeLayer(c)); circles.clear();
         stores.forEach(s -> map.removeLayer(s)); stores.clear();
+        // Necesitamos limpiar también las áreas críticas
+        if (areasCriticas != null) {
+            areasCriticas.forEach(a -> map.removeLayer(a)); 
+            areasCriticas.clear();
+        }
         Notification.show("Mapa limpiado");
     }
 }
