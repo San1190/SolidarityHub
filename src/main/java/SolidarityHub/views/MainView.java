@@ -20,10 +20,13 @@ import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -49,7 +52,6 @@ import software.xdev.vaadin.maps.leaflet.layer.raster.LTileLayer;
 import software.xdev.vaadin.maps.leaflet.registry.LComponentManagementRegistry;
 import software.xdev.vaadin.maps.leaflet.registry.LDefaultComponentManagementRegistry;
 
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.select.Select;
 
 import java.util.ArrayList;
@@ -434,14 +436,16 @@ public class MainView extends VerticalLayout {
                     if (colorBorde == null) colorBorde = "#3388ff";
                     if (colorRelleno == null) colorRelleno = "#3388ff";
                     
-                    // Crear un identificador único para este polígono
-                    final String poligonoId = "zona-" + zona.getId() + "-" + System.currentTimeMillis();
+                    // Crear un identificador único y claro para este polígono
+                    final String poligonoId = "zona-" + zona.getId();
+                    final Long zonaIdFinal = zona.getId(); // Capturar el ID para el mensaje de log
                     
-                    // Usar JavaScript para aplicar estilos al polígono, con un retraso para asegurar que está en el DOM
+                    // Usar JavaScript para aplicar estilos e ID al polígono, con un retraso para asegurar que está en el DOM
                     UI.getCurrent().getPage().executeJs(
                         "setTimeout(() => {" +
                             "try {" +
-                                "const leafletLayers = document.querySelectorAll('.leaflet-interactive');" +
+                                "console.log('Buscando nuevo polígono para asignar ID: " + poligonoId + "');" +
+                                "const leafletLayers = document.querySelectorAll('.leaflet-overlay-pane .leaflet-interactive');" +
                                 "const polygons = Array.from(leafletLayers).filter(el => el.tagName === 'path');" +
                                 "if (polygons.length > 0) {" +
                                     "const lastPolygon = polygons[polygons.length - 1];" +
@@ -450,7 +454,25 @@ public class MainView extends VerticalLayout {
                                     "lastPolygon.setAttribute('fill-opacity', '0.4');" +
                                     "lastPolygon.setAttribute('stroke-width', '3');" +
                                     "lastPolygon.id = '" + poligonoId + "';" +
-                                    "console.log('Estilos aplicados a zona con ID: " + zona.getId() + "');" +
+                                    "console.log('ID asignado a polígono: " + poligonoId + "');" +
+                                    "lastPolygon.setAttribute('data-zona-id', '" + zonaIdFinal + "');" +
+                                    
+                                    // Añadir un manejador de eventos directo para diagnóstico
+                                    "lastPolygon.onclick = function(event) {" +
+                                        "console.log('Clic directo en polígono:', this.id, this.getAttribute('data-zona-id'));" +
+                                        "if (event.ctrlKey || event.metaKey) {" +
+                                            "console.log('Ctrl+Clic detectado');" +
+                                            "if (" + esGestor + ") {" +
+                                                "document.getElementById('" + getId().orElse("main-view") + "').$server.zonaClicked(" +
+                                                    "this.id, event.clientX, event.clientY, true);" +
+                                            "}" +
+                                        "} else {" +
+                                            "console.log('Clic normal detectado');" +
+                                            "document.getElementById('" + getId().orElse("main-view") + "').$server.zonaClicked(" +
+                                                "this.id, event.clientX, event.clientY, false);" +
+                                        "}" +
+                                        "event.stopPropagation();" +
+                                    "};" +
                                 "}" +
                             "} catch(e) {" +
                                 "console.error('Error al aplicar estilos:', e);" +
@@ -464,6 +486,86 @@ public class MainView extends VerticalLayout {
                     System.out.println("Zona de encuentro cargada: " + zona.getNombre() + " (ID: " + zona.getId() + 
                                       "), coordenadas: " + zona.getCoordenadas());
                     
+                    // Dentro del método cargarZonasEncuentro, después de añadir exitosamente un polígono y antes de continuar con la siguiente zona
+
+                    // Añadir un marcador central para facilitar la selección y visualización de cada zona
+                    if (!coordsList.isEmpty()) {
+                        try {
+                            // Calcular el centro aproximado
+                            double sumLat = 0;
+                            double sumLng = 0;
+                            for (double[] coord : coordsList) {
+                                sumLat += coord[0];
+                                sumLng += coord[1];
+                            }
+                            double centerLat = sumLat / coordsList.size();
+                            double centerLng = sumLng / coordsList.size();
+                            
+                            // Determinar el color del marcador según el tipo de tarea
+                            String markerColor = "#ffffff"; // Color por defecto
+                            if (zona.getTarea() != null && zona.getTarea().getTipo() != null) {
+                                markerColor = getColorForTaskType(zona.getTarea().getTipo());
+                            }
+                            
+                            // Código mejorado para referenciar correctamente el mapa
+                            UI.getCurrent().getPage().executeJs(
+                                "setTimeout(() => {" +
+                                    "try {" +
+                                        "const centerIcon = L.divIcon({" +
+                                            "html: `<div style=\"background-color: " + markerColor + "; " +
+                                                  "border-radius: 50%; width: 10px; height: 10px; " +
+                                                  "border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5); " +
+                                                  "animation: pulse 2s infinite;\"></div>`," +
+                                            "className: 'zona-center-marker'," +
+                                            "iconSize: [14, 14]," +
+                                            "iconAnchor: [7, 7]" +
+                                        "});" +
+                                        
+                                        // Obtener la instancia del mapa
+                                        "const mapDiv = document.querySelector('.leaflet-container');" +
+                                        "if (!mapDiv || !mapDiv._leaflet_id) {" +
+                                            "console.error('No se pudo encontrar el mapa Leaflet');" +
+                                            "return;" +
+                                        "}" +
+                                        
+                                        "const map = L.map._instances[mapDiv._leaflet_id];" +
+                                        "if (!map) {" +
+                                            "console.error('No se pudo obtener la instancia del mapa');" +
+                                            "return;" +
+                                        "}" +
+                                        
+                                        // Añadir el marcador al mapa y vincularlo a la zona
+                                        "const centerMarker = L.marker([" + centerLat + ", " + centerLng + "], {icon: centerIcon});" +
+                                        "centerMarker.addTo(map);" +
+                                        
+                                        // Añadir un estilo de animación único
+                                        "if (!document.getElementById('zona-marker-style')) {" +
+                                            "const style = document.createElement('style');" +
+                                            "style.id = 'zona-marker-style';" +
+                                            "style.textContent = `" +
+                                                "@keyframes pulse {" +
+                                                    "0% { transform: scale(1); opacity: 1; }" +
+                                                    "50% { transform: scale(1.3); opacity: 0.7; }" +
+                                                    "100% { transform: scale(1); opacity: 1; }" +
+                                                "}" +
+                                            "`;" +
+                                            "document.head.appendChild(style);" +
+                                        "}" +
+                                        
+                                        // Vincular el marcador con la zona para que al hacer clic se muestre la información
+                                        "centerMarker.on('click', function(e) {" +
+                                            "document.getElementById('" + getId().orElse("main-view") + "').$server.zonaClicked(" +
+                                                "'zona-" + zona.getId() + "', e.originalEvent.clientX, e.originalEvent.clientY, false);" +
+                                        "});" +
+                                    "} catch(err) {" +
+                                        "console.error('Error al crear el marcador central:', err);" +
+                                    "}" +
+                                "}, 800);"
+                            );
+                        } catch (Exception e) {
+                            System.err.println("Error al crear marcador central para zona " + zona.getId() + ": " + e.getMessage());
+                        }
+                    }
                 } catch (Exception e) {
                     System.err.println("Error al cargar zona de encuentro " + zona.getId() + ": " + e.getMessage());
                     errores.add("Zona " + zona.getId() + ": " + e.getMessage());
@@ -700,6 +802,14 @@ public class MainView extends VerticalLayout {
             meetingZoneLegend.add(gestorTip);
         }
         
+        // Botón para mostrar todas las zonas de encuentro
+        Button btnMostrarZonas = new Button("Ver todas las zonas de encuentro", 
+                                          new Icon(VaadinIcon.LIST));
+        btnMostrarZonas.setWidthFull();
+        btnMostrarZonas.getStyle().set("margin-top", "16px");
+        btnMostrarZonas.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        btnMostrarZonas.addClickListener(e -> mostrarListadoZonas());
+        
         // Información de estadísticas
         H4 statsTitle = new H4("Estadísticas");
         
@@ -725,7 +835,8 @@ public class MainView extends VerticalLayout {
             userInfo.add(notaPermisos);
         }
         
-        sidePanel.add(panelTitle, legendTitle, legend, meetingZoneLegendTitle, meetingZoneLegend, statsTitle, stats, userTitle, userInfo);
+        sidePanel.add(panelTitle, legendTitle, legend, meetingZoneLegendTitle, meetingZoneLegend, 
+                     btnMostrarZonas, statsTitle, stats, userTitle, userInfo);
     }
     
     /**
@@ -799,6 +910,21 @@ public class MainView extends VerticalLayout {
         
         // Inicializar el comando para áreas críticas (usando el atributo de la clase)
         CreateAreaCriticaCommand areaCriticaCommand = new CreateAreaCriticaCommand(areasCriticas);
+        // Botón para cancelar acción actual (nuevo)
+        Button btnCancelar = new Button("Cancelar acción", new Icon(VaadinIcon.CLOSE_CIRCLE));
+        btnCancelar.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_CONTRAST);
+        btnCancelar.getStyle().set("margin-right", "10px");
+        btnCancelar.addClickListener(e -> {
+            // Deseleccionar comando activo
+            activeCommand = null;
+            // Si hay un botón de finalizar, lo eliminamos
+            if (btnFinalizarZona != null) {
+                remove(btnFinalizarZona);
+                btnFinalizarZona = null;
+            }
+            showNotification("Acción cancelada. Seleccione una nueva acción o interactúe con el mapa.", 
+                             NotificationVariant.LUMO_SUCCESS);
+        });
 
         // Botón de Crear Punto (estilizado)
         Button btnPoint = new Button("Crear Punto", new Icon(VaadinIcon.MAP_MARKER));
@@ -810,7 +936,7 @@ public class MainView extends VerticalLayout {
                 btnFinalizarZona = null;
             }
             activeCommand = pointCommand;
-            showNotification(pointCommand.getDescription(), NotificationVariant.LUMO_PRIMARY);
+            //showNotification(pointCommand.getDescription(), NotificationVariant.LUMO_PRIMARY);
         });
 
         // Botón de Marcar Almacén (estilizado)
@@ -823,7 +949,7 @@ public class MainView extends VerticalLayout {
                 btnFinalizarZona = null;
             }
             activeCommand = storeCommand;
-            showNotification(storeCommand.getDescription(), NotificationVariant.LUMO_SUCCESS);
+            //showNotification(storeCommand.getDescription(), NotificationVariant.LUMO_SUCCESS);
         });
 
         // Botón de Punto de Encuentro (estilizado)
@@ -850,7 +976,7 @@ public class MainView extends VerticalLayout {
                 btnFinalizarZona = null;
             }
             activeCommand = areaCriticaCommand;
-            showNotification(areaCriticaCommand.getDescription(), NotificationVariant.LUMO_ERROR);
+           // showNotification(areaCriticaCommand.getDescription(), NotificationVariant.LUMO_ERROR);
         });
         
         // Botón de asignar punto de encuentro a tarea
@@ -859,6 +985,11 @@ public class MainView extends VerticalLayout {
         btnAsignarPuntoEncuentro.addClickListener(e -> {
             mostrarDialogoSeleccionTarea();
         });
+        
+        // Botón para ver todas las zonas de encuentro
+        Button btnVerZonas = new Button("Ver Zonas Encuentro", new Icon(VaadinIcon.LIST));
+        btnVerZonas.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        btnVerZonas.addClickListener(e -> mostrarListadoZonas());
         
         // Botón de Limpiar Mapa (estilizado)
         Button btnClear = new Button("Limpiar Mapa", new Icon(VaadinIcon.TRASH));
@@ -875,11 +1006,8 @@ public class MainView extends VerticalLayout {
             .set("border-radius", "4px")
             .set("margin", "0");
 
-        controls.add(gestorLabel, btnPoint, btnStore, btnVol, btnAreaCritica, btnAsignarPuntoEncuentro, btnClear);
+        controls.add(gestorLabel, btnCancelar, btnPoint, btnStore, btnVol, btnAreaCritica, btnAsignarPuntoEncuentro, btnVerZonas, btnClear);
         mapContainer.add(controls);
-        
-        // Establecer el comando por defecto
-        activeCommand = pointCommand;
     }
     
     private void showNotification(String message, NotificationVariant variant) {
@@ -909,30 +1037,61 @@ public class MainView extends VerticalLayout {
                 mostrarBotonFinalizarZona();
             }
         } else {
-            showNotification("Selecciona primero una acción antes de hacer clic en el mapa",
-                             NotificationVariant.LUMO_ERROR);
+            // Mensaje mejorado cuando no hay comando activo
+            showNotification("No hay acción seleccionada. Seleccione primero una acción usando los botones superiores.",
+                             NotificationVariant.LUMO_WARNING);
+            
+            // También mostramos un tooltip temporal en los botones para guiar al usuario
+            UI.getCurrent().getPage().executeJs(
+                "setTimeout(() => {" +
+                    "const buttons = document.querySelectorAll('vaadin-button');" +
+                    "buttons.forEach(btn => {" +
+                        "if (btn.textContent.includes('Punto') || btn.textContent.includes('Almacén') || " +
+                        "btn.textContent.includes('Área')) {" +
+                            "btn.style.boxShadow = '0 0 8px var(--lumo-primary-color)';" +
+                            "setTimeout(() => {btn.style.boxShadow = '';}, 2000);" +
+                        "}" +
+                    "});" +
+                "}, 300);");
         }
     }
 
     private void clearMap() {
+        // Cancelar cualquier comando activo
+        activeCommand = null;
+        
+        // Limpiar todos los marcadores y formas
         markers.forEach(m -> map.removeLayer(m)); markers.clear();
         circles.forEach(c -> map.removeLayer(c)); circles.clear();
         stores.forEach(s -> map.removeLayer(s)); stores.clear();
         
-        // Solo limpiamos áreas críticas temporales, no las zonas de encuentro persistentes
+        // Limpiar todas las áreas críticas
         if (areasCriticas != null) {
             areasCriticas.forEach(a -> map.removeLayer(a)); 
             areasCriticas.clear();
         }
         
+        // Limpiar todas las zonas de encuentro temporales
+        // (pero no las persistentes, esas se deben eliminar individualmente)
+        for (LPolygon zona : zonasEncuentroPersistentes) {
+            try {
+                map.removeLayer(zona);
+            } catch (Exception e) {
+                System.err.println("Error al eliminar zona: " + e.getMessage());
+            }
+        }
+        zonasEncuentroPersistentes.clear();
+        
         // Si hay un botón de finalizar, lo eliminamos
         if (btnFinalizarZona != null) {
             remove(btnFinalizarZona);
             btnFinalizarZona = null;
-            activeCommand = null;
         }
         
-        showNotification("Mapa limpiado", NotificationVariant.LUMO_SUCCESS);
+        // Limpiar cualquier estado de edición
+        limpiarEstadoEdicion();
+        
+        showNotification("Mapa limpiado completamente", NotificationVariant.LUMO_SUCCESS);
         
         // Volver a crear el marcador de la UPV
         LMarker upv = new LMarker(registry, new LLatLng(registry, UPV_LAT, UPV_LNG));
@@ -1058,139 +1217,305 @@ public class MainView extends VerticalLayout {
      * Inicializa los listeners para detectar clics en zonas de encuentro
      */
     private void initZonaListeners() {
-        if (!esGestor) return; // Solo los gestores pueden editar zonas
+        // Log para diagnóstico
+        System.out.println("Inicializando listeners para zonas de encuentro");
         
         // Usar JavaScript para detectar clics en las zonas (polígonos)
         UI.getCurrent().getPage().executeJs(
             "setTimeout(() => {" +
+                "console.log('Configurando listeners para polígonos...');" +
+                
                 "const setupPolygonListeners = () => {" +
+                    // Buscar todos los elementos interactivos en la capa de superposición
+                    "console.log('Buscando elementos interactivos...');" +
                     "const layers = document.querySelectorAll('.leaflet-overlay-pane .leaflet-interactive');" +
+                    "console.log('Encontrados:', layers.length, 'elementos interactivos');" +
+                    
+                    // Iterar sobre cada capa y añadir listeners a los polígonos
                     "layers.forEach(layer => {" +
                         "if (layer.tagName === 'path' && !layer.hasAttribute('data-has-listener')) {" +
+                            "console.log('Configurando listener para:', layer.id || 'polígono sin ID');" +
                             "layer.setAttribute('data-has-listener', 'true');" +
+                            
+                            // Añadir un evento de clic al polígono
                             "layer.addEventListener('click', (event) => {" +
-                                "if (event.ctrlKey || event.metaKey) {" + // Requiere tecla Ctrl/Cmd para activar menú
-                                    "const rect = layer.getBoundingClientRect();" +
-                                    "const polygonId = layer.id;" +
+                                "console.log('Clic en polígono:', layer.id);" +
+                                "const polygonId = layer.id || ('zona-desconocida-' + Math.random());" +
+                                
+                                // Determinar qué tipo de evento manejar basado en teclas modificadoras
+                                "if (event.ctrlKey || event.metaKey) {" +
+                                    "console.log('Ctrl+Clic detectado en:', polygonId);" +
+                                    // Si Ctrl/Cmd está presionado, mostrar menú contextual de edición (solo para gestores)
+                                    "if (" + esGestor + ") {" +
+                                        "document.getElementById('" + getId().orElse("main-view") + "').$server.zonaClicked(" +
+                                            "polygonId, event.clientX, event.clientY, true);" +
+                                    "}" +
+                                "} else {" +
+                                    "console.log('Clic normal detectado en:', polygonId);" +
+                                    // Clic normal muestra detalles para todos los usuarios
                                     "document.getElementById('" + getId().orElse("main-view") + "').$server.zonaClicked(" +
-                                        "polygonId, event.clientX, event.clientY);" +
-                                    "event.stopPropagation();" + // Prevenir que el mapa reciba el clic
+                                        "polygonId, event.clientX, event.clientY, false);" +
                                 "}" +
+                                
+                                "event.stopPropagation();" + // Prevenir que el mapa reciba el clic
+                            "});" +
+                            
+                            // Añadir también un estilo hover para mejorar la UX
+                            "layer.addEventListener('mouseover', () => {" +
+                                "layer.setAttribute('data-original-fill-opacity', layer.getAttribute('fill-opacity') || '0.4');" +
+                                "layer.setAttribute('fill-opacity', '0.6');" +
+                                "layer.setAttribute('cursor', 'pointer');" +
+                            "});" +
+                            
+                            "layer.addEventListener('mouseout', () => {" +
+                                "layer.setAttribute('fill-opacity', layer.getAttribute('data-original-fill-opacity'));" +
                             "});" +
                         "}" +
                     "});" +
                 "};" +
                 
+                // Ejecutar la configuración inicial
                 "setupPolygonListeners();" +
                 
-                "// Configurar observador para detectar nuevos polígonos dinamicamente" +
-                "const observer = new MutationObserver(setupPolygonListeners);" +
+                // Configurar observador para detectar nuevos polígonos dinámicamente
+                "console.log('Configurando observador para nuevos polígonos...');" +
+                "const observer = new MutationObserver((mutations) => {" +
+                    "console.log('Mutación detectada, revisando nuevos polígonos...');" +
+                    "setupPolygonListeners();" +
+                "});" +
+                
                 "const mapPane = document.querySelector('.leaflet-overlay-pane');" +
                 "if (mapPane) {" +
+                    "console.log('Observando cambios en el mapa...');" +
                     "observer.observe(mapPane, { childList: true, subtree: true });" +
+                "} else {" +
+                    "console.error('No se encontró el contenedor del mapa');" +
                 "}" +
+                
+                // Verificación adicional para polígonos existentes
+                "setTimeout(() => {" +
+                    "const existingPolygons = document.querySelectorAll('path[id^=\"zona-\"]');" +
+                    "console.log('Verificación final: Se encontraron', existingPolygons.length, 'polígonos de zonas');" +
+                    "existingPolygons.forEach(p => console.log('  Zona:', p.id));" +
+                "}, 2000);" +
             "}, 1000);"
         );
     }
     
     @ClientCallable
-    public void zonaClicked(String polygonId, double clientX, double clientY) {
-        if (!esGestor) return;
-        
+    public void zonaClicked(String polygonId, double clientX, double clientY, boolean isContextMenu) {
         try {
+            System.out.println("Zona clickeada: ID=" + polygonId + ", x=" + clientX + ", y=" + clientY);
+            
+            // Si el ID está vacío o es null, mostrar mensaje y return
+            if (polygonId == null || polygonId.isEmpty()) {
+                System.err.println("Error: ID de polígono es null o vacío");
+                showNotification("No se pudo identificar la zona. Por favor, intente de nuevo.", 
+                               NotificationVariant.LUMO_ERROR);
+                return;
+            }
+            
             // Extraer el ID de la zona del ID del polígono
             // Formato esperado: zona-{id}-{timestamp}
             String[] partes = polygonId.split("-");
+            System.out.println("Partes del ID: " + String.join(", ", partes));
+            
             if (partes.length >= 2) {
-                Long zonaId = Long.parseLong(partes[1]);
-                Optional<ZonaEncuentro> optZona = zonaEncuentroServicio.obtenerZonaEncuentroPorId(zonaId);
-                
-                if (optZona.isPresent()) {
-                    zonaSeleccionada = optZona.get();
-                    mostrarMenuContextualZona(clientX, clientY);
+                try {
+                    Long zonaId = Long.parseLong(partes[1]);
+                    System.out.println("Buscando zona con ID: " + zonaId);
+                    
+                    Optional<ZonaEncuentro> optZona = zonaEncuentroServicio.obtenerZonaEncuentroPorId(zonaId);
+                    
+                    if (optZona.isPresent()) {
+                        System.out.println("Zona encontrada: " + optZona.get().getNombre());
+                        zonaSeleccionada = optZona.get();
+                        
+                        if (isContextMenu && esGestor) {
+                            // Mostrar menú contextual para gestores (editar/eliminar)
+                            mostrarMenuContextualZona(clientX, clientY);
+                        } else {
+                            // Mostrar detalles para todos los usuarios
+                            mostrarDetallesZona(clientX, clientY);
+                        }
+                    } else {
+                        System.err.println("No se encontró la zona con ID: " + zonaId);
+                        showNotification("No se encontró información para esta zona", 
+                                       NotificationVariant.LUMO_WARNING);
+                    }
+                } catch (NumberFormatException e) {
+                    System.err.println("Error al convertir el ID de zona: " + partes[1] + ", " + e.getMessage());
+                    showNotification("ID de zona inválido", NotificationVariant.LUMO_ERROR);
                 }
+            } else {
+                System.err.println("Formato de ID incorrecto: " + polygonId);
+                showNotification("Formato de zona incorrecto", NotificationVariant.LUMO_ERROR);
             }
         } catch (Exception e) {
             System.err.println("Error al procesar clic en zona: " + e.getMessage());
+            e.printStackTrace();
+            showNotification("Error al procesar la zona seleccionada", NotificationVariant.LUMO_ERROR);
         }
     }
     
     /**
-     * Muestra un menú contextual para editar/eliminar una zona
+     * Muestra un panel con detalles de la zona seleccionada
      */
-    private void mostrarMenuContextualZona(double x, double y) {
+    private void mostrarDetallesZona(double x, double y) {
         if (zonaSeleccionada == null) return;
         
-        Dialog contextMenu = new Dialog();
-        contextMenu.setWidth("250px");
-        contextMenu.getElement().getStyle().set("box-shadow", "0 0 10px rgba(0,0,0,0.5)");
-        contextMenu.getElement().getStyle().set("padding", "0");
-        contextMenu.getElement().getStyle().set("border-radius", "8px");
-        
-        // Posicionar el menú en las coordenadas del clic
-        contextMenu.getElement().getStyle().set("position", "fixed");
-        contextMenu.getElement().getStyle().set("left", x + "px");
-        contextMenu.getElement().getStyle().set("top", y + "px");
+        Dialog detallesDialog = new Dialog();
+        detallesDialog.setWidth("400px");
+        detallesDialog.setHeaderTitle("Detalles de Zona de Encuentro");
         
         VerticalLayout content = new VerticalLayout();
-        content.setPadding(false);
-        content.setSpacing(false);
+        content.setPadding(true);
+        content.setSpacing(true);
         
-        // Título del menú
-        H4 titulo = new H4("Zona: " + zonaSeleccionada.getNombre());
-        titulo.getStyle().set("margin", "10px").set("padding", "0");
-        content.add(titulo);
+        // Nombre de la zona
+        H3 nombreZona = new H3(zonaSeleccionada.getNombre());
+        nombreZona.getStyle()
+            .set("margin-top", "0")
+            .set("color", "var(--lumo-primary-color)");
+        content.add(nombreZona);
+        
+        // Descripción
+        if (zonaSeleccionada.getDescripcion() != null && !zonaSeleccionada.getDescripcion().isEmpty()) {
+            Paragraph descripcion = new Paragraph(zonaSeleccionada.getDescripcion());
+            descripcion.getStyle().set("font-style", "italic");
+            content.add(descripcion);
+        }
         
         // Información de la tarea asociada
-        Paragraph tareaInfo = new Paragraph("Tarea: " + zonaSeleccionada.getNombreTareaSeguro());
-        tareaInfo.getStyle().set("margin", "0 10px 10px 10px").set("color", "var(--lumo-secondary-text-color)");
-        content.add(tareaInfo);
+        H4 tareaTitle = new H4("Tarea Asociada");
+        tareaTitle.getStyle().set("margin-bottom", "0.2em");
         
-        // Mostrar coordenadas
-        Paragraph coordInfo = new Paragraph("Puntos: " + zonaSeleccionada.getCoordenadaComoLista().size());
-        coordInfo.getStyle().set("margin", "0 10px 15px 10px").set("font-size", "0.85em").set("color", "var(--lumo-tertiary-text-color)");
-        content.add(coordInfo);
+        Div tareaInfo = new Div();
+        tareaInfo.getStyle()
+            .set("padding", "10px")
+            .set("background-color", "var(--lumo-contrast-5pct)")
+            .set("border-radius", "4px")
+            .set("margin-bottom", "15px");
         
-        // Botones de acciones
-        Button btnEditar = new Button("Editar zona", new Icon(VaadinIcon.EDIT));
-        btnEditar.setWidthFull();
-        btnEditar.getStyle().set("text-align", "left").set("border-radius", "0");
-        btnEditar.addClickListener(e -> {
-            iniciarEdicionZona();
-            contextMenu.close();
-        });
+        try {
+            if (zonaSeleccionada.getTarea() != null) {
+                Tarea tarea = zonaSeleccionada.getTarea();
+                Span tareaNombre = new Span(tarea.getNombre());
+                tareaNombre.getStyle().set("font-weight", "bold");
+                
+                HorizontalLayout tareaHeader = new HorizontalLayout(tareaNombre);
+                tareaHeader.setAlignItems(FlexComponent.Alignment.CENTER);
+                
+                // Añadir indicador de tipo/estado si está disponible
+                try {
+                    String tipoTexto = tarea.getTipo() != null ? tarea.getTipo().name() : "N/A";
+                    String estadoTexto = tarea.getEstado() != null ? tarea.getEstado().name() : "N/A";
+                    
+                    Span tipo = new Span(tipoTexto);
+                    tipo.getElement().getThemeList().add("badge success");
+                    
+                    Span estado = new Span(estadoTexto);
+                    estado.getElement().getThemeList().add("badge contrast");
+                    
+                    tareaHeader.add(tipo, estado);
+                } catch (Exception e) {
+                    // Ignorar si no se puede acceder a estos campos
+                }
+                
+                tareaInfo.add(tareaHeader);
+                
+                // Descripción de la tarea
+                try {
+                    if (tarea.getDescripcion() != null && !tarea.getDescripcion().isEmpty()) {
+                        Paragraph tareaDesc = new Paragraph(tarea.getDescripcion());
+                        tareaDesc.getStyle()
+                            .set("margin-top", "5px")
+                            .set("margin-bottom", "0");
+                        tareaInfo.add(tareaDesc);
+                    }
+                } catch (Exception e) {
+                    // Ignorar si no se puede acceder a la descripción
+                }
+            } else {
+                tareaInfo.add(new Span("No hay tarea asociada"));
+            }
+        } catch (Exception e) {
+            tareaInfo.add(new Span("No se puede acceder a la información de la tarea"));
+        }
         
-        Button btnEliminar = new Button("Eliminar zona", new Icon(VaadinIcon.TRASH));
-        btnEliminar.setWidthFull();
-        btnEliminar.getStyle().set("text-align", "left").set("border-radius", "0");
-        btnEliminar.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
-        btnEliminar.addClickListener(e -> {
-            confirmarEliminarZona();
-            contextMenu.close();
-        });
+        // Información técnica de la zona
+        H4 datosTitle = new H4("Datos Técnicos");
+        datosTitle.getStyle().set("margin-bottom", "0.2em");
         
-        Button btnCerrar = new Button("Cerrar", new Icon(VaadinIcon.CLOSE));
-        btnCerrar.setWidthFull();
-        btnCerrar.getStyle().set("text-align", "left").set("border-radius", "0");
-        btnCerrar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        btnCerrar.addClickListener(e -> contextMenu.close());
+        List<double[]> coordenadas = zonaSeleccionada.getCoordenadaComoLista();
         
-        content.add(btnEditar, btnEliminar, btnCerrar);
-        contextMenu.add(content);
-        contextMenu.open();
+        Div datosInfo = new Div();
+        datosInfo.getStyle()
+            .set("padding", "10px")
+            .set("background-color", "var(--lumo-contrast-5pct)")
+            .set("border-radius", "4px");
         
-        // Cerrar el menú si se hace clic fuera
-        UI.getCurrent().getPage().executeJs(
-            "const closeDialogOnOutsideClick = (e) => {" +
-                "const dialog = document.querySelector('vaadin-dialog-overlay');" +
-                "if (dialog && !dialog.contains(e.target)) {" +
-                    "document.removeEventListener('click', closeDialogOnOutsideClick);" +
-                    "$0.$server.close();" +
-                "}" +
-            "};" +
-            "setTimeout(() => {" +
-                "document.addEventListener('click', closeDialogOnOutsideClick);" +
-            "}, 300);", contextMenu.getElement());
+        datosInfo.add(new Paragraph("ID: " + zonaSeleccionada.getId()));
+        datosInfo.add(new Paragraph("Número de puntos: " + coordenadas.size()));
+        
+        // Calcular el centro aproximado para mostrar
+        if (!coordenadas.isEmpty()) {
+            double sumLat = 0;
+            double sumLng = 0;
+            for (double[] coord : coordenadas) {
+                sumLat += coord[0];
+                sumLng += coord[1];
+            }
+            double centerLat = sumLat / coordenadas.size();
+            double centerLng = sumLng / coordenadas.size();
+            
+            datosInfo.add(new Paragraph("Centro aproximado: " + 
+                String.format("%.6f, %.6f", centerLat, centerLng)));
+        }
+        
+        datosInfo.add(new Paragraph("Fecha de creación: " + 
+            (zonaSeleccionada.getFechaCreacion() != null ? 
+             zonaSeleccionada.getFechaCreacion().toString() : "No disponible")));
+        
+        content.add(tareaTitle, tareaInfo, datosTitle, datosInfo);
+        
+        // Botones para gestores
+        if (esGestor) {
+            HorizontalLayout actions = new HorizontalLayout();
+            actions.setWidthFull();
+            actions.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+            actions.setMargin(true);
+            actions.getStyle().set("margin-top", "15px");
+            
+            Button editButton = new Button("Editar zona", new Icon(VaadinIcon.EDIT));
+            editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            editButton.addClickListener(e -> {
+                detallesDialog.close();
+                iniciarEdicionZona();
+            });
+            
+            Button deleteButton = new Button("Eliminar", new Icon(VaadinIcon.TRASH));
+            deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+            deleteButton.addClickListener(e -> {
+                detallesDialog.close();
+                confirmarEliminarZona();
+            });
+            
+            actions.add(editButton, deleteButton);
+            content.add(actions);
+        }
+        
+        // Botón cerrar para todos
+        Button closeButton = new Button("Cerrar", e -> detallesDialog.close());
+        closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        
+        HorizontalLayout footer = new HorizontalLayout(closeButton);
+        footer.setWidthFull();
+        footer.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        
+        detallesDialog.getFooter().add(footer);
+        detallesDialog.add(content);
+        detallesDialog.open();
     }
     
     /**
@@ -1423,12 +1748,188 @@ public class MainView extends VerticalLayout {
         }
     }
 
+    /**
+     * Muestra un menú contextual para editar o eliminar la zona
+     */
+    private void mostrarMenuContextualZona(double clientX, double clientY) {
+        if (zonaSeleccionada == null) return;
+        
+        Dialog menuDialog = new Dialog();
+        menuDialog.setWidth("250px");
+        menuDialog.setHeight("auto");
+        
+        // Posicionar el diálogo cerca del clic
+        // Usar valores fijos razonables en lugar de obtener dimensiones de la página
+        String topPosition = Math.min(clientY, 600) + "px";
+        String leftPosition = Math.min(clientX, 800) + "px";
+        
+        menuDialog.getElement().getStyle().set("position", "fixed");
+        menuDialog.getElement().getStyle().set("top", topPosition);
+        menuDialog.getElement().getStyle().set("left", leftPosition);
+        menuDialog.getElement().getStyle().set("margin", "0");
+        
+        VerticalLayout content = new VerticalLayout();
+        content.setPadding(false);
+        content.setSpacing(false);
+        
+        // Título del menú
+        H4 title = new H4("Zona: " + zonaSeleccionada.getNombre());
+        title.getStyle().set("margin", "8px 16px");
+        
+        // Botones de acción
+        Button btnEditar = new Button("Editar zona", new Icon(VaadinIcon.EDIT));
+        btnEditar.setWidthFull();
+        btnEditar.getStyle().set("text-align", "left");
+        btnEditar.addClickListener(e -> {
+            menuDialog.close();
+            iniciarEdicionZona();
+        });
+        
+        Button btnEliminar = new Button("Eliminar zona", new Icon(VaadinIcon.TRASH));
+        btnEliminar.setWidthFull();
+        btnEliminar.getStyle().set("text-align", "left");
+        btnEliminar.getStyle().set("color", "var(--lumo-error-color)");
+        btnEliminar.addClickListener(e -> {
+            menuDialog.close();
+            confirmarEliminarZona();
+        });
+        
+        Button btnVer = new Button("Ver detalles", new Icon(VaadinIcon.INFO_CIRCLE));
+        btnVer.setWidthFull();
+        btnVer.getStyle().set("text-align", "left");
+        btnVer.addClickListener(e -> {
+            menuDialog.close();
+            mostrarDetallesZona(clientX, clientY);
+        });
+        
+        Button btnCerrar = new Button("Cerrar", new Icon(VaadinIcon.CLOSE));
+        btnCerrar.setWidthFull();
+        btnCerrar.getStyle().set("text-align", "left");
+        btnCerrar.addClickListener(e -> menuDialog.close());
+        
+        content.add(title, btnVer, btnEditar, btnEliminar, btnCerrar);
+        menuDialog.add(content);
+        menuDialog.open();
+    }
+
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        // Inicializar listeners para zonas al cargar la vista
-        if (esGestor) {
-            initZonaListeners();
+        // Inicializar listeners para zonas al cargar la vista para todos los usuarios
+        initZonaListeners();
+    }
+
+    /**
+     * Muestra un diálogo con todas las zonas de encuentro disponibles
+     */
+    private void mostrarListadoZonas() {
+        // Obtener todas las zonas de encuentro
+        List<ZonaEncuentro> zonas = zonaEncuentroServicio.listarZonasEncuentro();
+        
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Zonas de Encuentro Disponibles");
+        dialog.setWidth("600px");
+        dialog.setHeight("500px");
+        
+        VerticalLayout content = new VerticalLayout();
+        content.setSpacing(true);
+        content.setPadding(true);
+        content.setSizeFull();
+        
+        if (zonas.isEmpty()) {
+            Paragraph noZonas = new Paragraph("No hay zonas de encuentro disponibles");
+            noZonas.getStyle().set("font-style", "italic").set("color", "var(--lumo-contrast-70pct)");
+            content.add(noZonas);
+        } else {
+            Paragraph instrucciones = new Paragraph("Haga clic en una zona para ver detalles completos");
+            instrucciones.getStyle().set("font-style", "italic").set("margin-bottom", "16px");
+            content.add(instrucciones);
+            
+            // Crear una tarjeta para cada zona
+            for (ZonaEncuentro zona : zonas) {
+                HorizontalLayout card = new HorizontalLayout();
+                card.setWidthFull();
+                card.setSpacing(true);
+                card.setPadding(true);
+                card.getStyle()
+                    .set("border", "1px solid var(--lumo-contrast-10pct)")
+                    .set("border-radius", "8px")
+                    .set("margin-bottom", "8px")
+                    .set("cursor", "pointer");
+                
+                // Cuadrado de color según tipo de tarea
+                Div colorIndicator = new Div();
+                colorIndicator.setHeight("40px");
+                colorIndicator.setWidth("40px");
+                
+                // Usar el color de la zona si está disponible
+                String colorBorde = zona.getColorBorde();
+                if (colorBorde == null && zona.getTarea() != null && zona.getTarea().getTipo() != null) {
+                    colorBorde = getColorForTaskType(zona.getTarea().getTipo());
+                }
+                if (colorBorde == null) colorBorde = "#3388ff"; // Color por defecto
+                
+                colorIndicator.getStyle()
+                    .set("background-color", colorBorde)
+                    .set("border-radius", "4px")
+                    .set("margin-right", "16px");
+                
+                // Información de la zona
+                VerticalLayout zonaInfo = new VerticalLayout();
+                zonaInfo.setPadding(false);
+                zonaInfo.setSpacing(false);
+                
+                H4 nombreZona = new H4(zona.getNombre());
+                nombreZona.getStyle().set("margin", "0").set("margin-bottom", "4px");
+                
+                // Añadir información de la tarea si está disponible
+                Paragraph tareaInfo = null;
+                try {
+                    if (zona.getTarea() != null) {
+                        String tipoTarea = zona.getTarea().getTipo() != null 
+                                          ? zona.getTarea().getTipo().name() 
+                                          : "No especificado";
+                        tareaInfo = new Paragraph("Tarea: " + zona.getTarea().getNombre() + " (" + tipoTarea + ")");
+                    } else {
+                        tareaInfo = new Paragraph("No hay tarea asociada");
+                    }
+                    tareaInfo.getStyle().set("margin", "0").set("margin-top", "4px");
+                } catch (Exception e) {
+                    tareaInfo = new Paragraph("Error al cargar información de tarea");
+                    tareaInfo.getStyle().set("color", "var(--lumo-error-color)");
+                }
+                
+                zonaInfo.add(nombreZona, tareaInfo);
+                card.add(colorIndicator, zonaInfo);
+                
+                // Al hacer clic, mostrar detalles completos
+                final ZonaEncuentro zonaFinal = zona;
+                card.addClickListener(e -> {
+                    dialog.close();
+                    zonaSeleccionada = zonaFinal;
+                    mostrarDetallesZona(300, 300); // Posición central aproximada
+                });
+                
+                content.add(card);
+            }
         }
+        
+        Button cerrarBtn = new Button("Cerrar", e -> dialog.close());
+        cerrarBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        
+        // Si hay zonas y el usuario es gestor, añadir botón para editar
+        if (!zonas.isEmpty() && esGestor) {
+            Button btnCrearZona = new Button("Crear Nueva Zona", e -> {
+                dialog.close();
+                mostrarDialogoSeleccionTarea();
+            });
+            btnCrearZona.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            dialog.getFooter().add(btnCrearZona);
+        }
+        
+        dialog.getFooter().add(cerrarBtn);
+        dialog.add(content);
+        dialog.open();
     }
 }
+
