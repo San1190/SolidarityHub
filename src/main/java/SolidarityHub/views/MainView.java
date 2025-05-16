@@ -1,5 +1,9 @@
 package SolidarityHub.views;
 
+import SolidarityHub.commands.CreateHexagonCommand;
+import SolidarityHub.commands.CreatePointCommand;
+import SolidarityHub.commands.MapCommand;
+import SolidarityHub.commands.MarkStoreCommand;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
@@ -34,6 +38,9 @@ public class MainView extends VerticalLayout {
     private static final double UPV_LAT = 39.4815;
     private static final double UPV_LNG = -0.3419;
     private static final int RADIUS_KM = 30;
+    
+    // Comando activo que se ejecutará al hacer clic en el mapa
+    private MapCommand activeCommand;
 
     public MainView() {
         setSizeFull();
@@ -75,24 +82,30 @@ public class MainView extends VerticalLayout {
     
         // Añade el contenedor (que es un Component) al layout
         add(container);
+        
+        // Notificación para indicar al usuario que puede interactuar con el mapa
+        Notification.show("Mapa cargado. Selecciona una acción y haz clic en el mapa para ejecutarla.");
     
         
         container.getElement().executeJs(
     "const host = this;" +
-    // imprimimos el contenedor
-    "console.log('Container element:', this);" +
-    // buscamos el <vaadin-map> interno
-    "const mapEl = this.querySelector('vaadin-map');" +
-    "console.log('vaadin-map element:', mapEl);" +
-    // imprimimos si tiene la propiedad .map
-    "console.log('mapEl.map is', mapEl && mapEl.map);" +
-    "if (mapEl && mapEl.map) {" +
-    // instrumentamos también la llegada de un clic:
-    "  mapEl.map.on('click', function(e) {" +
-    "    console.log('Leaflet click!', e.latlng);" +
-    "    host.$server.mapClicked(e.latlng.lat, e.latlng.lng);" +
-    "  });" +
-    "}"
+    // Esperamos a que el mapa esté completamente inicializado
+    "setTimeout(() => {" +
+    
+    "  const mapEl = this.querySelector('vaadin-map');" +
+    "  console.log('vaadin-map element:', mapEl);" +
+    
+    "  if (mapEl && mapEl._leafletMap) {" +
+    "    console.log('Leaflet map found:', mapEl._leafletMap);" +
+    
+    "    mapEl._leafletMap.on('click', function(e) {" +
+    "      console.log('Leaflet click!', e.latlng);" +
+    "      host.$server.mapClicked(e.latlng.lat, e.latlng.lng);" +
+    "    });" +
+    "  } else {" +
+    "    console.error('No se pudo encontrar el mapa Leaflet');" +
+    "  }" +
+    "}, 500);"
 );
 
     }
@@ -103,43 +116,44 @@ public class MainView extends VerticalLayout {
         HorizontalLayout hl = new HorizontalLayout();
         hl.setWidthFull(); hl.setPadding(true); hl.setSpacing(true);
 
+        // Inicializar comandos
+        CreatePointCommand pointCommand = new CreatePointCommand(markers);
+        MarkStoreCommand storeCommand = new MarkStoreCommand(stores);
+        CreateHexagonCommand hexagonCommand = new CreateHexagonCommand(circles, UPV_LAT, UPV_LNG, RADIUS_KM);
+
         Button btnPoint = new Button("Crear Punto", e -> {
-            // Solo muestra instrucción, el clic se maneja por JS
-            Notification.show("Ahora, haz clic en el mapa para crear un punto de necesidad");
+            activeCommand = pointCommand;
+            Notification.show(pointCommand.getDescription());
         });
 
         Button btnStore = new Button("Marcar Almacén", e -> {
-            Notification.show("Ahora, haz clic en el mapa para marcar un almacén");
+            activeCommand = storeCommand;
+            Notification.show(storeCommand.getDescription());
         });
 
-        Button btnVol = new Button("Crear Punto de Encuentro", e -> createHexagon());
+        Button btnVol = new Button("Crear Punto de Encuentro", e -> {
+            // Ejecutamos directamente sin esperar clic en el mapa
+            hexagonCommand.execute(map, registry, UPV_LAT, UPV_LNG);
+        });
+        
         Button btnClear = new Button("Limpiar Mapa", e -> clearMap());
 
         hl.add(btnPoint, btnStore, btnVol, btnClear);
         add(hl);
+        
+        // Establecer el comando por defecto
+        activeCommand = pointCommand;
     }
 
     @ClientCallable
     public void mapClicked(double lat, double lng) {
-        // Dependiendo de la última acción, creamos punto o almacén.
-        // Aquí siempre creamos una 'necesidad', pero puedes gestionar estado
-        LLatLng pos = new LLatLng(registry, lat, lng);
-        LMarker m = new LMarker(registry, pos);
-        m.bindTooltip("Necesidad en " + lat + ", " + lng);
-        m.addTo(map);
-        markers.add(m);
-        Notification.show("Punto creado en " + String.format("%.4f, %.4f", lat, lng));
-    }
-
-    private void createHexagon() {
-        LCircle circle = new LCircle(
-            registry,
-            new LLatLng(registry, UPV_LAT, UPV_LNG),
-            RADIUS_KM * 1000
-        );
-        circle.addTo(map);
-        circles.add(circle);
-        Notification.show("Hexágono creado");
+        // Si hay un comando activo, lo ejecutamos
+        if (activeCommand != null) {
+            Notification.show("Ejecutando comando en: " + String.format("%.4f, %.4f", lat, lng));
+            activeCommand.execute(map, registry, lat, lng);
+        } else {
+            Notification.show("Selecciona primero una acción antes de hacer clic en el mapa");
+        }
     }
 
     private void clearMap() {
