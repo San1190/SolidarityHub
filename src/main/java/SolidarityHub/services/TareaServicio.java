@@ -6,10 +6,12 @@ import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Tarea.EstadoTarea;
 import SolidarityHub.models.Usuario;
 import SolidarityHub.models.Voluntario;
+import SolidarityHub.models.dtos.TareaPorMesDTO;
 import SolidarityHub.repository.NotificacionRepositorio;
 import SolidarityHub.repository.TareaRepositorio;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -191,5 +193,18 @@ public class TareaServicio {
             tarea.dessuscribirObservador(voluntario);
         }
         tareaRepositorio.save(tarea);
+    }
+
+    // Método para obtener los datos del dashboard
+    public List<TareaPorMesDTO> obtenerConteoTareasPorNombreYMes() {
+        List<Object[]> resultados = tareaRepositorio.contarTareasPorNombreYMes();
+        List<TareaPorMesDTO> lista = new ArrayList<>();
+        for (Object[] fila : resultados) {
+            Integer mes = (Integer) fila[0];
+            String nombre = (String) fila[1];
+            Long cantidad = (Long) fila[2];
+            lista.add(new TareaPorMesDTO(mes, nombre, cantidad));
+        }
+        return lista;
     }
 }

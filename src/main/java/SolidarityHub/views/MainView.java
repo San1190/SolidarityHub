@@ -1,5 +1,7 @@
 package SolidarityHub.views;
 
+import SolidarityHub.models.Tarea;
+import SolidarityHub.services.TareaServicio;
 import SolidarityHub.services.UsuarioServicio;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
@@ -9,19 +11,24 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.charts.Chart;
-import com.vaadin.flow.component.charts.model.ChartType;
-import com.vaadin.flow.component.charts.model.Configuration;
-import com.vaadin.flow.component.charts.model.DataSeries;
-import com.vaadin.flow.component.charts.model.DataSeriesItem;
+import com.vaadin.flow.component.html.Div;
+
+import java.util.List;
+
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.page.Page;
 
 @Route(value = "main", layout = MainLayout.class)
 @PageTitle("Main | SolidarityHub")
 public class MainView extends VerticalLayout {
 
+        private TareaServicio tareaServicio;
+
         private Image logo;
 
-        public MainView(UsuarioServicio usuarioServicio) {
+        public MainView(UsuarioServicio usuarioServicio, TareaServicio tareaServicio) {
+                this.tareaServicio = tareaServicio;
+
                 setSizeFull();
                 setSpacing(false);
                 setPadding(true);
@@ -64,7 +71,7 @@ public class MainView extends VerticalLayout {
                 rol.addClassName(LumoUtility.Margin.Bottom.LARGE);
 
                 card.add(title, nombre, email, telefono, rol, crearLogo());
-                add(card, crearDashboard());
+                add(card, crearGoogleChart());
         }
 
         private Image crearLogo() {
@@ -80,23 +87,45 @@ public class MainView extends VerticalLayout {
                 return logo;
         }
 
-        private Chart crearDashboard() {
-                // Dashboard visual: gráfica de barras
-                Chart chart = new Chart(ChartType.COLUMN);
-                Configuration conf = chart.getConfiguration();
-                conf.setTitle("Tareas completadas por mes");
-                DataSeries series = new DataSeries();
-                series.add(new DataSeriesItem("Enero", 10));
-                series.add(new DataSeriesItem("Febrero", 15));
-                series.add(new DataSeriesItem("Marzo", 8));
-                series.add(new DataSeriesItem("Abril", 20));
-                conf.addSeries(series);
-                chart.setWidth("600px");
-                chart.setHeight("350px");
-                HorizontalLayout dashboard = new HorizontalLayout(chart);
-                dashboard.setWidthFull();
-                dashboard.setJustifyContentMode(JustifyContentMode.CENTER);
-                return chart;
+        private Div crearGoogleChart() {
+                Div chartDiv = new Div();
+                chartDiv.setId("google-bar-chart");
+                chartDiv.setWidth("650px");
+                chartDiv.setHeight("400px");
+                chartDiv.getStyle().set("margin", "2rem auto");
+
+                chartDiv.getElement().executeJs(
+                                "fetch('/api/tareas/dashboard')" +
+                                                ".then(response => response.json())" +
+                                                ".then(datos => {" +
+                                                "  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];"
+                                                +
+                                                "  let dataArr = [['Mes', 'Nombre', 'Cantidad']];" +
+                                                "  datos.forEach(d => dataArr.push([meses[d.mes-1], d.nombre, d.cantidad]));"
+                                                +
+                                                "  if (!window.googleChartsLoaded) {" +
+                                                "    var script = document.createElement('script');" +
+                                                "    script.src = 'https://www.gstatic.com/charts/loader.js';" +
+                                                "    script.onload = function() { window.googleChartsLoaded = true; drawChart(); };"
+                                                +
+                                                "    document.head.appendChild(script);" +
+                                                "  } else { drawChart(); }" +
+                                                "  function drawChart() {" +
+                                                "    google.charts.load('current', {packages:['corechart']});" +
+                                                "    google.charts.setOnLoadCallback(function() {" +
+                                                "      var data = google.visualization.arrayToDataTable(dataArr);" +
+                                                "      var options = {" +
+                                                "        title: 'Tareas por nombre y mes'," +
+                                                "        legend: { position: 'top' }," +
+                                                "        chartArea: {width: '70%'}" +
+                                                "      };" +
+                                                "      var chart = new google.visualization.ColumnChart(document.getElementById('google-bar-chart'));"
+                                                +
+                                                "      chart.draw(data, options);" +
+                                                "    });" +
+                                                "  }" +
+                                                "});");
+                return chartDiv;
         }
 
 }

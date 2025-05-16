@@ -38,4 +38,11 @@ public interface TareaRepositorio extends JpaRepository<Tarea, Long> {
     @Query("SELECT t FROM Tarea t LEFT JOIN FETCH t.suscriptores WHERE t.id = :id")
     @Transactional(readOnly = true)
     Tarea obtenerTareaPorIdConSuscriptores(@Param("id") Long id);
+
+    @Query("SELECT FUNCTION('MONTH', t.fechaInicio) as mes, t.nombre as nombre, COUNT(t) as cantidad " +
+       "FROM Tarea t " +
+       "GROUP BY mes, nombre " +
+       "ORDER BY mes, nombre")
+    List<Object[]> contarTareasPorNombreYMes();
+
 }
