@@ -13,6 +13,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
@@ -30,6 +31,18 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import org.springframework.web.client.RestTemplate;
 
+// Importaciones para el mapa
+import software.xdev.vaadin.maps.leaflet.MapContainer;
+import software.xdev.vaadin.maps.leaflet.map.LMap;
+import software.xdev.vaadin.maps.leaflet.basictypes.LLatLng;
+import software.xdev.vaadin.maps.leaflet.layer.raster.LTileLayer;
+import software.xdev.vaadin.maps.leaflet.registry.LComponentManagementRegistry;
+import software.xdev.vaadin.maps.leaflet.registry.LDefaultComponentManagementRegistry;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.ClientCallable;
+import com.vaadin.flow.component.UI;
+
 @Route(value = "necesidades", layout = MainLayout.class) 
 @PageTitle("Necesidades | SolidarityHub")
 public class NecesidadesView extends VerticalLayout {
@@ -38,6 +51,7 @@ public class NecesidadesView extends VerticalLayout {
     private final String apiUrl = "http://localhost:8080/api/necesidades";
     private final Grid<Necesidad> grid = new Grid<>(Necesidad.class, false);
     private final Binder<Necesidad> binder = new Binder<>(Necesidad.class);
+    private final double[] selectedCoords = new double[2];
 
     public NecesidadesView() {
         setSizeFull();
@@ -133,7 +147,21 @@ public class NecesidadesView extends VerticalLayout {
         binder.forField(urgenciaField).asRequired("La urgencia es obligatoria").bind(Necesidad::getUrgencia,
                 Necesidad::setUrgencia);
 
+        // Campo de ubicación con botón para abrir el mapa
+        HorizontalLayout ubicacionLayout = new HorizontalLayout();
+        ubicacionLayout.setWidthFull();
+        ubicacionLayout.setSpacing(true);
+        
         TextField ubicacionField = new TextField("Ubicación");
+        ubicacionField.setWidthFull();
+        ubicacionField.setReadOnly(true);
+        ubicacionField.setPlaceholder("Haga clic en el botón para seleccionar ubicación");
+        
+        Button btnSeleccionarUbicacion = new Button("Seleccionar en mapa");
+        btnSeleccionarUbicacion.addClickListener(e -> mostrarMapaSeleccion(ubicacionField));
+        
+        ubicacionLayout.add(ubicacionField, btnSeleccionarUbicacion);
+        
         binder.forField(ubicacionField).asRequired("La ubicación es obligatoria").bind(Necesidad::getUbicacion,
                 Necesidad::setUbicacion);
 
@@ -175,8 +203,111 @@ public class NecesidadesView extends VerticalLayout {
         botonLayout.setJustifyContentMode(JustifyContentMode.END);
 
         // Añadir campos al formulario
-        formLayout.add(tipoNecesidadField, descripcionField, urgenciaField, ubicacionField, fechaInicioField, botonLayout);
+        formLayout.add(tipoNecesidadField, descripcionField, urgenciaField, ubicacionLayout, fechaInicioField, botonLayout);
         return formLayout;
+    }
+
+    private void mostrarMapaSeleccion(TextField ubicacionField) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Seleccionar ubicación");
+        dialog.setWidth("600px");
+        dialog.setHeight("400px");
+        
+        // Contenedor principal del mapa
+        Div mapWrapper = new Div();
+        mapWrapper.setWidthFull();
+        mapWrapper.setHeight("300px");
+        mapWrapper.getStyle().set("position", "relative");
+        
+        // Inicializar el mapa
+        LComponentManagementRegistry registry = new LDefaultComponentManagementRegistry(this);
+        MapContainer mapContainer = new MapContainer(registry);
+        mapContainer.setSizeFull();
+        
+        // Obtener el mapa
+        LMap map = mapContainer.getlMap();
+        
+        // Configurar el mapa
+        map.addLayer(LTileLayer.createDefaultForOpenStreetMapTileServer(registry));
+        map.setView(new LLatLng(registry, 39.4699, -0.3763), 13);
+        
+        // Añadir el mapa al contenedor
+        mapWrapper.add(mapContainer);
+        
+        // ID para identificar este componente desde JavaScript
+        mapWrapper.setId("necesidades-view");
+        
+        // Registrar evento de clic directamente en el mapa usando la API de Leaflet
+        map.on("click", "e => document.getElementById('necesidades-view').$server.mapClicked(e.latlng.lat, e.latlng.lng)");
+        
+        // Método adicional para capturar clics usando el ID del contenedor del mapa
+        UI.getCurrent().getPage().executeJs(
+            "setTimeout(() => {" +
+                "const mapContainer = document.querySelector('.leaflet-container');" +
+                "if (mapContainer && mapContainer._leaflet_id) {" +
+                    "const mapId = mapContainer._leaflet_id;" +
+                    "if (L && L.map && L.map._instances && L.map._instances[mapId]) {" +
+                        "console.log('Método directo: Mapa Leaflet encontrado');" +
+                        "L.map._instances[mapId].on('click', function(e) {" +
+                            "console.log('Método directo: Click en mapa', e.latlng);" +
+                            "document.getElementById('necesidades-view').$server.mapClicked(e.latlng.lat, e.latlng.lng);" +
+                        "});" +
+                    "}" +
+                "}" +
+            "}, 1000);"
+        );
+        
+        // Botones de acción
+        HorizontalLayout actions = new HorizontalLayout();
+        Button confirmButton = new Button("Confirmar ubicación", e -> {
+            if (selectedCoords[0] != 0 && selectedCoords[1] != 0) {
+                String ubicacion = String.format("%.6f, %.6f", selectedCoords[0], selectedCoords[1]);
+                ubicacionField.setValue(ubicacion);
+                dialog.close();
+            } else {
+                Notification.show("Por favor, seleccione una ubicación en el mapa", 3000, Notification.Position.MIDDLE);
+            }
+        });
+        
+        Button cancelButton = new Button("Cancelar", e -> dialog.close());
+        
+        actions.add(confirmButton, cancelButton);
+        
+        // Añadir componentes al diálogo
+        VerticalLayout dialogLayout = new VerticalLayout(mapWrapper, actions);
+        dialogLayout.setPadding(true);
+        dialogLayout.setSpacing(true);
+        
+        dialog.add(dialogLayout);
+        dialog.open();
+    }
+
+    @ClientCallable
+    public void mapClicked(double lat, double lng) {
+        // Guardar las coordenadas seleccionadas
+        selectedCoords[0] = lat;
+        selectedCoords[1] = lng;
+        
+        // Añadir marcador en el mapa
+        UI.getCurrent().getPage().executeJs(
+            "const map = document.querySelector('.leaflet-container')._leaflet_map;" +
+            "// Eliminar marcadores anteriores" +
+            "map.eachLayer(function(layer) {" +
+                "if (layer instanceof L.Marker) {" +
+                    "map.removeLayer(layer);" +
+                "}" +
+            "});" +
+            // Crear nuevo marcador
+            "const marker = L.marker([" + lat + ", " + lng + "]).addTo(map);" +
+            "marker.bindPopup('Ubicación seleccionada: " + lat + ", " + lng + "').openPopup();"
+        );
+        
+        // Mostrar notificación
+        Notification.show(
+            String.format("Ubicación seleccionada: %.6f, %.6f", lat, lng),
+            2000,
+            Notification.Position.BOTTOM_CENTER
+        ).addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     }
 
     private VerticalLayout createGridLayout() {
