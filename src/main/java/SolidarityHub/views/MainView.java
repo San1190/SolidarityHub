@@ -280,45 +280,44 @@ public class MainView extends VerticalLayout {
             // Verificar si tiene localización válida
             if (tarea.getLocalizacion() != null && !tarea.getLocalizacion().isEmpty()) {
                 try {
-                    // Extraer coordenadas
-                    double[] coords = geolocalizacionServicio.extraerCoordenadas(tarea.getLocalizacion());
-                    double lat = coords[0];
-                    double lng = coords[1];
-                    
-                    // Crear marcador según el tipo de tarea
-                    LCircleMarker marker = new LCircleMarker(registry, new LLatLng(registry, lat, lng));
-                    
-                    // Personalizar apariencia según tipo de tarea
-                    marker.setRadius(8);
-                    
-                    // Asignar color según el tipo de tarea
-                    String color = getColorForTaskType(tarea.getTipo());
-                    
-                    // Aplicamos colores directamente usando funciones de API directas
-                    // Nota: En versiones recientes de la biblioteca, estos métodos podrían existir
-                    marker.bindTooltip("<strong>" + tarea.getNombre() + "</strong><br/>" +
-                                     "Tipo: " + (tarea.getTipo() != null ? tarea.getTipo().name() : "N/A") + "<br/>" +
-                                     "Estado: " + (tarea.getEstado() != null ? tarea.getEstado().name() : "N/A") + "<br/>" +
-                                     "Voluntarios: " + tarea.getNumeroVoluntariosNecesarios());
-                    
-                    // Primero agregamos el marcador al mapa para que sea visible
-                    marker.addTo(map);
-                    stores.add(marker);
-                    
-                    // Como último recurso, usamos JavaScript para cambiar los colores - utilizando un identificador de posición
-                    final int markerIndex = stores.size() - 1;
-                    UI.getCurrent().getPage().executeJs(
-                        "setTimeout(() => {" +
-                            "const leafletLayers = document.querySelectorAll('.leaflet-interactive');" +
-                            "const circles = Array.from(leafletLayers).filter(el => el.tagName === 'circle' || el.tagName === 'path');" +
-                            "if (circles.length > " + markerIndex + ") {" +
-                                "circles[" + markerIndex + "].setAttribute('stroke', '" + color + "');" +
-                                "circles[" + markerIndex + "].setAttribute('fill', '" + color + "');" +
-                                "circles[" + markerIndex + "].setAttribute('fill-opacity', '0.7');" +
-                                "circles[" + markerIndex + "].setAttribute('stroke-width', '2');" +
-                            "}" +
-                        "}, 1000);");
-                    
+                    // Intentar extraer coordenadas del formato texto
+                    double[] coords = extraerCoordenadasDeTexto(tarea.getLocalizacion());
+                    if (coords != null) {
+                        double lat = coords[0];
+                        double lng = coords[1];
+                        
+                        // Crear marcador según el tipo de tarea
+                        LCircleMarker marker = new LCircleMarker(registry, new LLatLng(registry, lat, lng));
+                        
+                        // Personalizar apariencia según tipo de tarea
+                        marker.setRadius(8);
+                        
+                        // Asignar color según el tipo de tarea
+                        String color = getColorForTaskType(tarea.getTipo());
+                        
+                        marker.bindTooltip("<strong>" + tarea.getNombre() + "</strong><br/>" +
+                                         "Tipo: " + (tarea.getTipo() != null ? tarea.getTipo().name() : "N/A") + "<br/>" +
+                                         "Estado: " + (tarea.getEstado() != null ? tarea.getEstado().name() : "N/A") + "<br/>" +
+                                         "Voluntarios: " + tarea.getNumeroVoluntariosNecesarios());
+                        
+                        // Primero agregamos el marcador al mapa para que sea visible
+                        marker.addTo(map);
+                        stores.add(marker);
+                        
+                        // Aplicar estilos al marcador
+                        final int markerIndex = stores.size() - 1;
+                        UI.getCurrent().getPage().executeJs(
+                            "setTimeout(() => {" +
+                                "const leafletLayers = document.querySelectorAll('.leaflet-interactive');" +
+                                "const circles = Array.from(leafletLayers).filter(el => el.tagName === 'circle' || el.tagName === 'path');" +
+                                "if (circles.length > " + markerIndex + ") {" +
+                                    "circles[" + markerIndex + "].setAttribute('stroke', '" + color + "');" +
+                                    "circles[" + markerIndex + "].setAttribute('fill', '" + color + "');" +
+                                    "circles[" + markerIndex + "].setAttribute('fill-opacity', '0.7');" +
+                                    "circles[" + markerIndex + "].setAttribute('stroke-width', '2');" +
+                                "}" +
+                            "}, 1000);");
+                    }
                 } catch (Exception e) {
                     System.err.println("Error al procesar tarea con ubicación: " + tarea.getLocalizacion());
                     e.printStackTrace();
@@ -331,6 +330,42 @@ public class MainView extends VerticalLayout {
         
         // Actualizar estadísticas
         updateSidePanelStats();
+    }
+    
+    /**
+     * Extrae coordenadas de un texto que puede estar en varios formatos
+     */
+    private double[] extraerCoordenadasDeTexto(String texto) {
+        if (texto == null || texto.isEmpty()) {
+            return null;
+        }
+
+        try {
+            // Intentar extraer coordenadas del formato "lat, lng"
+            String[] partes = texto.split(",");
+            if (partes.length == 2) {
+                double lat = Double.parseDouble(partes[0].trim());
+                double lng = Double.parseDouble(partes[1].trim());
+                
+                // Verificar que las coordenadas son válidas
+                if (coordenadaValida(lat, lng)) {
+                    return new double[]{lat, lng};
+                }
+            }
+        } catch (NumberFormatException e) {
+            // Si no se pudo parsear como coordenadas, intentar geocodificación
+            try {
+                // Aquí podrías implementar la geocodificación usando un servicio como Google Maps o Nominatim
+                // Por ahora, retornamos null si no se pueden extraer coordenadas
+                System.out.println("No se pudieron extraer coordenadas del texto: " + texto);
+                return null;
+            } catch (Exception ex) {
+                System.err.println("Error en geocodificación: " + ex.getMessage());
+                return null;
+            }
+        }
+        
+        return null;
     }
     
     /**

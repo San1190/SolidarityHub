@@ -4,20 +4,30 @@ import SolidarityHub.models.Necesidad;
 import SolidarityHub.models.Tarea;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
 
 @Service
 public class GeolocalizacionServicio {
 
     private final TareaServicio tareaServicio;
     private final NecesidadServicio necesidadServicio;
+    private final RestTemplate restTemplate;
 
     @Autowired
     public GeolocalizacionServicio(TareaServicio tareaServicio, NecesidadServicio necesidadServicio) {
         this.tareaServicio = tareaServicio;
         this.necesidadServicio = necesidadServicio;
+        this.restTemplate = new RestTemplate();
     }
 
     /**
@@ -110,5 +120,45 @@ public class GeolocalizacionServicio {
                     return distancia <= radioKm;
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtiene las coordenadas (latitud, longitud) de una dirección usando el servicio Nominatim
+     * @param direccion La dirección a geocodificar
+     * @return Array con [latitud, longitud] o null si no se pudo obtener
+     */
+    public double[] obtenerCoordenadas(String direccion) {
+        try {
+            // Construir la URL para Nominatim
+            String url = UriComponentsBuilder.fromHttpUrl("https://nominatim.openstreetmap.org/search")
+                .queryParam("q", direccion)
+                .queryParam("format", "json")
+                .queryParam("limit", "1")
+                .build()
+                .toUriString();
+
+            // Configurar headers para cumplir con la política de uso de Nominatim
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "SolidarityHub/1.0");
+            
+            // Realizar la petición
+            ResponseEntity<List<Map>> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                new org.springframework.core.ParameterizedTypeReference<List<Map>>() {}
+            );
+
+            // Procesar la respuesta
+            if (response.getBody() != null && !response.getBody().isEmpty()) {
+                Map<String, String> result = response.getBody().get(0);
+                double lat = Double.parseDouble(result.get("lat"));
+                double lon = Double.parseDouble(result.get("lon"));
+                return new double[]{lat, lon};
+            }
+        } catch (Exception e) {
+            System.err.println("Error al obtener coordenadas para: " + direccion + " - " + e.getMessage());
+        }
+        return null;
     }
 }
