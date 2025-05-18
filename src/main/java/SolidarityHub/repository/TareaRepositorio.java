@@ -13,18 +13,19 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TareaRepositorio extends JpaRepository<Tarea, Long> {
-    
+
     // Método para encontrar tareas por estado
     List<Tarea> findByEstado(EstadoTarea estado);
-    
+
     // Método para encontrar tareas por tipo
     List<Tarea> findByTipo(TipoNecesidad tipo);
-    
+
     // Método para encontrar tareas por estado y tipo
     List<Tarea> findByEstadoAndTipo(EstadoTarea estado, TipoNecesidad tipo);
-    
+
     /**
-     * Método que carga todas las tareas con sus voluntarios asignados en una sola consulta
+     * Método que carga todas las tareas con sus voluntarios asignados en una sola
+     * consulta
      * utilizando JOIN FETCH para evitar el LazyInitializationException
      * 
      * @return Lista de tareas con sus voluntarios asignados cargados
@@ -39,10 +40,15 @@ public interface TareaRepositorio extends JpaRepository<Tarea, Long> {
     @Transactional(readOnly = true)
     Tarea obtenerTareaPorIdConSuscriptores(@Param("id") Long id);
 
+    @Query("SELECT t FROM Tarea t WHERE t.estado = 'COMPLETADA'")
+    List<Tarea> obtenerTareasCompletadas();
+
+    // Método para el dashboard: contar tareas por nombre y mes
     @Query("SELECT FUNCTION('MONTH', t.fechaInicio) as mes, t.nombre as nombre, COUNT(t) as cantidad " +
-       "FROM Tarea t " +
-       "GROUP BY mes, nombre " +
-       "ORDER BY mes, nombre")
+            "FROM Tarea t " +
+            "WHERE t.fechaInicio IS NOT NULL " +
+            "GROUP BY mes, nombre " +
+            "ORDER BY mes, nombre")
     List<Object[]> contarTareasPorNombreYMes();
 
 }

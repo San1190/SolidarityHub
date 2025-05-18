@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Set;
 
 import SolidarityHub.repository.UsuarioRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TareaServicio {
-    
+
     private final TareaRepositorio tareaRepositorio;
 
     @Autowired
@@ -66,42 +68,45 @@ public class TareaServicio {
     public void eliminarTarea(Long id) {
         tareaRepositorio.deleteById(id);
     }
-    
+
     // Método para filtrar tareas por estado
     public List<Tarea> filtrarPorEstado(EstadoTarea estado) {
         return tareaRepositorio.findByEstado(estado);
     }
-    
+
     // Método para filtrar tareas por tipo
     public List<Tarea> filtrarPorTipo(TipoNecesidad tipo) {
         return tareaRepositorio.findByTipo(tipo);
     }
-    
+
     // Método para filtrar tareas por estado y tipo
     public List<Tarea> filtrarPorEstadoYTipo(EstadoTarea estado, TipoNecesidad tipo) {
         return tareaRepositorio.findByEstadoAndTipo(estado, tipo);
     }
-    
+
     /**
      * Obtiene las tareas pendientes de confirmación para un voluntario.
-     * Estas son tareas donde el voluntario está asignado pero aún no ha confirmado su participación.
+     * Estas son tareas donde el voluntario está asignado pero aún no ha confirmado
+     * su participación.
      * 
      * @param voluntario El voluntario para el que se buscan las tareas pendientes
      * @return Lista de tareas pendientes de confirmación
      */
     public List<Tarea> obtenerTareasPendientesConfirmacion(Voluntario voluntario) {
-        // Usar una consulta personalizada en el repositorio que cargue explícitamente los voluntarios asignados
+        // Usar una consulta personalizada en el repositorio que cargue explícitamente
+        // los voluntarios asignados
         List<Tarea> todasLasTareas = tareaRepositorio.findAllWithVoluntariosAsignados();
-        
+
         return todasLasTareas.stream()
-                .filter(tarea -> tarea.getVoluntariosAsignados() != null && 
-                                 tarea.getVoluntariosAsignados().contains(voluntario) &&
-                                 tarea.getEstado() == EstadoTarea.PREPARADA)
+                .filter(tarea -> tarea.getVoluntariosAsignados() != null &&
+                        tarea.getVoluntariosAsignados().contains(voluntario) &&
+                        tarea.getEstado() == EstadoTarea.PREPARADA)
                 .collect(Collectors.toList());
     }
-    
+
     /**
-     * Cambia el estado de una tarea a EN_CURSO cuando todos los voluntarios necesarios
+     * Cambia el estado de una tarea a EN_CURSO cuando todos los voluntarios
+     * necesarios
      * han aceptado participar en ella.
      * 
      * @param tareaId ID de la tarea a actualizar
@@ -112,23 +117,23 @@ public class TareaServicio {
         if (!tareaOpt.isPresent()) {
             return false;
         }
-        
+
         Tarea tarea = tareaOpt.get();
-        
+
         // Verificar si la tarea ya tiene todos los voluntarios necesarios
-        if (tarea.getEstado() == EstadoTarea.PREPARADA && 
-            tarea.getVoluntariosAsignados() != null &&
-            tarea.getVoluntariosAsignados().size() >= tarea.getNumeroVoluntariosNecesarios()) {
-            
+        if (tarea.getEstado() == EstadoTarea.PREPARADA &&
+                tarea.getVoluntariosAsignados() != null &&
+                tarea.getVoluntariosAsignados().size() >= tarea.getNumeroVoluntariosNecesarios()) {
+
             // Cambiar estado a EN_CURSO
             tarea.setEstado(EstadoTarea.EN_CURSO);
             tareaRepositorio.save(tarea);
             return true;
         }
-        
+
         return false;
     }
-    
+
     /**
      * Obtiene las tareas aceptadas por un voluntario.
      * 
@@ -136,17 +141,18 @@ public class TareaServicio {
      * @return Lista de tareas aceptadas
      */
     public List<Tarea> obtenerTareasAceptadas(Voluntario voluntario) {
-        // Usar una consulta personalizada en el repositorio que cargue explícitamente los voluntarios asignados
+        // Usar una consulta personalizada en el repositorio que cargue explícitamente
+        // los voluntarios asignados
         List<Tarea> todasLasTareas = tareaRepositorio.findAllWithVoluntariosAsignados();
-        
+
         return todasLasTareas.stream()
-                .filter(tarea -> tarea.getVoluntariosAsignados() != null && 
-                                 tarea.getVoluntariosAsignados().contains(voluntario) &&
-                                 (tarea.getEstado() == EstadoTarea.EN_CURSO || 
-                                  tarea.getEstado() == EstadoTarea.FINALIZADA))
+                .filter(tarea -> tarea.getVoluntariosAsignados() != null &&
+                        tarea.getVoluntariosAsignados().contains(voluntario) &&
+                        (tarea.getEstado() == EstadoTarea.EN_CURSO ||
+                                tarea.getEstado() == EstadoTarea.FINALIZADA))
                 .collect(Collectors.toList());
     }
-    
+
     /**
      * Obtiene las tareas que comienzan en la fecha especificada.
      * Útil para enviar recordatorios a los voluntarios.
@@ -157,17 +163,17 @@ public class TareaServicio {
     public List<Tarea> obtenerTareasQueComienzan(LocalDateTime fecha) {
         LocalDateTime inicioDia = fecha.toLocalDate().atStartOfDay();
         LocalDateTime finDia = inicioDia.plusDays(1);
-        
+
         return tareaRepositorio.findAll().stream()
-                .filter(tarea -> tarea.getFechaInicio().isAfter(inicioDia) && 
-                                 tarea.getFechaInicio().isBefore(finDia))
+                .filter(tarea -> tarea.getFechaInicio().isAfter(inicioDia) &&
+                        tarea.getFechaInicio().isBefore(finDia))
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public void notificarSuscritores(Tarea tarea, String titulo, String mensaje) {
         for (Voluntario voluntario : tarea.getSuscriptores()) {
-            voluntario.actualizar(); //Manda el mesaje al voluntario
+            voluntario.actualizar(); // Manda el mesaje al voluntario
             Notificacion notificacion = new Notificacion();
             notificacion.setUsuario(voluntario);
             notificacion.setTarea(tarea);
@@ -195,6 +201,19 @@ public class TareaServicio {
         tareaRepositorio.save(tarea);
     }
 
+    // DTO para el dashboard
+    public static class TareaPorMesDTO {
+        public Integer mes;
+        public String nombre;
+        public Long cantidad;
+
+        public TareaPorMesDTO(Integer mes, String nombre, Long cantidad) {
+            this.mes = mes;
+            this.nombre = nombre;
+            this.cantidad = cantidad;
+        }
+    }
+
     // Método para obtener los datos del dashboard
     public List<TareaPorMesDTO> obtenerConteoTareasPorNombreYMes() {
         List<Object[]> resultados = tareaRepositorio.contarTareasPorNombreYMes();
@@ -206,5 +225,72 @@ public class TareaServicio {
             lista.add(new TareaPorMesDTO(mes, nombre, cantidad));
         }
         return lista;
+    }
+
+    // Método para obtener tareas completadas
+    public List<Tarea> obtenerTareasCompletadas() {
+        return tareaRepositorio.obtenerTareasCompletadas();
+    }
+
+    // DTO para métricas completas del dashboard
+    public static class DashboardMetricasDTO {
+        public long totalTareas;
+        public long tareasCompletadas;
+        public long tareasEnCurso;
+        public long tareasPendientes;
+        public double promedioPorMes;
+        public List<TareaPorMesDTO> datosPorMes;
+
+        public DashboardMetricasDTO() {
+            this.totalTareas = 0;
+            this.tareasCompletadas = 0;
+            this.tareasEnCurso = 0;
+            this.tareasPendientes = 0;
+            this.promedioPorMes = 0.0;
+            this.datosPorMes = new ArrayList<>();
+        }
+    }
+
+    // Método para obtener métricas completas del dashboard
+    public DashboardMetricasDTO obtenerMetricasDashboard() {
+        DashboardMetricasDTO metricas = new DashboardMetricasDTO();
+
+        // Obtener conteo por estado
+        List<Tarea> todasTareas = tareaRepositorio.findAll();
+        metricas.totalTareas = todasTareas.size();
+
+        // Contar tareas por estado
+        for (Tarea tarea : todasTareas) {
+            EstadoTarea estado = tarea.getEstado();
+            if (estado == EstadoTarea.FINALIZADA) {
+                metricas.tareasCompletadas++;
+            } else if (estado == EstadoTarea.EN_CURSO) {
+                metricas.tareasEnCurso++;
+            } else if (estado == EstadoTarea.PREPARADA) {
+                metricas.tareasPendientes++;
+            }
+        }
+
+        // Obtener datos por mes
+        metricas.datosPorMes = obtenerConteoTareasPorNombreYMes();
+
+        // Calcular promedio por mes
+        if (!metricas.datosPorMes.isEmpty()) {
+            // Obtener meses únicos
+            Set<Integer> mesesUnicos = new HashSet<>();
+            int totalTareasPorMes = 0;
+
+            for (TareaPorMesDTO dato : metricas.datosPorMes) {
+                mesesUnicos.add(dato.mes);
+                totalTareasPorMes += dato.cantidad;
+            }
+
+            // Calcular promedio si hay meses
+            if (!mesesUnicos.isEmpty()) {
+                metricas.promedioPorMes = (double) totalTareasPorMes / mesesUnicos.size();
+            }
+        }
+
+        return metricas;
     }
 }
