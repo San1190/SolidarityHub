@@ -140,16 +140,6 @@ public class NecesidadesView extends VerticalLayout {
         binder.forField(urgenciaField).asRequired("La urgencia es obligatoria").bind(Necesidad::getUrgencia,
                 Necesidad::setUrgencia);
 
-        //Añadir los campos de fecha de inicio y fecha de fin
-        DatePicker fechaInicioField = new DatePicker("Fecha de Inicio");
-        binder.forField(fechaInicioField)
-              .asRequired("La fecha de inicio es obligatoria")
-              .withConverter(
-                  date -> date != null ? date.atStartOfDay() : null,
-                  dateTime -> dateTime != null ? dateTime.toLocalDate() : null
-              )
-              .bind(Necesidad::getFechaInicio, Necesidad::setFechaInicio);
-
         // Campo de ubicación
         TextField ubicacionField = new TextField("Ubicación");
         ubicacionField.setPlaceholder("Escriba la dirección (ej: Calle Mayor 123, Valencia)");
@@ -165,6 +155,18 @@ public class NecesidadesView extends VerticalLayout {
                 binder.writeBeanIfValid(nuevaNecesidad);
                 nuevaNecesidad.setEstadoNecesidad(Necesidad.EstadoNecesidad.REGISTRADA);
                 nuevaNecesidad.setFechaCreacion(LocalDateTime.now());
+                switch (nuevaNecesidad.getUrgencia()){
+                    case Urgencia.ALTA :
+                        nuevaNecesidad.setFechaInicio(LocalDateTime.now());
+                        break;
+                    case Urgencia.MEDIA :
+                        nuevaNecesidad.setFechaInicio(LocalDateTime.now().plusDays(3));
+                        break;
+                    case Urgencia.BAJA:
+                        nuevaNecesidad.setFechaInicio(LocalDateTime.now().plusDays(7));
+                        break;
+                }
+
                 nuevaNecesidad.setCreador((Afectado) VaadinSession.getCurrent().getAttribute("usuario"));
 
                 restTemplate.postForObject(apiUrl + "/crear", nuevaNecesidad, Necesidad.class);
@@ -181,7 +183,7 @@ public class NecesidadesView extends VerticalLayout {
         botonLayout.setJustifyContentMode(JustifyContentMode.END);
 
         // Añadir campos al formulario en el nuevo orden
-        formLayout.add(tipoNecesidadField, descripcionField, urgenciaField, fechaInicioField, ubicacionField, botonLayout);
+        formLayout.add(tipoNecesidadField, descripcionField, urgenciaField, ubicacionField, botonLayout);
 
         return formLayout;
     }

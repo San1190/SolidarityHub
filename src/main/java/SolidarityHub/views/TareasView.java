@@ -366,19 +366,13 @@ public class TareasView extends VerticalLayout {
                 .asRequired("La fecha de inicio es requerida")
                 .bind(Tarea::getFechaInicio, Tarea::setFechaInicio);
 
-        DateTimePicker fechaFinField = new DateTimePicker("Fecha de fin");
-        fechaFinField.setRequiredIndicatorVisible(true);
-        binder.forField(fechaFinField)
-                .asRequired("La fecha de fin es requerida")
-                .bind(Tarea::getFechaFin, Tarea::setFechaFin);
-
         // Añadir campos al formulario
         campos.add(
                 nombreField, descripcionField,
                 tipoField, estadoField,
                 localizacionField, puntoEncuentroField,
                 turnoField, voluntariosField,
-                fechaInicioField, fechaFinField);
+                fechaInicioField);
 
         formLayout.add(campos);
 
@@ -512,8 +506,7 @@ public class TareasView extends VerticalLayout {
         infoGrid.add(
             crearInfoItem(VaadinIcon.MAP_MARKER, tarea.getLocalizacion()),
             crearInfoItem(VaadinIcon.CALENDAR, 
-                "Inicio: " + (tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "No definida") + 
-                "\nFin: " + (tarea.getFechaFin() != null ? formatter.format(tarea.getFechaFin()) : "No definida")),
+                "Inicio: " + (tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "No definida")),
             crearInfoItem(VaadinIcon.USERS, tarea.getNumeroVoluntariosNecesarios() + " voluntarios")
         );
         Div recursosContainer = new Div();
@@ -764,14 +757,10 @@ public class TareasView extends VerticalLayout {
         Span turno = new Span(tarea.getTurno() != null ? tarea.getTurno() : "No definido");
         infoLayout.addFormItem(turno, "Turno");
 
-        // Fechas
+        // Fecha inicio
         String fechaInicio = tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "No definida";
         Span fechaInicioSpan = new Span(fechaInicio);
         infoLayout.addFormItem(fechaInicioSpan, "Fecha de inicio");
-
-        String fechaFin = tarea.getFechaFin() != null ? formatter.format(tarea.getFechaFin()) : "No definida";
-        Span fechaFinSpan = new Span(fechaFin);
-        infoLayout.addFormItem(fechaFinSpan, "Fecha de fin");
 
         // Voluntarios necesarios
         Span voluntariosNecesarios = new Span(String.valueOf(tarea.getNumeroVoluntariosNecesarios()));
@@ -879,17 +868,12 @@ public class TareasView extends VerticalLayout {
         binder.forField(fechaInicioField).asRequired("La fecha de inicio es obligatoria").bind(Tarea::getFechaInicio,
                 Tarea::setFechaInicio);
 
-        DateTimePicker fechaFinField = new DateTimePicker("Fecha de Fin");
-        binder.forField(fechaFinField).asRequired("La fecha de fin es obligatoria").bind(Tarea::getFechaFin,
-                Tarea::setFechaFin);
-
         ComboBox<EstadoTarea> estadoField = new ComboBox<>("Estado");
         estadoField.setItems(EstadoTarea.values());
         estadoField.setItemLabelGenerator(Enum::name);
         binder.forField(estadoField).asRequired("El estado es obligatorio").bind(Tarea::getEstado, Tarea::setEstado);
 
-        formLayout.add(nombreField, descripcionField, tipoField, localizacionField, voluntariosField, fechaInicioField,
-                fechaFinField, estadoField);
+        formLayout.add(nombreField, descripcionField, tipoField, localizacionField, voluntariosField, fechaInicioField, estadoField);
 
         HorizontalLayout buttonLayout = new HorizontalLayout();
         Button saveButton = new Button("Guardar", e -> guardarTarea());

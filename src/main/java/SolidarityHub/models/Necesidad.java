@@ -43,10 +43,6 @@ public class Necesidad {
     private String ubicacion;
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaInicio;
-    
-
-
-
 
     public Necesidad() {}
 

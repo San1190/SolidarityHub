@@ -211,20 +211,15 @@ public class AutomatizacionServicio implements ApplicationListener<ContextRefres
                 // Asignar la fecha de inicio sin la hora (aunque ya viene sin hora desde el DatePicker)
                 nuevaTarea.setFechaInicio(necesidad.getFechaInicio() != null ? necesidad.getFechaInicio() : LocalDateTime.now().toLocalDate().atStartOfDay());
                 nuevaTarea.setCreador(necesidad.getCreador());
-                
-                
-                ;
+
                 switch (necesidad.getUrgencia()) {
                     case BAJA:
-                        nuevaTarea.setFechaFin(necesidad.getFechaInicio()!= null? necesidad.getFechaInicio().plusDays(1) : LocalDateTime.now().toLocalDate().atStartOfDay().plusDays(3));
                         nuevaTarea.setNumeroVoluntariosNecesarios(2);
                         break;
                     case MEDIA:
-                        nuevaTarea.setFechaFin(necesidad.getFechaInicio()!= null? necesidad.getFechaInicio().plusDays(2) : LocalDateTime.now().toLocalDate().atStartOfDay().plusDays(2));
                         nuevaTarea.setNumeroVoluntariosNecesarios(3);
                         break;
                     case ALTA:
-                        nuevaTarea.setFechaFin(necesidad.getFechaInicio()!= null? necesidad.getFechaInicio().plusDays(3) : LocalDateTime.now().toLocalDate().atStartOfDay().plusDays(1));
                         nuevaTarea.setNumeroVoluntariosNecesarios(5);
                         break;
                 }

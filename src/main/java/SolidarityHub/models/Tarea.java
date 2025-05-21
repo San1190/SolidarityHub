@@ -31,7 +31,6 @@ public class Tarea implements Observado {
     private double longitud;
     private int numeroVoluntariosNecesarios;
     private LocalDateTime fechaInicio;
-    private LocalDateTime fechaFin;
     
     // Punto de encuentro para la tarea
     private String puntoEncuentro;
@@ -92,7 +91,7 @@ public class Tarea implements Observado {
     // Constructor con todos los campos
     public Tarea(String nombre, String descripcion, Necesidad.TipoNecesidad tipo, 
                 String localizacion, int numeroVoluntariosNecesarios, 
-                LocalDateTime fechaInicio, LocalDateTime fechaFin, String puntoEncuentro, String turno,
+                LocalDateTime fechaInicio, String puntoEncuentro, String turno,
                 EstadoTarea estado, Usuario creador, List<Afectado> afectados, 
                 List<Voluntario> voluntariosAsignados, List<Habilidad> habilidadesRequeridas, List<Voluntario> suscriptores, double latitud, double longitud) {
         this.nombre = nombre;
@@ -101,7 +100,6 @@ public class Tarea implements Observado {
         this.localizacion = localizacion;
         this.numeroVoluntariosNecesarios = numeroVoluntariosNecesarios;
         this.fechaInicio = fechaInicio;
-        this.fechaFin = fechaFin;
         this.puntoEncuentro = puntoEncuentro;
         this.turno = turno;
         this.estado = estado;
@@ -137,9 +135,6 @@ public class Tarea implements Observado {
     
     public LocalDateTime getFechaInicio() { return fechaInicio; }
     public void setFechaInicio(LocalDateTime fechaInicio) { this.fechaInicio = fechaInicio; }
-    
-    public LocalDateTime getFechaFin() { return fechaFin; }
-    public void setFechaFin(LocalDateTime fechaFin) { this.fechaFin = fechaFin; }
     
     public String getPuntoEncuentro() { return puntoEncuentro; }
     public void setPuntoEncuentro(String puntoEncuentro) { this.puntoEncuentro = puntoEncuentro; }
@@ -218,20 +213,23 @@ public class Tarea implements Observado {
 
     @Override
     public void suscribirObservador(Observador observador) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'suscribirObservador'");
+        if(observador instanceof Voluntario voluntario) {
+            suscribirVoluntario(voluntario);
+        }
     }
 
     @Override
     public void dessuscribirObservador(Observador observador) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'dessuscribirObservador'");
+        if(observador instanceof Voluntario voluntario) {
+            dessuscribirVoluntario(voluntario);
+        }
     }
 
     @Override
     public void notificarSuscriptores() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'notificarSuscriptores'");
+        for (Voluntario voluntario : getVoluntariosAsignados()) {
+            voluntario.actualizar();
+        }
     }
     
     
