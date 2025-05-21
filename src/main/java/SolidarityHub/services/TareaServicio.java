@@ -219,24 +219,24 @@ public class TareaServicio {
         return lista;
     }
 
-// DTO para métricas completas del dashboard
-public static class DashboardMetricasDTO {
-    public long totalTareas;
-    public long tareasCompletadas;
-    public long tareasEnCurso;
-    public long tareasPendientes;
-    public double promedioPorMes;
-    public List<TareaPorMesDTO> datosPorMes;
+    // DTO para métricas completas del dashboard
+    public static class DashboardMetricasDTO {
+        public long totalTareas;
+        public long tareasCompletadas;
+        public long tareasEnCurso;
+        public long tareasPendientes;
+        public double promedioPorMes;
+        public List<TareaPorMesDTO> datosPorMes;
 
-    public DashboardMetricasDTO() {
-        this.totalTareas = 0;
-        this.tareasCompletadas = 0;
-        this.tareasEnCurso = 0;
-        this.tareasPendientes = 0;
-        this.promedioPorMes = 0.0;
-        this.datosPorMes = new ArrayList<>();
+        public DashboardMetricasDTO() {
+            this.totalTareas = 0;
+            this.tareasCompletadas = 0;
+            this.tareasEnCurso = 0;
+            this.tareasPendientes = 0;
+            this.promedioPorMes = 0.0;
+            this.datosPorMes = new ArrayList<>();
+        }
     }
-}
 
     // Método para obtener métricas completas del dashboard
     public DashboardMetricasDTO obtenerMetricasDashboard() {

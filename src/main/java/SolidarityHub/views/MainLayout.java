@@ -120,6 +120,7 @@ public class MainLayout extends AppLayout implements RouterLayout {
 
         // Crear ítems de navegación
         SideNavItem mainItem = new SideNavItem("Inicio", "main", VaadinIcon.MAP_MARKER.create());
+        
         SideNavItem dashboardItem = new SideNavItem("Dashboard", "dashboard", VaadinIcon.DASHBOARD.create());
 
         SideNavItem necesidadesItem = new SideNavItem("Necesidades", "necesidades", VaadinIcon.HEART.create());
