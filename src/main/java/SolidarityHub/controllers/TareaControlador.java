@@ -407,7 +407,7 @@ public class TareaControlador {
     }
 
     @GetMapping("/dashboard")
-    public List<TareaServicio.TareaPorMesDTO> obtenerDatosDashboard() {
+    public List<TareaPorMesDTO> obtenerDatosDashboard() {
         return tareaServicio.obtenerConteoTareasPorNombreYMes();
     }
 

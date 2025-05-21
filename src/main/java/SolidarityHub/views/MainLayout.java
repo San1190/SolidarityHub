@@ -120,6 +120,7 @@ public class MainLayout extends AppLayout implements RouterLayout {
 
         // Crear ítems de navegación
         SideNavItem mainItem = new SideNavItem("Inicio", "main", VaadinIcon.MAP_MARKER.create());
+        SideNavItem dashboardItem = new SideNavItem("Dashboard", "dashboard", VaadinIcon.DASHBOARD.create());
 
         SideNavItem necesidadesItem = new SideNavItem("Necesidades", "necesidades", VaadinIcon.HEART.create());
 
@@ -143,6 +144,8 @@ public class MainLayout extends AppLayout implements RouterLayout {
         String currentRoute = UI.getCurrent().getInternals().getActiveViewLocation().getPath();
         if ("main".equals(currentRoute)) {
             mainItem.getElement().getThemeList().add("primary");
+        } else if ("dashboard".equals(currentRoute)) {
+            dashboardItem.getElement().getThemeList().add("primary");
         } else if ("configuracion".equals(currentRoute)) {
             configItem.getElement().getThemeList().add("primary");
         } else if ("necesidades".equals(currentRoute)) {
@@ -159,7 +162,7 @@ public class MainLayout extends AppLayout implements RouterLayout {
             });
         }
 
-        nav.addItem(mainItem);
+        nav.addItem(mainItem, dashboardItem);
         if (usuario.getTipoUsuario().equals("afectado")) {
             nav.addItem(necesidadesItem);
         }

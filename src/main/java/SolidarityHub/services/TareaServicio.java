@@ -201,17 +201,9 @@ public class TareaServicio {
         tareaRepositorio.save(tarea);
     }
 
-    // DTO para el dashboard
-    public static class TareaPorMesDTO {
-        public Integer mes;
-        public String nombre;
-        public Long cantidad;
-
-        public TareaPorMesDTO(Integer mes, String nombre, Long cantidad) {
-            this.mes = mes;
-            this.nombre = nombre;
-            this.cantidad = cantidad;
-        }
+    // Método para obtener tareas completadas
+    public List<Tarea> obtenerTareasCompletadas() {
+        return tareaRepositorio.obtenerTareasCompletadas();
     }
 
     // Método para obtener los datos del dashboard
@@ -227,29 +219,24 @@ public class TareaServicio {
         return lista;
     }
 
-    // Método para obtener tareas completadas
-    public List<Tarea> obtenerTareasCompletadas() {
-        return tareaRepositorio.obtenerTareasCompletadas();
-    }
+// DTO para métricas completas del dashboard
+public static class DashboardMetricasDTO {
+    public long totalTareas;
+    public long tareasCompletadas;
+    public long tareasEnCurso;
+    public long tareasPendientes;
+    public double promedioPorMes;
+    public List<TareaPorMesDTO> datosPorMes;
 
-    // DTO para métricas completas del dashboard
-    public static class DashboardMetricasDTO {
-        public long totalTareas;
-        public long tareasCompletadas;
-        public long tareasEnCurso;
-        public long tareasPendientes;
-        public double promedioPorMes;
-        public List<TareaPorMesDTO> datosPorMes;
-
-        public DashboardMetricasDTO() {
-            this.totalTareas = 0;
-            this.tareasCompletadas = 0;
-            this.tareasEnCurso = 0;
-            this.tareasPendientes = 0;
-            this.promedioPorMes = 0.0;
-            this.datosPorMes = new ArrayList<>();
-        }
+    public DashboardMetricasDTO() {
+        this.totalTareas = 0;
+        this.tareasCompletadas = 0;
+        this.tareasEnCurso = 0;
+        this.tareasPendientes = 0;
+        this.promedioPorMes = 0.0;
+        this.datosPorMes = new ArrayList<>();
     }
+}
 
     // Método para obtener métricas completas del dashboard
     public DashboardMetricasDTO obtenerMetricasDashboard() {
@@ -281,8 +268,8 @@ public class TareaServicio {
             int totalTareasPorMes = 0;
 
             for (TareaPorMesDTO dato : metricas.datosPorMes) {
-                mesesUnicos.add(dato.mes);
-                totalTareasPorMes += dato.cantidad;
+                mesesUnicos.add(dato.getMes());
+                totalTareasPorMes += dato.getCantidad();
             }
 
             // Calcular promedio si hay meses

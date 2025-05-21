@@ -11,4 +11,17 @@ public class TareaPorMesDTO {
         this.nombre = nombre;
         this.cantidad = cantidad;
     }
+
+    public Integer getMes() {
+        return mes;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public Long getCantidad() {
+        return cantidad;
+    }
+
 }
