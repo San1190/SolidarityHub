@@ -43,188 +43,26 @@ public class MainView extends VerticalLayout {
                 add(crearDashboard());
         }
 
-        private Image crearLogo() {
-                // Cargar el logo
-                logo = new Image(
-                                "https://cliente.tuneupprocess.com/ApiWeb/UploadFiles/7dcef7b2-6389-45f4-9961-8741a558c286.png/LogoSH-transparent.png",
-                                "Solidarity Hub Logo");
-                logo.setWidth("220px");
-                logo.setHeight("auto");
-                logo.getStyle().set("margin", "0 auto").set("display", "block").set("padding", "1rem")
-                                .set("align-items", "center").set("justify-content", "center")
-                                .set("margin-top", "2rem");
-                return logo;
-        }
-
-        private Div crearCard() {
-                Div card = new Div();
-                card.addClassName(LumoUtility.Background.BASE);
-                card.addClassName(LumoUtility.BoxShadow.SMALL);
-                card.addClassName(LumoUtility.BorderRadius.LARGE);
-                card.addClassName(LumoUtility.Padding.LARGE);
-                card.setMaxWidth("600px");
-                card.setWidth("100%");
-
-                H3 title = new H3("Bienvenido/a a SolidarityHub");
-                title.addClassName(LumoUtility.FontSize.XXXLARGE);
-                title.addClassName(LumoUtility.TextColor.SUCCESS);
-                title.addClassName(LumoUtility.TextAlignment.CENTER);
-                title.addClassName(LumoUtility.Margin.Bottom.LARGE);
-
-                var usuario = usuarioServicio.obtenerUsuarioPorId(1L); // Obtener usuario actual
-
-                H3 nombre = new H3("Nombre: " + usuario.getNombre() + " " + usuario.getApellidos());
-                nombre.addClassName(LumoUtility.FontSize.MEDIUM);
-                nombre.addClassName(LumoUtility.TextAlignment.CENTER);
-                nombre.addClassName(LumoUtility.Margin.Bottom.SMALL);
-
-                H3 email = new H3("Email: " + usuario.getEmail());
-                email.addClassName(LumoUtility.FontSize.MEDIUM);
-                email.addClassName(LumoUtility.TextAlignment.CENTER);
-                email.addClassName(LumoUtility.Margin.Bottom.SMALL);
-
-                H3 telefono = new H3("Teléfono: " + usuario.getTelefono());
-                telefono.addClassName(LumoUtility.FontSize.MEDIUM);
-                telefono.addClassName(LumoUtility.TextAlignment.CENTER);
-                telefono.addClassName(LumoUtility.Margin.Bottom.SMALL);
-
-                H3 rol = new H3("Rol: " + usuario.getTipoUsuario());
-                rol.addClassName(LumoUtility.FontSize.MEDIUM);
-                rol.addClassName(LumoUtility.TextAlignment.CENTER);
-                rol.addClassName(LumoUtility.Margin.Bottom.LARGE);
-
-                card.add(title, nombre, email, telefono, rol, crearLogo());
-
-                return card;
-        }
-
         private Div crearGoogleChart() {
                 Div chartDiv = new Div();
                 chartDiv.setId("google-bar-chart");
                 chartDiv.setWidth("650px");
                 chartDiv.setHeight("400px");
                 chartDiv.getStyle().set("margin", "2rem auto");
-
-                // Mensaje de carga inicial
                 chartDiv.getElement().setProperty("innerHTML",
                                 "<div style='text-align:center; padding:20px;'>Cargando datos...</div>");
-
-                // Script simplificado que funciona de manera más directa
-                chartDiv.getElement().executeJs(
-                                "// Cargar Google Charts primero\n" +
-                                                "const loadCharts = () => {\n" +
-                                                "  return new Promise((resolve) => {\n" +
-                                                "    if (typeof google !== 'undefined' && google.charts) {\n" +
-                                                "      resolve();\n" +
-                                                "      return;\n" +
-                                                "    }\n" +
-                                                "    const script = document.createElement('script');\n" +
-                                                "    script.src = 'https://www.gstatic.com/charts/loader.js';\n" +
-                                                "    script.onload = () => {\n" +
-                                                "      google.charts.load('current', {packages:['corechart']});\n" +
-                                                "      google.charts.setOnLoadCallback(() => resolve());\n" +
-                                                "    };\n" +
-                                                "    document.head.appendChild(script);\n" +
-                                                "  });\n" +
-                                                "};\n" +
-                                                "\n" +
-                                                "// Función para dibujar el gráfico\n" +
-                                                "const drawChart = (data) => {\n" +
-                                                "  const element = document.getElementById('google-bar-chart');\n" +
-                                                "  if (!element) return console.error('No se encontró el elemento google-bar-chart');\n"
-                                                +
-                                                "  \n" +
-                                                "  try {\n" +
-                                                "    // Crear datos de ejemplo si no hay datos\n" +
-                                                "    if (!data || !data.datosPorMes || data.datosPorMes.length === 0) {\n"
-                                                +
-                                                "      element.innerHTML = '<div style=\"text-align:center; padding:20px;\">No hay datos disponibles</div>';\n"
-                                                +
-                                                "      return;\n" +
-                                                "    }\n" +
-                                                "    \n" +
-                                                "    // Obtener los datos por mes del objeto de métricas\n" +
-                                                "    const datosPorMes = data.datosPorMes;\n" +
-                                                "    \n" +
-                                                "    // Datos fijos si hay problemas (esto siempre funcionará)\n" +
-                                                "    const dataTable = new google.visualization.DataTable();\n" +
-                                                "    dataTable.addColumn('string', 'Mes');\n" +
-                                                "    \n" +
-                                                "    // Obtener nombres únicos de tareas\n" +
-                                                "    const tareas = [...new Set(datosPorMes.map(d => d.nombre))];\n" +
-                                                "    tareas.forEach(tarea => {\n" +
-                                                "      dataTable.addColumn('number', tarea);\n" +
-                                                "    });\n" +
-                                                "    \n" +
-                                                "    // Agrupar por mes\n" +
-                                                "    const mesesTexto = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',\n"
-                                                +
-                                                "                       'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];\n"
-                                                +
-                                                "    \n" +
-                                                "    // Primero agrupar por mes\n" +
-                                                "    const porMes = {};\n" +
-                                                "    datosPorMes.forEach(d => {\n" +
-                                                "      const mesTexto = mesesTexto[d.mes-1];\n" +
-                                                "      if (!porMes[mesTexto]) porMes[mesTexto] = {};\n" +
-                                                "      porMes[mesTexto][d.nombre] = d.cantidad;\n" +
-                                                "    });\n" +
-                                                "    \n" +
-                                                "    // Convertir a filas\n" +
-                                                "    Object.keys(porMes).forEach(mes => {\n" +
-                                                "      const fila = [mes];\n" +
-                                                "      tareas.forEach(tarea => {\n" +
-                                                "        fila.push(porMes[mes][tarea] || 0);\n" +
-                                                "      });\n" +
-                                                "      dataTable.addRow(fila);\n" +
-                                                "    });\n" +
-                                                "    \n" +
-                                                "    const options = {\n" +
-                                                "      title: 'Tareas completadas por mes',\n" +
-                                                "      legend: { position: 'top' },\n" +
-                                                "      vAxis: { title: 'Cantidad' },\n" +
-                                                "      hAxis: { title: 'Mes' },\n" +
-                                                "      chartArea: { width: '70%' }\n" +
-                                                "    };\n" +
-                                                "    \n" +
-                                                "    const chart = new google.visualization.ColumnChart(element);\n" +
-                                                "    chart.draw(dataTable, options);\n" +
-                                                "  } catch (error) {\n" +
-                                                "    console.error('Error dibujando gráfico:', error);\n" +
-                                                "    element.innerHTML = '<div style=\"text-align:center; color:red; padding:20px;\">Error al dibujar el gráfico: ' + error.message + '</div>';\n"
-                                                +
-                                                "  }\n" +
-                                                "};\n" +
-                                                "\n" +
-                                                "// Iniciar proceso\n" +
-                                                "const initChart = async () => {\n" +
-                                                "  try {\n" +
-                                                "    // Cargar biblioteca de gráficos\n" +
-                                                "    await loadCharts();\n" +
-                                                "    \n" +
-                                                "    // Obtener datos de métricas completas\n" +
-                                                "    const response = await fetch('/api/tareas/dashboard-metrics');\n" +
-                                                "    if (!response.ok) {\n" +
-                                                "      throw new Error('Error en el servidor: ' + response.status);\n" +
-                                                "    }\n" +
-                                                "    const data = await response.json();\n" +
-                                                "    \n" +
-                                                "    // Dibujar gráfico\n" +
-                                                "    drawChart(data);\n" +
-                                                "  } catch (error) {\n" +
-                                                "    console.error('Error inicializando gráfico:', error);\n" +
-                                                "    const element = document.getElementById('google-bar-chart');\n" +
-                                                "    if (element) {\n" +
-                                                "      element.innerHTML = '<div style=\"text-align:center; color:red; padding:20px;\">Error: ' + error.message + '</div>';\n"
-                                                +
-                                                "    }\n" +
-                                                "  }\n" +
-                                                "};\n" +
-                                                "\n" +
-                                                "// Ejecutar\n" +
-                                                "initChart();");
-
                 return chartDiv;
+        }
+
+        private Div crearPieChart() {
+                Div pieDiv = new Div();
+                pieDiv.setId("google-pie-chart");
+                pieDiv.setWidth("650px");
+                pieDiv.setHeight("400px");
+                pieDiv.getStyle().set("margin", "2rem auto");
+                pieDiv.getElement().setProperty("innerHTML",
+                                "<div style='text-align:center; padding:20px;'>Cargando gráfico circular...</div>");
+                return pieDiv;
         }
 
         // Método que crea todo el dashboard
@@ -245,8 +83,12 @@ public class MainView extends VerticalLayout {
                 dashboardContainer.add(
                                 dashboardTitle,
                                 crearMetricas(), // Primero el panel de métricas
-                                crearGoogleChart() // Después el gráfico
+                                crearPieChart(), // Después el gráfico circular
+                                crearGoogleChart() // Finalmente el gráfico de barras
                 );
+
+                // Inicializar dashboard con una única llamada al backend
+                inicializarDashboard();
 
                 return dashboardContainer;
         }
@@ -335,6 +177,136 @@ public class MainView extends VerticalLayout {
 
                 tarjeta.add(tituloSpan, valorSpan);
                 return tarjeta;
+        }
+
+        private void inicializarDashboard() {
+                UI.getCurrent().getPage().executeJs(
+                                "console.log('Iniciando carga del dashboard...');" +
+                                // Primero definimos todas las funciones necesarias
+                                                "function mostrarError(error) {" +
+                                                "  console.error('Error:', error);" +
+                                                "  const errorMsg = '<div style=\\\"text-align:center; color:red; padding:20px;\\\">Error: ' + error.message + '</div>';"
+                                                +
+                                                "  document.getElementById('google-bar-chart').innerHTML = errorMsg;" +
+                                                "  document.getElementById('google-pie-chart').innerHTML = errorMsg;" +
+                                                "  document.getElementById('totalTareas').textContent = 'Error';" +
+                                                "  document.getElementById('completadas').textContent = 'Error';" +
+                                                "  document.getElementById('enCurso').textContent = 'Error';" +
+                                                "  document.getElementById('pendientes').textContent = 'Error';" +
+                                                "}" +
+                                                "function actualizarMetricas(data) {" +
+                                                "  console.log('Actualizando métricas con datos:', data);" +
+                                                "  document.getElementById('totalTareas').textContent = data.totalTareas || 0;"
+                                                +
+                                                "  document.getElementById('completadas').textContent = data.tareasCompletadas || 0;"
+                                                +
+                                                "  document.getElementById('enCurso').textContent = data.tareasEnCurso || 0;"
+                                                +
+                                                "  document.getElementById('pendientes').textContent = data.tareasPendientes || 0;"
+                                                +
+                                                "}" +
+                                                "function dibujarGraficoCircular(data) {" +
+                                                "  console.log('Dibujando gráfico circular con datos:', data);" +
+                                                "  try {" +
+                                                "    const dataTable = new google.visualization.DataTable();" +
+                                                "    dataTable.addColumn('string', 'Estado');" +
+                                                "    dataTable.addColumn('number', 'Cantidad');" +
+                                                "    dataTable.addRows([" +
+                                                "      ['Completadas', data.tareasCompletadas || 0]," +
+                                                "      ['En Curso', data.tareasEnCurso || 0]," +
+                                                "      ['Pendientes', data.tareasPendientes || 0]" +
+                                                "    ]);" +
+                                                "    const options = {" +
+                                                "      title: 'Proporción de tareas por estado'," +
+                                                "      pieHole: 0.4," +
+                                                "      legend: { position: 'right' }," +
+                                                "      chartArea: { width: '80%', height: '80%' }," +
+                                                "      colors: ['#4CAF50', '#2f77ef', '#FFC107']" +
+                                                "    };" +
+                                                "    const chart = new google.visualization.PieChart(document.getElementById('google-pie-chart'));"
+                                                +
+                                                "    chart.draw(dataTable, options);" +
+                                                "  } catch (error) {" +
+                                                "    console.error('Error dibujando gráfico circular:', error);" +
+                                                "    mostrarError(error);" +
+                                                "  }" +
+                                                "}" +
+                                                "function dibujarGraficoBarras(data) {" +
+                                                "  try {" +
+                                                "    if (!data || !data.datosPorMes || data.datosPorMes.length === 0) {"
+                                                +
+                                                "      document.getElementById('google-bar-chart').innerHTML = " +
+                                                "        '<div style=\\\"text-align:center; padding:20px;\\\">No hay datos disponibles</div>';"
+                                                +
+                                                "      return;" +
+                                                "    }" +
+                                                "    const dataTable = new google.visualization.DataTable();" +
+                                                "    dataTable.addColumn('string', 'Mes');" +
+                                                "    const tareas = [...new Set(data.datosPorMes.map(d => d.nombre))];"
+                                                +
+                                                "    tareas.forEach(tarea => dataTable.addColumn('number', tarea));" +
+                                                "    const mesesTexto = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',"
+                                                +
+                                                "                       'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];"
+                                                +
+                                                "    const porMes = {};" +
+                                                "    data.datosPorMes.forEach(d => {" +
+                                                "      const mesTexto = mesesTexto[d.mes-1];" +
+                                                "      if (!porMes[mesTexto]) porMes[mesTexto] = {};" +
+                                                "      porMes[mesTexto][d.nombre] = d.cantidad;" +
+                                                "    });" +
+                                                "    Object.keys(porMes).forEach(mes => {" +
+                                                "      const fila = [mes];" +
+                                                "      tareas.forEach(tarea => fila.push(porMes[mes][tarea] || 0));" +
+                                                "      dataTable.addRow(fila);" +
+                                                "    });" +
+                                                "    const options = {" +
+                                                "      title: 'Tareas completadas por mes'," +
+                                                "      legend: { position: 'top' }," +
+                                                "      vAxis: { title: 'Cantidad' }," +
+                                                "      hAxis: { title: 'Mes' }," +
+                                                "      chartArea: { width: '70%' }" +
+                                                "    };" +
+                                                "    const chart = new google.visualization.ColumnChart(document.getElementById('google-bar-chart'));"
+                                                +
+                                                "    chart.draw(dataTable, options);" +
+                                                "  } catch (error) {" +
+                                                "    mostrarError(error);" +
+                                                "  }" +
+                                                "}" +
+                                                "function cargarDatosDashboard() {" +
+                                                "  console.log('Cargando datos del dashboard...');" +
+                                                "  fetch('/api/tareas/dashboard-metrics')" +
+                                                "    .then(response => {" +
+                                                "      if (!response.ok) throw new Error('Error en el servidor: ' + response.status);"
+                                                +
+                                                "      return response.json();" +
+                                                "    })" +
+                                                "    .then(data => {" +
+                                                "      console.log('Datos recibidos:', data);" +
+                                                "      actualizarMetricas(data);" +
+                                                "      dibujarGraficoCircular(data);" +
+                                                "      dibujarGraficoBarras(data);" +
+                                                "    })" +
+                                                "    .catch(error => {" +
+                                                "      console.error('Error cargando datos:', error);" +
+                                                "      mostrarError(error);" +
+                                                "    });" +
+                                                "}" +
+                                                // Cargar Google Charts y ejecutar
+                                                "if (typeof google === 'undefined' || !google.charts) {" +
+                                                "  console.log('Cargando Google Charts...');" +
+                                                "  const script = document.createElement('script');" +
+                                                "  script.src = 'https://www.gstatic.com/charts/loader.js';" +
+                                                "  script.onload = () => {" +
+                                                "    google.charts.load('current', {packages:['corechart']});" +
+                                                "    google.charts.setOnLoadCallback(cargarDatosDashboard);" +
+                                                "  };" +
+                                                "  document.head.appendChild(script);" +
+                                                "} else {" +
+                                                "  console.log('Google Charts ya está cargado, cargando datos...');" +
+                                                "  cargarDatosDashboard();" +
+                                                "}");
         }
 
 }
