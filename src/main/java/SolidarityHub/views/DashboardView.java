@@ -7,6 +7,7 @@ import SolidarityHub.services.TareaServicio;
 import SolidarityHub.services.TareaServicio.DashboardMetricasDTO;
 import SolidarityHub.services.UsuarioServicio;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.charts.Chart;
 import com.vaadin.flow.component.charts.model.*;
 import com.vaadin.flow.component.html.*;
@@ -101,12 +102,14 @@ public class DashboardView extends VerticalLayout {
                 LumoUtility.Margin.Vertical.MEDIUM);
         section.setSpacing(false);
         section.setPadding(false);
+        section.getStyle().set("margin-bottom", "50px"); // Center the title text
 
         H3 sectionTitle = new H3("Indicadores Clave de Rendimiento");
         sectionTitle.addClassNames(
                 LumoUtility.FontSize.LARGE,
                 LumoUtility.TextColor.SECONDARY,
                 LumoUtility.Margin.Bottom.MEDIUM);
+        sectionTitle.getStyle().set("margin-bottom", "30px"); // Center the title text
 
         HorizontalLayout kpiLayout = new HorizontalLayout();
         kpiLayout.setWidthFull();
@@ -162,7 +165,7 @@ public class DashboardView extends VerticalLayout {
         FlexLayout chartsContainer = new FlexLayout();
         chartsContainer.setWidthFull();
         chartsContainer.setFlexWrap(FlexWrap.WRAP);
-        chartsContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.SPACE_BETWEEN);
+        chartsContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         chartsContainer.addClassName(LumoUtility.Gap.LARGE);
         return chartsContainer;
     }
@@ -173,26 +176,27 @@ public class DashboardView extends VerticalLayout {
         if (taskTrendChart != null) {
             Div chartCard = createChartCard("Tendencia de Tareas por Mes", taskTrendChart, true);
             container.add(chartCard);
+            chartCard.getStyle().set("margin-bottom", "30px"); // Set width to 100% for the full-width char
         }
 
         // Middle row - two medium charts
         Chart statusChart = createTaskStatusDistributionChart();
         if (statusChart != null) {
             Div chartCard = createChartCard("Distribución por Estado", statusChart, false);
-            container.add(chartCard);
+            container.add(chartCard);// Set width to 48% for the two charts
         }
         
         Chart monthlyTasksChart = createMonthlyTaskDistributionChart();
         if (monthlyTasksChart != null) {
             Div chartCard = createChartCard("Tareas por Mes", monthlyTasksChart, false);
-            container.add(chartCard);
+            container.add(chartCard); // Set width to 48% for the two charts
         }
         
         // Bottom row - task details by name
         Chart taskByNameChart = createTasksByNameChart();
         if (taskByNameChart != null) {
             Div chartCard = createChartCard("Desglose de Tareas por Nombre", taskByNameChart, true);
-            container.add(chartCard);
+            container.add(chartCard);// Set width to 100% for the full-width char
         }
     }
 
