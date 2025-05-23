@@ -2,6 +2,7 @@ package SolidarityHub.views;
 
 import SolidarityHub.models.Tarea;
 import SolidarityHub.services.TareaServicio;
+import SolidarityHub.services.TareaServicio.DashboardMetricasDTO;
 import SolidarityHub.services.UsuarioServicio;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
@@ -27,8 +28,6 @@ public class MainView extends VerticalLayout {
         private UsuarioServicio usuarioServicio;
 
         private TareaServicio tareaServicio;
-
-        private Image logo;
 
         public MainView(UsuarioServicio usuarioServicio, TareaServicio tareaServicio) {
                 this.usuarioServicio = usuarioServicio;
@@ -100,80 +99,72 @@ public class MainView extends VerticalLayout {
                 metricas.setJustifyContentMode(JustifyContentMode.CENTER);
                 metricas.setSpacing(true);
                 metricas.setPadding(true);
+                metricas.setAlignItems(Alignment.CENTER);
 
-                // Crear tarjetas de métricas
-                metricas.add(
-                                crearTarjetaMetrica("Total Tareas", "totalTareas", "...",
-                                                LumoUtility.TextColor.PRIMARY),
-                                crearTarjetaMetrica("Completadas", "completadas", "...", LumoUtility.TextColor.SUCCESS),
-                                crearTarjetaMetrica("En Curso", "enCurso", "...", LumoUtility.TextColor.WARNING),
-                                crearTarjetaMetrica("Pendientes", "pendientes", "...", LumoUtility.TextColor.ERROR));
+                Div totalTareas = crearTarjetaMetrica("Total Tareas", "valor-total");
+                Div completadas = crearTarjetaMetrica("Completadas", "valor-completadas");
+                Div enCurso = crearTarjetaMetrica("En Curso", "valor-en-curso");
+                Div pendientes = crearTarjetaMetrica("Pendientes", "valor-pendientes");
 
-                // Script mejorado para cargar y mostrar las métricas
-                metricas.getElement().executeJs(
-                                "console.log('Iniciando carga de métricas...');" +
-                                                "setTimeout(() => {" +
-                                                "  fetch('/api/tareas/dashboard-metrics')" +
-                                                "  .then(response => {" +
-                                                "    console.log('Respuesta recibida:', response.status);" +
-                                                "    if (!response.ok) {" +
-                                                "      throw new Error('Error en el servidor: ' + response.status);" +
-                                                "    }" +
-                                                "    return response.json();" +
-                                                "  })" +
-                                                "  .then(data => {" +
-                                                "    console.log('Datos recibidos:', data);" +
-                                                "    // Actualizar métricas con datos reales" +
-                                                "    document.getElementById('totalTareas').textContent = data.totalTareas || 0;"
-                                                +
-                                                "    document.getElementById('completadas').textContent = data.tareasCompletadas || 0;"
-                                                +
-                                                "    document.getElementById('enCurso').textContent = data.tareasEnCurso || 0;"
-                                                +
-                                                "    document.getElementById('pendientes').textContent = data.tareasPendientes || 0;"
-                                                +
-                                                "  })" +
-                                                "  .catch(error => {" +
-                                                "    console.error('Error cargando métricas:', error);" +
-                                                "    document.getElementById('totalTareas').textContent = 'Error';" +
-                                                "    document.getElementById('completadas').textContent = 'Error';" +
-                                                "    document.getElementById('enCurso').textContent = 'Error';" +
-                                                "    document.getElementById('pendientes').textContent = 'Error';" +
-                                                "  });" +
-                                                "}, 500);" // Pequeño retraso para asegurar que los elementos están
-                                                           // renderizados
-                );
+                metricas.add(totalTareas, completadas, enCurso, pendientes);
+
+                UI.getCurrent().getPage().retrieveExtendedClientDetails(details -> {
+                        try {
+                                DashboardMetricasDTO metrics = tareaServicio.obtenerMetricasDashboard();
+                                Page page = UI.getCurrent().getPage();
+                                page.executeJs("document.getElementById('valor-total').innerText = $0;",
+                                                metrics.totalTareas);
+                                page.executeJs("document.getElementById('valor-completadas').innerText = $0;",
+                                                metrics.tareasCompletadas);
+                                page.executeJs("document.getElementById('valor-en-curso').innerText = $0;",
+                                                metrics.tareasEnCurso);
+                                page.executeJs("document.getElementById('valor-pendientes').innerText = $0;",
+                                                metrics.tareasPendientes);
+                        } catch (Exception e) {
+                                e.printStackTrace();
+                        }
+                });
 
                 return metricas;
         }
 
         // Método auxiliar para crear una tarjeta de métrica individual
-        private Div crearTarjetaMetrica(String titulo, String id, String valorInicial, String colorClass) {
+        private Div crearTarjetaMetrica(String titulo, String idValorSpan) {
                 Div tarjeta = new Div();
-                tarjeta.addClassNames(
-                                LumoUtility.Background.BASE,
-                                LumoUtility.BoxShadow.SMALL,
-                                LumoUtility.BorderRadius.MEDIUM,
-                                LumoUtility.Padding.MEDIUM);
                 tarjeta.setWidth("150px");
                 tarjeta.setHeight("100px");
+                tarjeta.getStyle()
+                                .set("border", "1px solid #ccc")
+                                .set("border-radius", "8px")
+                                .set("padding", "10px")
+                                .set("text-align", "center")
+                                .set("box-shadow", "2px 2px 5px rgba(0,0,0,0.1)");
 
                 Span tituloSpan = new Span(titulo);
-                tituloSpan.addClassNames(
-                                LumoUtility.FontSize.SMALL,
-                                LumoUtility.TextColor.SECONDARY,
-                                LumoUtility.TextAlignment.CENTER);
-                tituloSpan.getStyle().set("display", "block");
+                tituloSpan.getStyle().set("display", "block").set("font-weight", "bold");
 
-                Span valorSpan = new Span(valorInicial);
-                valorSpan.setId(id);
-                valorSpan.addClassNames(
-                                LumoUtility.FontSize.XXXLARGE,
-                                colorClass,
-                                LumoUtility.FontWeight.BOLD,
-                                LumoUtility.TextAlignment.CENTER);
-                valorSpan.getStyle().set("display", "block");
-                valorSpan.getStyle().set("margin-top", "10px");
+                Span valorSpan = new Span("0");
+                valorSpan.setId(idValorSpan); // Identificador único
+                valorSpan.getStyle()
+                                .set("display", "block")
+                                .set("margin-top", "10px")
+                                .set("font-size", "1.5em");
+
+                // Colores según tipo
+                switch (titulo) {
+                        case "Total Tareas":
+                                valorSpan.getStyle().set("color", "#050608");
+                                break;
+                        case "Completadas":
+                                valorSpan.getStyle().set("color", "#4CAF50");
+                                break;
+                        case "En Curso":
+                                valorSpan.getStyle().set("color", "#2f77ef");
+                                break;
+                        case "Pendientes":
+                                valorSpan.getStyle().set("color", "#FFC107");
+                                break;
+                }
 
                 tarjeta.add(tituloSpan, valorSpan);
                 return tarjeta;
@@ -182,31 +173,15 @@ public class MainView extends VerticalLayout {
         private void inicializarDashboard() {
                 UI.getCurrent().getPage().executeJs(
                                 "console.log('Iniciando carga del dashboard...');" +
-                                // Primero definimos todas las funciones necesarias
+                                // Solo funciones para los gráficos
                                                 "function mostrarError(error) {" +
                                                 "  console.error('Error:', error);" +
                                                 "  const errorMsg = '<div style=\\\"text-align:center; color:red; padding:20px;\\\">Error: ' + error.message + '</div>';"
                                                 +
                                                 "  document.getElementById('google-bar-chart').innerHTML = errorMsg;" +
                                                 "  document.getElementById('google-pie-chart').innerHTML = errorMsg;" +
-                                                "  document.getElementById('totalTareas').textContent = 'Error';" +
-                                                "  document.getElementById('completadas').textContent = 'Error';" +
-                                                "  document.getElementById('enCurso').textContent = 'Error';" +
-                                                "  document.getElementById('pendientes').textContent = 'Error';" +
-                                                "}" +
-                                                "function actualizarMetricas(data) {" +
-                                                "  console.log('Actualizando métricas con datos:', data);" +
-                                                "  document.getElementById('totalTareas').textContent = data.totalTareas || 0;"
-                                                +
-                                                "  document.getElementById('completadas').textContent = data.tareasCompletadas || 0;"
-                                                +
-                                                "  document.getElementById('enCurso').textContent = data.tareasEnCurso || 0;"
-                                                +
-                                                "  document.getElementById('pendientes').textContent = data.tareasPendientes || 0;"
-                                                +
                                                 "}" +
                                                 "function dibujarGraficoCircular(data) {" +
-                                                "  console.log('Dibujando gráfico circular con datos:', data);" +
                                                 "  try {" +
                                                 "    const dataTable = new google.visualization.DataTable();" +
                                                 "    dataTable.addColumn('string', 'Estado');" +
@@ -227,7 +202,6 @@ public class MainView extends VerticalLayout {
                                                 +
                                                 "    chart.draw(dataTable, options);" +
                                                 "  } catch (error) {" +
-                                                "    console.error('Error dibujando gráfico circular:', error);" +
                                                 "    mostrarError(error);" +
                                                 "  }" +
                                                 "}" +
@@ -275,7 +249,6 @@ public class MainView extends VerticalLayout {
                                                 "  }" +
                                                 "}" +
                                                 "function cargarDatosDashboard() {" +
-                                                "  console.log('Cargando datos del dashboard...');" +
                                                 "  fetch('/api/tareas/dashboard-metrics')" +
                                                 "    .then(response => {" +
                                                 "      if (!response.ok) throw new Error('Error en el servidor: ' + response.status);"
@@ -283,19 +256,13 @@ public class MainView extends VerticalLayout {
                                                 "      return response.json();" +
                                                 "    })" +
                                                 "    .then(data => {" +
-                                                "      console.log('Datos recibidos:', data);" +
-                                                "      actualizarMetricas(data);" +
                                                 "      dibujarGraficoCircular(data);" +
                                                 "      dibujarGraficoBarras(data);" +
                                                 "    })" +
-                                                "    .catch(error => {" +
-                                                "      console.error('Error cargando datos:', error);" +
-                                                "      mostrarError(error);" +
-                                                "    });" +
+                                                "    .catch(error => { mostrarError(error); });" +
                                                 "}" +
                                                 // Cargar Google Charts y ejecutar
                                                 "if (typeof google === 'undefined' || !google.charts) {" +
-                                                "  console.log('Cargando Google Charts...');" +
                                                 "  const script = document.createElement('script');" +
                                                 "  script.src = 'https://www.gstatic.com/charts/loader.js';" +
                                                 "  script.onload = () => {" +
@@ -304,7 +271,6 @@ public class MainView extends VerticalLayout {
                                                 "  };" +
                                                 "  document.head.appendChild(script);" +
                                                 "} else {" +
-                                                "  console.log('Google Charts ya está cargado, cargando datos...');" +
                                                 "  cargarDatosDashboard();" +
                                                 "}");
         }
