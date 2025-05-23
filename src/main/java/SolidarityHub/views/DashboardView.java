@@ -31,7 +31,7 @@ public class DashboardView extends VerticalLayout {
     private final TareaServicio tareaServicio;
     private final DashboardMetricasDTO metricasDashboard;
 
-    // Theme colors for consistent styling
+    // Colores del tema para un estilo consistente
     private final String[] CHART_COLORS = {
             "#3366CC", "#DC3912", "#FF9900", "#109618", "#990099",
             "#0099C6", "#DD4477", "#66AA00", "#B82E2E", "#316395"
@@ -46,23 +46,23 @@ public class DashboardView extends VerticalLayout {
         setSpacing(false);
         addClassName(LumoUtility.Background.CONTRAST_5);
 
-        // Header section with title and subtitle
+        // Sección de cabecera con título y subtítulo
         createHeader();
 
-        // Dashboard content wrapper
+        // Contenedor principal del dashboard
         Div contentWrapper = new Div();
         contentWrapper.addClassNames(
                 LumoUtility.Padding.LARGE,
                 LumoUtility.BoxSizing.BORDER);
         contentWrapper.setWidthFull();
 
-        // KPI Cards section
+        // Sección de tarjetas KPI
         contentWrapper.add(createKPISection());
         
-        // Main charts grid
+        // Rejilla principal de gráficos
         FlexLayout chartsContainer = createChartsContainer();
         
-        // Add all chart components
+        // Añadir todos los componentes de gráficos
         createAndAddCharts(chartsContainer);
         
         contentWrapper.add(chartsContainer);
@@ -102,14 +102,14 @@ public class DashboardView extends VerticalLayout {
                 LumoUtility.Margin.Vertical.MEDIUM);
         section.setSpacing(false);
         section.setPadding(false);
-        section.getStyle().set("margin-bottom", "50px"); // Center the title text
+        section.getStyle().set("margin-bottom", "50px"); // Centrar el texto del título
 
         H3 sectionTitle = new H3("Indicadores Clave de Rendimiento");
         sectionTitle.addClassNames(
                 LumoUtility.FontSize.LARGE,
                 LumoUtility.TextColor.SECONDARY,
                 LumoUtility.Margin.Bottom.MEDIUM);
-        sectionTitle.getStyle().set("margin-bottom", "30px"); // Center the title text
+        sectionTitle.getStyle().set("margin-bottom", "30px"); // Centrar el texto del título
 
         HorizontalLayout kpiLayout = new HorizontalLayout();
         kpiLayout.setWidthFull();
@@ -171,32 +171,32 @@ public class DashboardView extends VerticalLayout {
     }
 
     private void createAndAddCharts(FlexLayout container) {
-        // Top row - full width chart
+        // Fila superior - gráfico de ancho completo
         Chart taskTrendChart = createTaskTrendChart();
         if (taskTrendChart != null) {
             Div chartCard = createChartCard("Tendencia de Tareas por Mes", taskTrendChart, true);
             container.add(chartCard);
-            chartCard.getStyle().set("margin-bottom", "30px"); // Set width to 100% for the full-width char
+            chartCard.getStyle().set("margin-bottom", "30px"); // Establecer ancho al 100% para el gráfico de ancho completo
         }
 
-        // Middle row - two medium charts
+        // Fila media - dos gráficos medianos
         Chart statusChart = createTaskStatusDistributionChart();
         if (statusChart != null) {
             Div chartCard = createChartCard("Distribución por Estado", statusChart, false);
-            container.add(chartCard);// Set width to 48% for the two charts
+            container.add(chartCard);// Establecer ancho al 48% para los dos gráficos
         }
         
         Chart monthlyTasksChart = createMonthlyTaskDistributionChart();
         if (monthlyTasksChart != null) {
             Div chartCard = createChartCard("Tareas por Mes", monthlyTasksChart, false);
-            container.add(chartCard); // Set width to 48% for the two charts
+            container.add(chartCard); // Establecer ancho al 48% para los dos gráficos
         }
         
-        // Bottom row - task details by name
+        // Fila inferior - detalles de tareas por nombre
         Chart taskByNameChart = createTasksByNameChart();
         if (taskByNameChart != null) {
             Div chartCard = createChartCard("Desglose de Tareas por Nombre", taskByNameChart, true);
-            container.add(chartCard);// Set width to 100% for the full-width char
+            container.add(chartCard);// Establecer ancho al 100% para el gráfico de ancho completo
         }
     }
 
@@ -224,7 +224,7 @@ public class DashboardView extends VerticalLayout {
         return card;
     }
 
-    // CHART 1: Timeline trend chart
+    // GRÁFICO 1: Gráfico de tendencia temporal
     private Chart createTaskTrendChart() {
         List<TareaPorMesDTO> metricas = metricasDashboard.datosPorMes;
         if (metricas == null || metricas.isEmpty()) {
@@ -234,21 +234,21 @@ public class DashboardView extends VerticalLayout {
         Chart chart = new Chart(ChartType.AREASPLINE);
         Configuration conf = chart.getConfiguration();
         
-        // Month names
+        // Nombres de los meses
         String[] monthNames = {"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
                               "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
         
-        // Get unique months in order
+        // Obtener meses únicos en orden
         Set<Integer> months = metricas.stream()
                 .map(TareaPorMesDTO::getMes)
                 .collect(Collectors.toCollection(TreeSet::new));
         
-        // Create month categories
+        // Crear categorías de meses
         String[] categories = months.stream()
                 .map(month -> monthNames[month-1])
                 .toArray(String[]::new);
         
-        // Total tasks per month
+        // Total de tareas por mes
         Map<Integer, Long> totalsByMonth = metricas.stream()
                 .collect(Collectors.groupingBy(
                         TareaPorMesDTO::getMes, 
@@ -279,7 +279,7 @@ public class DashboardView extends VerticalLayout {
         return chart;
     }
 
-    // CHART 2: Status distribution as a donut chart
+    // GRÁFICO 2: Distribución de estados como gráfico de anillo
     private Chart createTaskStatusDistributionChart() {
         if (metricasDashboard.totalTareas == 0) {
             return null;
@@ -290,7 +290,7 @@ public class DashboardView extends VerticalLayout {
 
         DataSeries series = new DataSeries();
         
-        // Add data points with specific colors
+        // Añadir puntos de datos con colores específicos
         DataSeriesItem completed = new DataSeriesItem("Finalizadas", metricasDashboard.tareasCompletadas);
         completed.setColor(SolidColor.GREEN);
         series.add(completed);
@@ -318,7 +318,7 @@ public class DashboardView extends VerticalLayout {
         return chart;
     }
 
-    // CHART 3: Monthly task distribution as a column chart
+    // GRÁFICO 3: Distribución mensual de tareas como gráfico de columnas
     private Chart createMonthlyTaskDistributionChart() {
         List<TareaPorMesDTO> metricas = metricasDashboard.datosPorMes;
         if (metricas == null || metricas.isEmpty()) {
@@ -328,7 +328,7 @@ public class DashboardView extends VerticalLayout {
         Chart chart = new Chart(ChartType.COLUMN);
         Configuration conf = chart.getConfiguration();
 
-        // Get month names and unique months
+        // Obtener nombres de meses y meses únicos
         String[] monthNames = {"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
                               "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
         
@@ -370,7 +370,7 @@ public class DashboardView extends VerticalLayout {
         return chart;
     }
 
-    // CHART 4: Tasks by name as a bar chart
+    // GRÁFICO 4: Tareas por nombre como gráfico de barras
     private Chart createTasksByNameChart() {
         List<TareaPorMesDTO> metricas = metricasDashboard.datosPorMes;
         if (metricas == null || metricas.isEmpty()) {
@@ -380,22 +380,22 @@ public class DashboardView extends VerticalLayout {
         Chart chart = new Chart(ChartType.BAR);
         Configuration conf = chart.getConfiguration();
         
-        // Group tasks by name
+        // Agrupar tareas por nombre
         Map<String, Long> tasksByName = metricas.stream()
                 .collect(Collectors.groupingBy(
                         TareaPorMesDTO::getNombre, 
                         Collectors.summingLong(TareaPorMesDTO::getCantidad)));
         
-        // Sort by task count descending
+        // Ordenar por recuento de tareas descendente
         List<Map.Entry<String, Long>> sortedTasks = new ArrayList<>(tasksByName.entrySet());
         sortedTasks.sort(Map.Entry.<String, Long>comparingByValue().reversed());
         
-        // Limit to top 10 if we have more
+        // Limitar a los 10 primeros si tenemos más
         if (sortedTasks.size() > 10) {
             sortedTasks = sortedTasks.subList(0, 10);
         }
         
-        // Prepare categories and series
+        // Preparar categorías y series
         String[] categories = sortedTasks.stream()
                 .map(Map.Entry::getKey)
                 .toArray(String[]::new);
