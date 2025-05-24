@@ -79,7 +79,7 @@ public class MainLayout extends AppLayout implements RouterLayout {
                 .set("height", "50px")
                 .set("border-radius", "50%")
                 .set("box-shadow", "0 0 5px rgba(0, 0, 0, 0.2)");
-        //haz un listener para q si presiona el avatar s va a cnfiguracion
+        // haz un listener para q si presiona el avatar s va a cnfiguracion
         avatar.getElement().addEventListener("click", event -> {
             UI.getCurrent().navigate("configuracion");
         });
@@ -121,6 +121,8 @@ public class MainLayout extends AppLayout implements RouterLayout {
         // Crear ítems de navegación
         SideNavItem mainItem = new SideNavItem("Inicio", "main", VaadinIcon.MAP_MARKER.create());
 
+        SideNavItem dashboardItem = new SideNavItem("Dashboard", "dashboard", VaadinIcon.DASHBOARD.create());
+
         SideNavItem necesidadesItem = new SideNavItem("Necesidades", "necesidades", VaadinIcon.HEART.create());
 
         SideNavItem tareasItem = new SideNavItem("Tareas", "tareas", VaadinIcon.TASKS.create());
@@ -143,6 +145,8 @@ public class MainLayout extends AppLayout implements RouterLayout {
         String currentRoute = UI.getCurrent().getInternals().getActiveViewLocation().getPath();
         if ("main".equals(currentRoute)) {
             mainItem.getElement().getThemeList().add("primary");
+        } else if ("dashboard".equals(currentRoute)) {
+            dashboardItem.getElement().getThemeList().add("primary");
         } else if ("configuracion".equals(currentRoute)) {
             configItem.getElement().getThemeList().add("primary");
         } else if ("necesidades".equals(currentRoute)) {
@@ -159,7 +163,7 @@ public class MainLayout extends AppLayout implements RouterLayout {
             });
         }
 
-        nav.addItem(mainItem);
+        nav.addItem(mainItem, dashboardItem);
         if (usuario.getTipoUsuario().equals("afectado")) {
             nav.addItem(necesidadesItem);
         }

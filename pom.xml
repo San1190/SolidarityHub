@@ -96,6 +96,13 @@
             <version>4.0.1</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- Vaadin Charts -->
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-charts-flow</artifactId>
+            <version>${vaadin.version}</version> <!-- Asegúrate que esta versión sea compatible con tu versión de Vaadin -->
+        </dependency>
     </dependencies>
 
     <dependencyManagement>

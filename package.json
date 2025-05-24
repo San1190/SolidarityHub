@@ -5,6 +5,7 @@
   "dependencies": {
     "@polymer/polymer": "3.5.2",
     "@vaadin/bundles": "24.6.4",
+    "@vaadin/charts": "24.6.4",
     "@vaadin/common-frontend": "0.0.19",
     "@vaadin/polymer-legacy-adapter": "24.6.4",
     "@vaadin/react-components": "24.6.4",
@@ -46,6 +47,7 @@
     "dependencies": {
       "@polymer/polymer": "3.5.2",
       "@vaadin/bundles": "24.6.4",
+      "@vaadin/charts": "24.6.4",
       "@vaadin/common-frontend": "0.0.19",
       "@vaadin/polymer-legacy-adapter": "24.6.4",
       "@vaadin/react-components": "24.6.4",
@@ -83,7 +85,7 @@
       "workbox-core": "7.3.0",
       "workbox-precaching": "7.3.0"
     },
-    "hash": "c86e6252edf7910c020c9b65d2115c55e0037b499db79816bcbf1d7fd82d7d44"
+    "hash": "f09dc2b717497f140c619aaaddae2ab1eb651752ee0aa816e838fc6da5f12fdb"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -102,6 +104,7 @@
     "@vaadin/vaadin-themable-mixin": "$@vaadin/vaadin-themable-mixin",
     "@vaadin/vaadin-lumo-styles": "$@vaadin/vaadin-lumo-styles",
     "@vaadin/vaadin-material-styles": "$@vaadin/vaadin-material-styles",
-    "leaflet": "$leaflet"
+    "leaflet": "$leaflet",
+    "@vaadin/charts": "$@vaadin/charts"
   }
 }
