@@ -226,15 +226,10 @@ public class LoginView extends VerticalLayout {
 
         // Estilo consistente con RegistroView
         iniciarSesionBtn.getStyle()
-                .set("background-color", "#3498db")
-                .set("color", "white")
                 .set("border-radius", "6px")
-                .set("font-weight", "600")
-                .set("margin-top", "1em")
-                .set("margin-bottom", "1em")
                 .set("box-shadow", "0 4px 6px rgba(52, 152, 219, 0.2)")
-                .set("transition", "transform 0.1s ease-in-out")
-                .set("width", "auto");
+                .set("text-align", "center");
+        iniciarSesionBtn.getElement().getThemeList().add("primary");
 
         iniciarSesionBtn.getElement().addEventListener("mouseover",
                 _ -> iniciarSesionBtn.getStyle().set("transform", "translateY(-2px)"));
@@ -255,11 +250,10 @@ public class LoginView extends VerticalLayout {
         registrarBtn.getStyle()
                 .set("background-color", "white")
                 .set("color", "#3498db")
-                .set("border", "1px solid #3498db")
-                .set("border-radius", "6px")
                 .set("font-weight", "500")
                 .set("width", "auto")
-                .set("margin-top", "1.2em");
+                .set("margin-top", "1.2em")
+                .set("text-align", "center");
 
         return registrarBtn;
     }
@@ -284,7 +278,7 @@ public class LoginView extends VerticalLayout {
             Usuario response = restTemplate.postForObject(url, usuario, Usuario.class);
 
             if (response != null) {
-                if (response instanceof Voluntario voluntario){
+                if (response instanceof Voluntario voluntario) {
                     suscribirVoluntario(voluntario);
                 }
                 VaadinSession.getCurrent().setAttribute("usuario", response);
@@ -314,10 +308,11 @@ public class LoginView extends VerticalLayout {
 
         List<Tarea> listaTareas = tareaRepositorio.findAllWithSuscriptores();
         for (Tarea tarea : listaTareas) {
-            if(!tarea.getSuscriptores().contains(voluntario)) {
+            if (!tarea.getSuscriptores().contains(voluntario)) {
                 Habilidad habilidadRequerida = mapeoHabilidades.get(tarea.getTipo());
                 if (voluntario.getHabilidades().contains(habilidadRequerida)) {
-                    restTemplate.postForEntity(url + tarea.getId() + "/suscribir/" + voluntario.getId(), null, Void.class);
+                    restTemplate.postForEntity(url + tarea.getId() + "/suscribir/" + voluntario.getId(), null,
+                            Void.class);
                 }
             }
         }

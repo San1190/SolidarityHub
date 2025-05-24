@@ -62,11 +62,11 @@ public class RecursosView extends VerticalLayout {
         filtrosLayout.setAlignItems(Alignment.CENTER);
         filtrosLayout.setJustifyContentMode(JustifyContentMode.CENTER);
         filtrosLayout.getStyle()
-            .set("background-color", "#f3f3f3")
-            .set("border-radius", "10px")
-            .set("padding", "18px 12px 12px 12px")
-            .set("margin-bottom", "18px")
-            .set("box-shadow", "0 2px 8px rgba(0,0,0,0.04)");
+                .set("background-color", "#f3f3f3")
+                .set("border-radius", "10px")
+                .set("padding", "18px 12px 12px 12px")
+                .set("margin-bottom", "18px")
+                .set("box-shadow", "0 2px 8px rgba(0,0,0,0.04)");
 
         ComboBox<TipoRecurso> filtroTipo = new ComboBox<>("Tipo de Recurso");
         filtroTipo.setItems(TipoRecurso.values());
@@ -84,12 +84,13 @@ public class RecursosView extends VerticalLayout {
         filtroUbicacion.setPlaceholder("Cualquier ubicación");
         filtroUbicacion.setWidth("180px");
 
-        Button btnFiltrar = new Button("Filtrar", e -> refreshGridFiltrado(filtroTipo.getValue(), filtroEstado.getValue(), filtroUbicacion.getValue()));
+        Button btnFiltrar = new Button("Filtrar",
+                e -> refreshGridFiltrado(filtroTipo.getValue(), filtroEstado.getValue(), filtroUbicacion.getValue()));
         btnFiltrar.getElement().getThemeList().add("primary");
         btnFiltrar.getStyle()
-            .set("margin-left", "8px")
-            .set("margin-right", "8px")
-            .set("font-weight", "bold");
+                .set("margin-left", "8px")
+                .set("margin-right", "8px")
+                .set("font-weight", "bold");
 
         Button btnLimpiar = new Button("Limpiar", e -> {
             filtroTipo.clear();
@@ -98,8 +99,7 @@ public class RecursosView extends VerticalLayout {
             refreshGrid();
         });
         btnLimpiar.getStyle()
-            .set("margin-right", "8px")
-            .set("font-weight", "bold");
+                .set("margin-right", "8px");
 
         HorizontalLayout botonesLayout = new HorizontalLayout(btnFiltrar, btnLimpiar);
         botonesLayout.setAlignItems(Alignment.CENTER);
@@ -310,7 +310,7 @@ public class RecursosView extends VerticalLayout {
                 Notification.show("Por favor, complete todos los campos obligatorios");
             }
         });
-        guardarButton.getStyle().set("background-color", "#3498db").set("color", "white");
+        guardarButton.getElement().getThemeList().add("primary");
 
         Button cancelarButton = new Button("Cancelar", event -> dialog.close());
 
@@ -350,6 +350,7 @@ public class RecursosView extends VerticalLayout {
             e.printStackTrace(); // Add this to see more details in the console
         }
     }
+
     // Añadir método para refrescar el grid filtrado
     private void refreshGridFiltrado(TipoRecurso tipo, EstadoRecurso estado, String ubicacion) {
         try {

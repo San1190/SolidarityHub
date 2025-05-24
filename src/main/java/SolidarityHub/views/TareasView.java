@@ -80,19 +80,22 @@ public class TareasView extends VerticalLayout {
         tablaTareas = new Grid<>(Tarea.class, false);
         tablaTareas.setWidthFull();
         tablaTareas.addColumn(Tarea::getNombre).setHeader("Nombre").setSortable(true);
-        tablaTareas.addColumn(tarea -> tarea.getTipo() != null ? tarea.getTipo().name() : "").setHeader("Tipo").setSortable(true);
+        tablaTareas.addColumn(tarea -> tarea.getTipo() != null ? tarea.getTipo().name() : "").setHeader("Tipo")
+                .setSortable(true);
         tablaTareas.addColumn(Tarea::getLocalizacion).setHeader("Localización").setSortable(true);
         tablaTareas.addColumn(Tarea::getTurno).setHeader("Turno").setSortable(true);
-        tablaTareas.addColumn(tarea -> tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "").setHeader("Fecha Inicio").setSortable(true);
-        tablaTareas.addColumn(tarea -> tarea.getEstado() != null ? tarea.getEstado().name() : "").setHeader("Estado").setSortable(true);
-        
+        tablaTareas.addColumn(tarea -> tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "")
+                .setHeader("Fecha Inicio").setSortable(true);
+        tablaTareas.addColumn(tarea -> tarea.getEstado() != null ? tarea.getEstado().name() : "").setHeader("Estado")
+                .setSortable(true);
+
         // Columna de acciones
         tablaTareas.addComponentColumn(tarea -> {
             HorizontalLayout actions = new HorizontalLayout();
             Button detallesBtn = new Button(new Icon(VaadinIcon.SEARCH), e -> mostrarDetallesTarea(tarea));
             detallesBtn.getElement().setAttribute("title", "Ver detalles");
             actions.add(detallesBtn);
-            
+
             if (usuarioActual instanceof Voluntario && esCreador(tarea, usuarioActual)) {
                 Button editarBtn = new Button(new Icon(VaadinIcon.EDIT), e -> abrirFormularioTarea(tarea));
                 editarBtn.getElement().setAttribute("title", "Editar");
@@ -101,18 +104,18 @@ public class TareasView extends VerticalLayout {
                 eliminarBtn.getElement().getThemeList().add("error");
                 actions.add(editarBtn, eliminarBtn);
             }
-            
+
             return actions;
         }).setHeader("Acciones").setAutoWidth(true);
-        
+
         // Configuración de la tabla
         tablaTareas.setPageSize(10);
         tablaTareas.getStyle().set("margin-top", "60px");
-        
+
         // Guardar referencia a la tabla para actualizarla
         // No need to store grid reference since we can refresh via refreshTareas()
         refreshTareas();
-        
+
         add(tablaTareas);
 
         refreshTareas();
@@ -332,7 +335,7 @@ public class TareasView extends VerticalLayout {
         binder.forField(localizacionField)
                 .asRequired("La localización es requerida")
                 .bind(Tarea::getLocalizacion, Tarea::setLocalizacion);
-                
+
         // Campo: Punto de Encuentro
         TextField puntoEncuentroField = new TextField("Punto de Encuentro");
         puntoEncuentroField.setRequired(true);
@@ -398,8 +401,10 @@ public class TareasView extends VerticalLayout {
                         NotificacionDTO notificacionDTO = new NotificacionDTO();
                         notificacionDTO.setTitulo("Nueva Tarea");
                         notificacionDTO.setMensaje("Se ha creado la tarea " + tareaActual.getNombre());
-                        System.out.println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
-                        restTemplate.postForEntity(apiUrl + "/" + tareaAct.getId() + "/notificar", notificacionDTO, Void.class);
+                        System.out.println(
+                                "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+                        restTemplate.postForEntity(apiUrl + "/" + tareaAct.getId() + "/notificar", notificacionDTO,
+                                Void.class);
                         Notification.show("Tarea creada correctamente", 3000, Position.BOTTOM_START);
                     } else {
                         // Actualizar tarea existente
@@ -407,8 +412,10 @@ public class TareasView extends VerticalLayout {
                         NotificacionDTO notificacionDTO = new NotificacionDTO();
                         notificacionDTO.setTitulo("Tarea actualizada");
                         notificacionDTO.setMensaje("Se ha actualizado la tarea " + tareaActual.getNombre());
-                        restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO, Void.class);
-                        System.out.println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+                        restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO,
+                                Void.class);
+                        System.out.println(
+                                "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
                         Notification.show("Tarea actualizada correctamente", 3000, Position.BOTTOM_START);
                     }
                     formDialog.close();
@@ -435,141 +442,138 @@ public class TareasView extends VerticalLayout {
         Div tarjeta = new Div();
         tarjeta.setWidth("100%");
         tarjeta.getStyle()
-               .set("box-shadow", "none")
-               .set("background-color", "white")
-               .set("transition", "all 0.3s ease")
-               .set("margin-bottom", "-50px")
-               .set("border", "transparent");
-    
+                .set("box-shadow", "none")
+                .set("background-color", "white")
+                .set("transition", "all 0.3s ease")
+                .set("margin-bottom", "-50px")
+                .set("border", "transparent");
+
         // Efecto hover
-        tarjeta.getElement().addEventListener("mouseover", e ->
-            tarjeta.getStyle().set("transform", "translateY(-5px)")
-        );
-        tarjeta.getElement().addEventListener("mouseout", e ->
-            tarjeta.getStyle().set("transform", "translateY(0)")
-        );
-    
+        tarjeta.getElement().addEventListener("mouseover",
+                e -> tarjeta.getStyle().set("transform", "translateY(-5px)"));
+        tarjeta.getElement().addEventListener("mouseout", e -> tarjeta.getStyle().set("transform", "translateY(0)"));
+
         // Layout interno
         VerticalLayout contenido = new VerticalLayout();
         contenido.setPadding(false);
         contenido.setSpacing(false);
         contenido.setWidthFull();
-    
+
         // 1) Cabecera: título, tipo y estado
         HorizontalLayout cabecera = new HorizontalLayout();
         cabecera.setWidthFull();
         cabecera.setPadding(true);
         cabecera.getStyle()
-               .set("background-color", "#f8f9fa")
-               .set("border-bottom", "1px solid #eaeaea")
-               .set("padding", "18px 12px")
-               .set("border-radius", "12px 12px 0 0");
-    
+                .set("background-color", "#f8f9fa")
+                .set("border-bottom", "1px solid #eaeaea")
+                .set("padding", "18px 12px")
+                .set("border-radius", "12px 12px 0 0");
+
         H4 titulo = new H4(tarea.getNombre());
         titulo.getStyle().set("margin", "0");
-    
+
         Span tipoSpan = crearBadge(tarea.getTipo() != null ? tarea.getTipo().name() : "SIN TIPO",
-                                   "#F3E5F5", "#6A1B9A", "1px solid #E1BEE7");
+                "#F3E5F5", "#6A1B9A", "1px solid #E1BEE7");
         Span estadoSpan = crearBadge(
-            tarea.getEstado() != null ? tarea.getEstado().name() : "SIN ESTADO",
-            tarea.getEstado() == EstadoTarea.PREPARADA ? "#FFF3CD" :
-            tarea.getEstado() == EstadoTarea.EN_CURSO ? "#D1ECF1" :
-            tarea.getEstado() == EstadoTarea.FINALIZADA ? "#D4EDDA" : "#E2E3E5",
-            tarea.getEstado() == EstadoTarea.PREPARADA ? "#856404" :
-            tarea.getEstado() == EstadoTarea.EN_CURSO ? "#0C5460" :
-            tarea.getEstado() == EstadoTarea.FINALIZADA ? "#155724" : "#383D41",
-            tarea.getEstado() == EstadoTarea.PREPARADA ? "1px solid #856404" :
-            tarea.getEstado() == EstadoTarea.EN_CURSO ? "1px solid #0C5460" :
-            tarea.getEstado() == EstadoTarea.FINALIZADA ? "1px solid #155724" : "1px solid #383D41"
-        );
-    
+                tarea.getEstado() != null ? tarea.getEstado().name() : "SIN ESTADO",
+                tarea.getEstado() == EstadoTarea.PREPARADA ? "#FFF3CD"
+                        : tarea.getEstado() == EstadoTarea.EN_CURSO ? "#D1ECF1"
+                                : tarea.getEstado() == EstadoTarea.FINALIZADA ? "#D4EDDA" : "#E2E3E5",
+                tarea.getEstado() == EstadoTarea.PREPARADA ? "#856404"
+                        : tarea.getEstado() == EstadoTarea.EN_CURSO ? "#0C5460"
+                                : tarea.getEstado() == EstadoTarea.FINALIZADA ? "#155724" : "#383D41",
+                tarea.getEstado() == EstadoTarea.PREPARADA ? "1px solid #856404"
+                        : tarea.getEstado() == EstadoTarea.EN_CURSO ? "1px solid #0C5460"
+                                : tarea.getEstado() == EstadoTarea.FINALIZADA ? "1px solid #155724"
+                                        : "1px solid #383D41");
+
         Div etiquetas = new Div(tipoSpan, estadoSpan);
         etiquetas.getStyle().set("margin-left", "auto");
-    
+
         cabecera.add(titulo, etiquetas);
-    
+
         // 2) Cuerpo: descripción e info adicional
         VerticalLayout cuerpo = new VerticalLayout();
         cuerpo.setPadding(true);
         cuerpo.getStyle().set("background-color", "#E2E3E5");
-    
+
         Paragraph desc = new Paragraph(truncar(tarea.getDescripcion(), 100));
         desc.getStyle().set("margin-bottom", "20px");
-    
+
         Div infoGrid = new Div();
         infoGrid.getStyle()
                 .set("display", "grid")
                 .set("grid-template-columns", "1fr 1fr")
                 .set("gap", "16px 24px")
                 .set("padding", "16px");
-    
-        infoGrid.add(
-            crearInfoItem(VaadinIcon.MAP_MARKER, tarea.getLocalizacion()),
-            crearInfoItem(VaadinIcon.CALENDAR, 
-                "Inicio: " + (tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio()) : "No definida")),
-            crearInfoItem(VaadinIcon.USERS, tarea.getNumeroVoluntariosNecesarios() + " voluntarios")
-        );
-        Div recursosContainer = new Div();
-        recursosContainer.getStyle()            
-                             .set("margin-top", "12px")
-                             .set("margin-bottom", "8px");
-        try {
-                List<Recursos> recursosAsignados = tarea.getRecursosAsignados();
-                if (recursosAsignados != null && !recursosAsignados.isEmpty()) {
-                    VerticalLayout listaLayout = new VerticalLayout();
-                    listaLayout.setSpacing(false);
-                    listaLayout.setPadding(false);
-                    
-                    Span titulorecursos = new Span("Recursos Asignados");
-                    titulorecursos.getStyle()
-                                .set("font-weight", "bold")
-                                .set("font-size", "14px");
-                                listaLayout.add(titulorecursos);
 
-                    VerticalLayout listaRecursos = new VerticalLayout();
-                    for (Recursos recurso : recursosAsignados) {
-                        Span descripcionRecurso = new Span("- " + recurso.getDescripcion());
-                    
-                        descripcionRecurso.getStyle()
-                                        .set("font-size", "12px")
-                                        .set("color", "#6c757d")
-                                        .set("matgin-left", "8px");
-                        listaRecursos.add(descripcionRecurso);  
-                    }
-                    listaLayout.add(listaRecursos);
-                    recursosContainer.add(listaLayout);
-                } else {
-                    Span sinRecursos = new Span("No hay recursos asignados");
-                    sinRecursos.getStyle()
-                           .set("font-size", "12px")
-                           .set("color", "#6c757d");
-                    recursosContainer.add(sinRecursos);
+        infoGrid.add(
+                crearInfoItem(VaadinIcon.MAP_MARKER, tarea.getLocalizacion()),
+                crearInfoItem(VaadinIcon.CALENDAR,
+                        "Inicio: " + (tarea.getFechaInicio() != null ? formatter.format(tarea.getFechaInicio())
+                                : "No definida")),
+                crearInfoItem(VaadinIcon.USERS, tarea.getNumeroVoluntariosNecesarios() + " voluntarios"));
+        Div recursosContainer = new Div();
+        recursosContainer.getStyle()
+                .set("margin-top", "12px")
+                .set("margin-bottom", "8px");
+        try {
+            List<Recursos> recursosAsignados = tarea.getRecursosAsignados();
+            if (recursosAsignados != null && !recursosAsignados.isEmpty()) {
+                VerticalLayout listaLayout = new VerticalLayout();
+                listaLayout.setSpacing(false);
+                listaLayout.setPadding(false);
+
+                Span titulorecursos = new Span("Recursos Asignados");
+                titulorecursos.getStyle()
+                        .set("font-weight", "bold")
+                        .set("font-size", "14px");
+                listaLayout.add(titulorecursos);
+
+                VerticalLayout listaRecursos = new VerticalLayout();
+                for (Recursos recurso : recursosAsignados) {
+                    Span descripcionRecurso = new Span("- " + recurso.getDescripcion());
+
+                    descripcionRecurso.getStyle()
+                            .set("font-size", "12px")
+                            .set("color", "#6c757d")
+                            .set("matgin-left", "8px");
+                    listaRecursos.add(descripcionRecurso);
                 }
+                listaLayout.add(listaRecursos);
+                recursosContainer.add(listaLayout);
+            } else {
+                Span sinRecursos = new Span("No hay recursos asignados");
+                sinRecursos.getStyle()
+                        .set("font-size", "12px")
+                        .set("color", "#6c757d");
+                recursosContainer.add(sinRecursos);
+            }
         } catch (Exception ex) {
-                Span error = new Span("No hay recursos asignados");
-                error.getStyle()
-                          .set("font-size", "12px")
-                          .set("color", "#red");
-                recursosContainer.add(error);
+            Span error = new Span("No hay recursos asignados");
+            error.getStyle()
+                    .set("font-size", "12px")
+                    .set("color", "#red");
+            recursosContainer.add(error);
         }
         infoGrid.add(recursosContainer);
-    
+
         cuerpo.add(desc, infoGrid);
-    
+
         // 3) Pie: botones
         HorizontalLayout pie = new HorizontalLayout();
         pie.setWidthFull();
         pie.setPadding(true);
         pie.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         pie.getStyle().set("border-top", "1px solid #eaeaea");
-    
+
         Button detalles = new Button("Ver Detalles", new Icon(VaadinIcon.SEARCH));
         detalles.getElement().getThemeList().add("tertiary");
         detalles.addClickListener(e -> mostrarDetallesTarea(tarea));
         pie.add(detalles);
-    
+
         if (usuarioActual instanceof Voluntario
-            && esCreador(tarea, usuarioActual)) {
+                && esCreador(tarea, usuarioActual)) {
             Button editar = new Button("Editar", new Icon(VaadinIcon.EDIT));
             editar.addClickListener(e -> abrirFormularioTarea(tarea));
             Button eliminar = new Button("Eliminar", new Icon(VaadinIcon.TRASH));
@@ -577,27 +581,27 @@ public class TareasView extends VerticalLayout {
             eliminar.addClickListener(e -> eliminarTarea(tarea));
             pie.add(editar, eliminar);
         }
-    
+
         // Ensamblar tarjeta
         contenido.add(cabecera, cuerpo, pie);
         tarjeta.add(contenido);
         return tarjeta;
     }
-    
+
     // Métodos auxiliares:
     private Span crearBadge(String text, String bg, String color, String border) {
         Span badge = new Span(text);
         badge.getStyle()
-             .set("padding", "4px 10px")
-             .set("border-radius", "20px")
-             .set("font-size", "12px")
-             .set("font-weight", "600")
-             .set("background-color", bg)
-             .set("color", color)
-             .set("border", border);
+                .set("padding", "4px 10px")
+                .set("border-radius", "20px")
+                .set("font-size", "12px")
+                .set("font-weight", "600")
+                .set("background-color", bg)
+                .set("color", color)
+                .set("border", border);
         return badge;
     }
-    
+
     private Component crearInfoItem(VaadinIcon iconType, String text) {
         HorizontalLayout layout = new HorizontalLayout();
         Icon icon = iconType.create();
@@ -605,16 +609,17 @@ public class TareasView extends VerticalLayout {
         layout.add(icon, new Span(text));
         return layout;
     }
-    
+
     private String truncar(String s, int max) {
-        if (s == null) return "";
+        if (s == null)
+            return "";
         return s.length() <= max ? s : s.substring(0, max - 3) + "...";
     }
-    
+
     private boolean esCreador(Tarea tarea, Usuario u) {
         return tarea.getCreador() != null && tarea.getCreador().getId().equals(u.getId());
     }
-    
+
     /**
      * Muestra un diálogo con los detalles completos de una tarea
      * 
@@ -748,11 +753,11 @@ public class TareasView extends VerticalLayout {
         // Localización
         Span localizacion = new Span(tarea.getLocalizacion());
         infoLayout.addFormItem(localizacion, "Localización");
-        
+
         // Punto de encuentro
         Span puntoEncuentro = new Span(tarea.getPuntoEncuentro() != null ? tarea.getPuntoEncuentro() : "No definido");
         infoLayout.addFormItem(puntoEncuentro, "Punto de encuentro");
-        
+
         // Turno
         Span turno = new Span(tarea.getTurno() != null ? tarea.getTurno() : "No definido");
         infoLayout.addFormItem(turno, "Turno");
@@ -873,10 +878,12 @@ public class TareasView extends VerticalLayout {
         estadoField.setItemLabelGenerator(Enum::name);
         binder.forField(estadoField).asRequired("El estado es obligatorio").bind(Tarea::getEstado, Tarea::setEstado);
 
-        formLayout.add(nombreField, descripcionField, tipoField, localizacionField, voluntariosField, fechaInicioField, estadoField);
+        formLayout.add(nombreField, descripcionField, tipoField, localizacionField, voluntariosField, fechaInicioField,
+                estadoField);
 
         HorizontalLayout buttonLayout = new HorizontalLayout();
         Button saveButton = new Button("Guardar", e -> guardarTarea());
+        saveButton.getElement().getThemeList().add("primary");
         Button cancelButton = new Button("Cancelar", e -> formDialog.close());
         buttonLayout.add(saveButton, cancelButton);
 
@@ -906,7 +913,8 @@ public class TareasView extends VerticalLayout {
                         NotificacionDTO notificacionDTO = new NotificacionDTO();
                         notificacionDTO.setTitulo("Nueva Tarea");
                         notificacionDTO.setMensaje("Se ha creado la tarea " + tareaActual.getNombre());
-                        restTemplate.postForEntity(apiUrl + "/" + tarea.getId() + "/notificar", notificacionDTO, Void.class);
+                        restTemplate.postForEntity(apiUrl + "/" + tarea.getId() + "/notificar", notificacionDTO,
+                                Void.class);
                         Notification.show("Tarea creada correctamente", 3000, Position.BOTTOM_START);
                     }
                 } else {
@@ -915,7 +923,8 @@ public class TareasView extends VerticalLayout {
                     NotificacionDTO notificacionDTO = new NotificacionDTO();
                     notificacionDTO.setTitulo("Tarea actualizada");
                     notificacionDTO.setMensaje("Se ha actualizado la tarea " + tareaActual.getNombre());
-                    restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO, Void.class);
+                    restTemplate.postForEntity(apiUrl + "/" + tareaActual.getId() + "/notificar", notificacionDTO,
+                            Void.class);
                     Notification.show("Tarea actualizada correctamente", 3000, Position.BOTTOM_START);
                 }
                 formDialog.close();
@@ -1238,7 +1247,7 @@ public class TareasView extends VerticalLayout {
         puntoEncuentroField.setRequired(true);
         puntoEncuentroField.setHelperText("Especifique el lugar exacto donde se reunirán los voluntarios");
 
-        // Campos de fecha 
+        // Campos de fecha
         DateTimePicker fechaEncuentroField = new DateTimePicker("Fecha y Hora de Encuentro");
         fechaEncuentroField.setWidthFull();
         fechaEncuentroField.setRequiredIndicatorVisible(true);
@@ -1261,33 +1270,35 @@ public class TareasView extends VerticalLayout {
             String puntoEncuentro = puntoEncuentroField.getValue();
             LocalDateTime fechaEncuentro = fechaEncuentroField.getValue();
             String turno = turnoField.getValue();
-            
-            if (tareaSeleccionada != null && recursoSeleccionado != null && 
-                puntoEncuentro != null && !puntoEncuentro.isEmpty() && 
-                fechaEncuentro != null && turno != null) {
+
+            if (tareaSeleccionada != null && recursoSeleccionado != null &&
+                    puntoEncuentro != null && !puntoEncuentro.isEmpty() &&
+                    fechaEncuentro != null && turno != null) {
                 try {
                     // Actualizar la tarea con el punto de encuentro y fecha
                     tareaSeleccionada.setPuntoEncuentro(puntoEncuentro);
                     tareaSeleccionada.setFechaInicio(fechaEncuentro);
                     tareaSeleccionada.setTurno(turno);
-                    
+
                     // Actualizar la tarea primero
                     restTemplate.put(apiUrl + "/" + tareaSeleccionada.getId(), tareaSeleccionada);
-                    
+
                     // Luego asignar el recurso manualmente
                     recursoSeleccionado.setTareaAsignada(tareaSeleccionada);
                     recursoSeleccionado.setEstado(Recursos.EstadoRecurso.ASIGNADO);
                     restTemplate.put("http://localhost:8080/api/recursos/" + recursoSeleccionado.getId(),
                             recursoSeleccionado);
-                    
+
                     // Notificar a los voluntarios sobre la actualización
                     NotificacionDTO notificacionDTO = new NotificacionDTO();
                     notificacionDTO.setTitulo("Tarea actualizada por gestor");
-                    notificacionDTO.setMensaje("Se ha actualizado la tarea '" + tareaSeleccionada.getNombre() + 
-                                             "' con nuevo punto de encuentro: " + puntoEncuentro);
-                    restTemplate.postForEntity(apiUrl + "/" + tareaSeleccionada.getId() + "/notificar", notificacionDTO, Void.class);
-                    
-                    Notification.show("Tarea configurada y recurso asignado correctamente", 3000, Position.BOTTOM_START);
+                    notificacionDTO.setMensaje("Se ha actualizado la tarea '" + tareaSeleccionada.getNombre() +
+                            "' con nuevo punto de encuentro: " + puntoEncuentro);
+                    restTemplate.postForEntity(apiUrl + "/" + tareaSeleccionada.getId() + "/notificar", notificacionDTO,
+                            Void.class);
+
+                    Notification.show("Tarea configurada y recurso asignado correctamente", 3000,
+                            Position.BOTTOM_START);
                     dialog.close();
                     refreshTareas();
                 } catch (Exception ex) {
@@ -1297,7 +1308,7 @@ public class TareasView extends VerticalLayout {
                 Notification.show("Por favor, complete todos los campos requeridos", 3000, Position.BOTTOM_START);
             }
         });
-        asignarButton.getStyle().set("background-color", "#3498db").set("color", "white");
+        asignarButton.getElement().getThemeList().add("primary");
 
         Button cancelarButton = new Button("Cancelar", event -> dialog.close());
         HorizontalLayout botonesLayout = new HorizontalLayout(asignarButton, cancelarButton);
