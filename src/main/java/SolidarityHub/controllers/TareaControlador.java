@@ -1,5 +1,6 @@
 package SolidarityHub.controllers;
 
+import SolidarityHub.models.dtos.DashboardMetricasDTO;
 import SolidarityHub.models.dtos.NotificacionDTO;
 import SolidarityHub.models.dtos.TareaPorMesDTO;
 import SolidarityHub.repository.TareaRepositorio;
@@ -412,7 +413,7 @@ public class TareaControlador {
     }
 
     @GetMapping("/dashboard-metrics")
-    public TareaServicio.DashboardMetricasDTO obtenerMetricasDashboard() {
+    public DashboardMetricasDTO obtenerMetricasDashboard() {
         return tareaServicio.obtenerMetricasDashboard();
     }
 }

@@ -6,6 +6,7 @@ import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Tarea.EstadoTarea;
 import SolidarityHub.models.Usuario;
 import SolidarityHub.models.Voluntario;
+import SolidarityHub.models.dtos.DashboardMetricasDTO;
 import SolidarityHub.models.dtos.TareaPorMesDTO;
 import SolidarityHub.repository.NotificacionRepositorio;
 import SolidarityHub.repository.TareaRepositorio;
@@ -217,25 +218,6 @@ public class TareaServicio {
             lista.add(new TareaPorMesDTO(mes, nombre, cantidad));
         }
         return lista;
-    }
-
-    // DTO para métricas completas del dashboard
-    public static class DashboardMetricasDTO {
-        public long totalTareas;
-        public long tareasCompletadas;
-        public long tareasEnCurso;
-        public long tareasPendientes;
-        public double promedioPorMes;
-        public List<TareaPorMesDTO> datosPorMes;
-
-        public DashboardMetricasDTO() {
-            this.totalTareas = 0;
-            this.tareasCompletadas = 0;
-            this.tareasEnCurso = 0;
-            this.tareasPendientes = 0;
-            this.promedioPorMes = 0.0;
-            this.datosPorMes = new ArrayList<>();
-        }
     }
 
     // Método para obtener métricas completas del dashboard

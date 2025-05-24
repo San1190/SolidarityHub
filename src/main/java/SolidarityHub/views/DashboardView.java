@@ -2,7 +2,7 @@ package SolidarityHub.views;
 
 import SolidarityHub.models.dtos.TareaPorMesDTO;
 import SolidarityHub.services.TareaServicio;
-import SolidarityHub.services.TareaServicio.DashboardMetricasDTO;
+import SolidarityHub.models.dtos.DashboardMetricasDTO;
 import SolidarityHub.services.UsuarioServicio;
 
 import com.vaadin.flow.component.Component;

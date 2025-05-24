@@ -34,12 +34,11 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
-import SolidarityHub.models.dtos.DashboardMetricasTipoDTO;
+import SolidarityHub.models.dtos.DashboardMetricasDTO;
 import SolidarityHub.models.dtos.TareaPorMesDTO;
-import SolidarityHub.models.dtos.TareaPorTipoDTO;
 
 public class DashboardTipo extends VerticalLayout {
-    private final DashboardMetricasTipoDTO metricasDashboard;
+    private final DashboardMetricasDTO metricasDashboard;
 
     // Theme colors for consistent styling
     private final String[] CHART_COLORS = {
@@ -47,7 +46,7 @@ public class DashboardTipo extends VerticalLayout {
             "#0099C6", "#DD4477", "#66AA00", "#B82E2E", "#316395"
     };
 
-    public DashboardTipo(DashboardMetricasTipoDTO metricasDashboard) {
+    public DashboardTipo(DashboardMetricasDTO metricasDashboard) {
         this.metricasDashboard = metricasDashboard;
 
         // Dashboard content wrapper
@@ -201,7 +200,7 @@ public class DashboardTipo extends VerticalLayout {
 
     // CHART 1: Timeline trend chart
     private Chart createTaskTrendChart() {
-        List<TareaPorTipoDTO> metricas = metricasDashboard.getDatosPorMes();
+        List<TareaPorMesDTO> metricas = metricasDashboard.getDatosPorMes();
         if (metricas == null || metricas.isEmpty()) {
             return null;
         }
@@ -213,15 +212,15 @@ public class DashboardTipo extends VerticalLayout {
         series.setName("Tareas por Tipo");
 
         // Add data points
-        for (TareaPorTipoDTO tipo : metricas) {
-            series.add(new DataSeriesItem(tipo.getTipo(), tipo.getCantidad()));
+        for (TareaPorMesDTO tipo : metricas) {
+            series.add(new DataSeriesItem(tipo.getNombre(), tipo.getCantidad()));
         }
         conf.addSeries(series);
 
         // Configure x-axis
         XAxis xAxis = new XAxis();
         xAxis.setCategories(metricas.stream()
-                .map(TareaPorTipoDTO::getTipo)
+                .map(TareaPorMesDTO::getNombre)
                 .toArray(String[]::new));
         conf.addxAxis(xAxis);
 
@@ -236,7 +235,7 @@ public class DashboardTipo extends VerticalLayout {
 
     // CHART 2: Status distribution as a donut chart
     private Chart createTaskTypeDistributionChart() {
-        List<TareaPorTipoDTO> metricas = metricasDashboard.getDatosPorMes();
+        List<TareaPorMesDTO> metricas = metricasDashboard.getDatosPorMes();
         if (metricas == null || metricas.isEmpty()) {
             return null;
         }
@@ -249,8 +248,8 @@ public class DashboardTipo extends VerticalLayout {
 
         // Add data points with specific colors
         int colorIndex = 0;
-        for (TareaPorTipoDTO tipo : metricas) {
-            DataSeriesItem item = new DataSeriesItem(tipo.getTipo(), tipo.getCantidad());
+        for (TareaPorMesDTO tipo : metricas) {
+            DataSeriesItem item = new DataSeriesItem(tipo.getNombre(), tipo.getCantidad());
             item.setColor(new SolidColor(CHART_COLORS[colorIndex % CHART_COLORS.length]));
             series.add(item);
             colorIndex++;
@@ -272,7 +271,7 @@ public class DashboardTipo extends VerticalLayout {
 
     // CHART 3: Monthly task distribution as a column chart
     private Chart createMonthlyTaskDistributionChart() {
-        List<TareaPorTipoDTO> metricas = metricasDashboard.getDatosPorMes();
+        List<TareaPorMesDTO> metricas = metricasDashboard.getDatosPorMes();
         if (metricas == null || metricas.isEmpty()) {
             return null;
         }
@@ -284,15 +283,15 @@ public class DashboardTipo extends VerticalLayout {
         series.setName("Tareas por Tipo");
 
         // Add data points
-        for (TareaPorTipoDTO tipo : metricas) {
-            series.add(new DataSeriesItem(tipo.getTipo(), tipo.getCantidad()));
+        for (TareaPorMesDTO tipo : metricas) {
+            series.add(new DataSeriesItem(tipo.getNombre(), tipo.getCantidad()));
         }
         conf.addSeries(series);
 
         // Configure x-axis
         XAxis xAxis = new XAxis();
         xAxis.setCategories(metricas.stream()
-                .map(TareaPorTipoDTO::getTipo)
+                .map(TareaPorMesDTO::getNombre)
                 .toArray(String[]::new));
         conf.addxAxis(xAxis);
 
@@ -307,7 +306,7 @@ public class DashboardTipo extends VerticalLayout {
 
     // CHART 4: Tasks by name as a bar chart
     private Chart createTasksByNameChart() {
-        List<TareaPorTipoDTO> metricas = metricasDashboard.getDatosPorMes();
+        List<TareaPorMesDTO> metricas = metricasDashboard.getDatosPorMes();
         if (metricas == null || metricas.isEmpty()) {
             return null;
         }
@@ -319,15 +318,15 @@ public class DashboardTipo extends VerticalLayout {
         series.setName("Tareas por Tipo");
 
         // Add data points
-        for (TareaPorTipoDTO tipo : metricas) {
-            series.add(new DataSeriesItem(tipo.getTipo(), tipo.getCantidad()));
+        for (TareaPorMesDTO tipo : metricas) {
+            series.add(new DataSeriesItem(tipo.getNombre(), tipo.getCantidad()));
         }
         conf.addSeries(series);
 
         // Configure x-axis
         XAxis xAxis = new XAxis();
         xAxis.setCategories(metricas.stream()
-                .map(TareaPorTipoDTO::getTipo)
+                .map(TareaPorMesDTO::getNombre)
                 .toArray(String[]::new));
         conf.addxAxis(xAxis);
 
