@@ -3,8 +3,8 @@ package SolidarityHub.models.dtos;
 import java.util.ArrayList;
 import java.util.List;
 
-// DTO para métricas completas del dashboard
-public class DashboardMetricasDTO {
+// DTO para métricas completas del dashboard para estado
+public class DashboardMetricasEstadoDTO {
     public long totalTareas;
     public long tareasCompletadas;
     public long tareasEnCurso;
@@ -12,7 +12,7 @@ public class DashboardMetricasDTO {
     public double promedioPorMes;
     public List<TareaPorMesDTO> datosPorMes;
 
-    public DashboardMetricasDTO() {
+    public DashboardMetricasEstadoDTO() {
         this.totalTareas = 0;
         this.tareasCompletadas = 0;
         this.tareasEnCurso = 0;

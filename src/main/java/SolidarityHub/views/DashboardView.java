@@ -2,7 +2,7 @@ package SolidarityHub.views;
 
 import SolidarityHub.models.dtos.TareaPorMesDTO;
 import SolidarityHub.services.TareaServicio;
-import SolidarityHub.models.dtos.DashboardMetricasDTO;
+import SolidarityHub.models.dtos.DashboardMetricasEstadoDTO;
 import SolidarityHub.services.UsuarioServicio;
 
 import com.vaadin.flow.component.Component;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public class DashboardView extends VerticalLayout {
 
     private final TareaServicio tareaServicio;
-    private final DashboardMetricasDTO metricasDashboard;
+    private final DashboardMetricasEstadoDTO metricasDashboard;
 
     // Theme colors for consistent styling
     private final String[] CHART_COLORS = {
@@ -37,7 +37,7 @@ public class DashboardView extends VerticalLayout {
 
     public DashboardView(UsuarioServicio usuarioServicio, TareaServicio tareaServicio) {
         this.tareaServicio = tareaServicio;
-        this.metricasDashboard = tareaServicio.obtenerMetricasDashboard();
+        this.metricasDashboard = tareaServicio.obtenerMetricasDashboardEstado();
 
         setSizeFull();
         setPadding(true);

@@ -34,11 +34,11 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
-import SolidarityHub.models.dtos.DashboardMetricasDTO;
+import SolidarityHub.models.dtos.DashboardMetricasEstadoDTO;
 import SolidarityHub.models.dtos.TareaPorMesDTO;
 
 public class DashboardTipo extends VerticalLayout {
-    private final DashboardMetricasDTO metricasDashboard;
+    private final DashboardMetricasEstadoDTO metricasDashboard;
 
     // Theme colors for consistent styling
     private final String[] CHART_COLORS = {
@@ -46,7 +46,7 @@ public class DashboardTipo extends VerticalLayout {
             "#0099C6", "#DD4477", "#66AA00", "#B82E2E", "#316395"
     };
 
-    public DashboardTipo(DashboardMetricasDTO metricasDashboard) {
+    public DashboardTipo(DashboardMetricasEstadoDTO metricasDashboard) {
         this.metricasDashboard = metricasDashboard;
 
         // Dashboard content wrapper

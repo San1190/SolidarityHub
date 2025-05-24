@@ -2,8 +2,8 @@ package SolidarityHub.strategy;
 
 import com.vaadin.flow.component.Component;
 
-import SolidarityHub.models.dtos.DashboardMetricasDTO;
+import SolidarityHub.models.dtos.DashboardMetricasEstadoDTO;
 
 public interface EstrategiaMetrica {
-    Component ejecutar(DashboardMetricasDTO metrica);
+    Component ejecutar(DashboardMetricasEstadoDTO metrica);
 }

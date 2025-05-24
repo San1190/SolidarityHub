@@ -50,4 +50,11 @@ public interface TareaRepositorio extends JpaRepository<Tarea, Long> {
             "GROUP BY mes, nombre " +
             "ORDER BY mes, nombre")
     List<Object[]> contarTareasPorNombreYMes();
+
+    @Query("SELECT t.nombre as nombre, COUNT(t) as cantidad " +
+            "FROM Tarea t " +
+            "WHERE t.nombre IS NOT NULL " +
+            "GROUP BY t.nombre " +
+            "ORDER BY t.nombre")
+    List<Object[]> contarTareasPorNombre();
 }

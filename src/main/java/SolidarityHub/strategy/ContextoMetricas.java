@@ -1,6 +1,6 @@
 package SolidarityHub.strategy;
 
-import SolidarityHub.models.dtos.DashboardMetricasDTO;
+import SolidarityHub.models.dtos.DashboardMetricasEstadoDTO;
 import com.vaadin.flow.component.Component;
 
 public class ContextoMetricas {
@@ -10,7 +10,7 @@ public class ContextoMetricas {
         this.estrategia = estrategia;
     }
 
-    public Component ejecutarEstrategia(DashboardMetricasDTO metrica) {
+    public Component ejecutarEstrategia(DashboardMetricasEstadoDTO metrica) {
         return estrategia.ejecutar(metrica);
     }
 }
