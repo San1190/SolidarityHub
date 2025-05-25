@@ -6,8 +6,7 @@ import SolidarityHub.models.Necesidad.TipoNecesidad;
 import SolidarityHub.models.Tarea.EstadoTarea;
 import SolidarityHub.models.Usuario;
 import SolidarityHub.models.Voluntario;
-import SolidarityHub.models.dtos.DashboardMetricasEstadoDTO;
-import SolidarityHub.models.dtos.DashboardMetricasTipoDTO;
+import SolidarityHub.models.dtos.DashboardMetricasDTO;
 import SolidarityHub.models.dtos.TareaPorMesDTO;
 import SolidarityHub.repository.NotificacionRepositorio;
 import SolidarityHub.repository.TareaRepositorio;
@@ -222,8 +221,8 @@ public class TareaServicio {
     }
 
     // Método para obtener métricas completas del dashboard
-    public DashboardMetricasEstadoDTO obtenerMetricasDashboardEstado() {
-        DashboardMetricasEstadoDTO metricas = new DashboardMetricasEstadoDTO();
+    public DashboardMetricasDTO obtenerMetricasDashboardEstado() {
+        DashboardMetricasDTO metricas = new DashboardMetricasDTO();
 
         // Obtener conteo por estado
         List<Tarea> todasTareas = tareaRepositorio.findAll();
@@ -262,17 +261,5 @@ public class TareaServicio {
         }
 
         return metricas;
-    }
-
-    // Método para obtener métricas completas del dashboard para tipo
-    public List<DashboardMetricasTipoDTO> obtenerMetricasDashboardTipo() {
-        List<Object[]> resultados = tareaRepositorio.contarTareasPorNombre();
-        List<DashboardMetricasTipoDTO> lista = new ArrayList<>();
-        for (Object[] fila : resultados) {
-            String nombre = (String) fila[0];
-            Long cantidad = (Long) fila[1];
-            lista.add(new DashboardMetricasTipoDTO(nombre, cantidad));
-        }
-        return lista;
     }
 }

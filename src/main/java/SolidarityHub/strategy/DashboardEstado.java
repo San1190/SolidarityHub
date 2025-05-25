@@ -34,12 +34,12 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
-import SolidarityHub.models.dtos.DashboardMetricasEstadoDTO;
+import SolidarityHub.models.dtos.DashboardMetricasDTO;
 import SolidarityHub.models.dtos.TareaPorMesDTO;
 
-public class DashboardEstado {
+public class DashboardEstado extends VerticalLayout implements EstrategiaMetrica {
 
-    private final DashboardMetricasEstadoDTO metricasDashboard;
+    private DashboardMetricasDTO metricasDashboard;
 
     // Theme colors for consistent styling
     private final String[] CHART_COLORS = {
@@ -47,8 +47,35 @@ public class DashboardEstado {
             "#0099C6", "#DD4477", "#66AA00", "#B82E2E", "#316395"
     };
 
-    public DashboardEstado(DashboardMetricasEstadoDTO metricasDashboard) {
+    public DashboardEstado(DashboardMetricasDTO metricasDashboard) {
         this.metricasDashboard = metricasDashboard;
+    }
+
+    @Override
+    public Component ejecutar(DashboardMetricasDTO metrica) {
+        // Create a new instance with the provided metrics
+        DashboardEstado dashboardEstado = new DashboardEstado(metrica);
+
+        // Dashboard content wrapper
+        Div contentWrapper = new Div();
+        contentWrapper.addClassNames(
+                LumoUtility.Padding.LARGE,
+                LumoUtility.BoxSizing.BORDER);
+        contentWrapper.setWidthFull();
+
+        // KPI Cards section
+        contentWrapper.add(dashboardEstado.createKPISection());
+
+        // Main charts grid
+        FlexLayout chartsContainer = dashboardEstado.createChartsContainer();
+
+        // Add all chart components
+        dashboardEstado.createAndAddCharts(chartsContainer);
+
+        contentWrapper.add(chartsContainer);
+        dashboardEstado.add(contentWrapper);
+
+        return dashboardEstado;
     }
 
     private Component createKPISection() {
@@ -151,7 +178,7 @@ public class DashboardEstado {
         // Bottom row - task details by name
         Chart taskByNameChart = createTasksByNameChart();
         if (taskByNameChart != null) {
-            Div chartCard = createChartCard("Desglose de Tareas por Nombre", taskByNameChart, true);
+            Div chartCard = createChartCard("Desglose de Tareas por Estado", taskByNameChart, true);
             container.add(chartCard);// Set width to 100% for the full-width char
         }
     }
@@ -336,41 +363,25 @@ public class DashboardEstado {
         Chart chart = new Chart(ChartType.BAR);
         Configuration conf = chart.getConfiguration();
 
-        // Group tasks by name
-        Map<String, Long> tasksByName = metricas.stream()
-                .collect(Collectors.groupingBy(
-                        TareaPorMesDTO::getNombre,
-                        Collectors.summingLong(TareaPorMesDTO::getCantidad)));
-
-        // Sort by task count descending
-        List<Map.Entry<String, Long>> sortedTasks = new ArrayList<>(tasksByName.entrySet());
-        sortedTasks.sort(Map.Entry.<String, Long>comparingByValue().reversed());
-
-        // Limit to top 10 if we have more
-        if (sortedTasks.size() > 10) {
-            sortedTasks = sortedTasks.subList(0, 10);
-        }
-
-        // Prepare categories and series
-        String[] categories = sortedTasks.stream()
-                .map(Map.Entry::getKey)
-                .toArray(String[]::new);
-
         DataSeries series = new DataSeries();
-        series.setName("Cantidad de Tareas");
 
-        int colorIndex = 0;
-        for (Map.Entry<String, Long> entry : sortedTasks) {
-            DataSeriesItem item = new DataSeriesItem(entry.getKey(), entry.getValue());
-            item.setColor(new SolidColor(CHART_COLORS[colorIndex % CHART_COLORS.length]));
-            series.add(item);
-            colorIndex++;
-        }
+        // Add data points with specific colors
+        DataSeriesItem completed = new DataSeriesItem("Completadas", metricasDashboard.tareasCompletadas);
+        completed.setColor(SolidColor.GREEN);
+        series.add(completed);
+
+        DataSeriesItem inProgress = new DataSeriesItem("En Curso", metricasDashboard.tareasEnCurso);
+        inProgress.setColor(SolidColor.ORANGE);
+        series.add(inProgress);
+
+        DataSeriesItem pending = new DataSeriesItem("Pendientes", metricasDashboard.tareasPendientes);
+        pending.setColor(SolidColor.BLUE);
+        series.add(pending);
 
         conf.addSeries(series);
 
         XAxis xAxis = conf.getxAxis();
-        xAxis.setCategories(categories);
+        xAxis.setTitle("Tipo de Tarea");
 
         YAxis yAxis = conf.getyAxis();
         yAxis.setTitle("Número de Tareas");

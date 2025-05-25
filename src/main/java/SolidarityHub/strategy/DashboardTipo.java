@@ -34,11 +34,11 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
-import SolidarityHub.models.dtos.DashboardMetricasEstadoDTO;
+import SolidarityHub.models.dtos.DashboardMetricasDTO;
 import SolidarityHub.models.dtos.TareaPorMesDTO;
 
-public class DashboardTipo extends VerticalLayout {
-    private final DashboardMetricasEstadoDTO metricasDashboard;
+public class DashboardTipo extends VerticalLayout implements EstrategiaMetrica {
+    private final DashboardMetricasDTO metricasDashboard;
 
     // Theme colors for consistent styling
     private final String[] CHART_COLORS = {
@@ -46,8 +46,14 @@ public class DashboardTipo extends VerticalLayout {
             "#0099C6", "#DD4477", "#66AA00", "#B82E2E", "#316395"
     };
 
-    public DashboardTipo(DashboardMetricasEstadoDTO metricasDashboard) {
+    public DashboardTipo(DashboardMetricasDTO metricasDashboard) {
         this.metricasDashboard = metricasDashboard;
+    }
+
+    @Override
+    public Component ejecutar(DashboardMetricasDTO metrica) {
+        // Create a new instance with the provided metrics
+        DashboardTipo dashboardTipo = new DashboardTipo(metrica);
 
         // Dashboard content wrapper
         Div contentWrapper = new Div();
@@ -56,17 +62,19 @@ public class DashboardTipo extends VerticalLayout {
                 LumoUtility.BoxSizing.BORDER);
         contentWrapper.setWidthFull();
 
-        // KPI Cards section
-        contentWrapper.add(createKPISection());
+        // KPI Cards section arreglalo
+        contentWrapper.add(dashboardTipo.createKPISection());
 
         // Main charts grid
-        FlexLayout chartsContainer = createChartsContainer();
+        FlexLayout chartsContainer = dashboardTipo.createChartsContainer();
 
         // Add all chart components
-        createAndAddCharts(chartsContainer);
+        dashboardTipo.createAndAddCharts(chartsContainer);
 
         contentWrapper.add(chartsContainer);
-        add(contentWrapper);
+        dashboardTipo.add(contentWrapper);
+
+        return dashboardTipo;
     }
 
     private Component createKPISection() {
@@ -93,11 +101,11 @@ public class DashboardTipo extends VerticalLayout {
         kpiLayout.add(
                 createKPICard("Total Tareas", String.valueOf(metricasDashboard.getTotalTareas()),
                         "#000000"),
-                createKPICard("Completadas", String.valueOf(metricasDashboard.getTareasCompletadas()), "#109618"),
-                createKPICard("En Curso", String.valueOf(metricasDashboard.getTareasEnCurso()), "#FF9900"),
-                createKPICard("Pendientes", String.valueOf(metricasDashboard.getTareasPendientes()), "#3366CC"),
-                createKPICard("Promedio/Mes", String.format("%.1f", metricasDashboard.getPromedioPorMes()), "#990099"));
-
+                createKPICard("Medicamentos", String.valueOf(metricasDashboard.getTipo().equals("Medicamentos") ? metricasDashboard.getCantidad() : 0), "#109618"),
+                createKPICard("Ropa", String.valueOf(metricasDashboard.getTipo().equals("Ropa") ? metricasDashboard.getCantidad() : 0), "#FF9900"),
+                createKPICard("Refugio", String.valueOf(metricasDashboard.getTipo().equals("Refugio") ? metricasDashboard.getCantidad() : 0), "#3366CC"),
+                createKPICard("Alimentos", String.valueOf(metricasDashboard.getTipo().equals("Alimentos") ? metricasDashboard.getCantidad() : 0), "#990099"));
+                
         section.add(sectionTitle, kpiLayout);
         return section;
     }
@@ -169,7 +177,7 @@ public class DashboardTipo extends VerticalLayout {
         // Bottom row - task details by name
         Chart taskByNameChart = createTasksByNameChart();
         if (taskByNameChart != null) {
-            Div chartCard = createChartCard("Desglose de Tareas por Nombre", taskByNameChart, true);
+            Div chartCard = createChartCard("Desglose de Tareas por Tipo", taskByNameChart, true);
             container.add(chartCard);// Set width to 100% for the full-width char
         }
     }
@@ -244,15 +252,11 @@ public class DashboardTipo extends VerticalLayout {
         Configuration conf = chart.getConfiguration();
 
         DataSeries series = new DataSeries();
-        series.setName("Tipos de Tareas");
+        series.setName("Tareas por Tipo");
 
-        // Add data points with specific colors
-        int colorIndex = 0;
+        // Add data points
         for (TareaPorMesDTO tipo : metricas) {
-            DataSeriesItem item = new DataSeriesItem(tipo.getNombre(), tipo.getCantidad());
-            item.setColor(new SolidColor(CHART_COLORS[colorIndex % CHART_COLORS.length]));
-            series.add(item);
-            colorIndex++;
+            series.add(new DataSeriesItem(tipo.getNombre(), tipo.getCantidad()));
         }
         conf.addSeries(series);
 
