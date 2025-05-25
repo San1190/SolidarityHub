@@ -85,9 +85,7 @@ public class LoginView extends VerticalLayout {
                 crearTipoUsuario(),
                 crearEmailField(),
                 crearContraseñaField(),
-                crearIniciarSesionBtn(),
-                crearContraseñaOlvidadaLink(),
-                crearRegistrarBtn());
+                crearBotonesCentrados());
 
         // Añadir card al layout principal
         add(formCard);
@@ -337,5 +335,17 @@ public class LoginView extends VerticalLayout {
 
     public RadioButtonGroup<String> getTipoUsuario() {
         return tipoUsuario;
+    }
+
+    // Nuevo método para centrar los botones de iniciar sesión y registrarse
+    private Component crearBotonesCentrados() {
+        VerticalLayout botonesLayout = new VerticalLayout();
+        botonesLayout.setPadding(false);
+        botonesLayout.setSpacing(false);
+        botonesLayout.setWidthFull();
+        botonesLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        botonesLayout.setAlignItems(Alignment.CENTER);
+        botonesLayout.add(crearIniciarSesionBtn(), crearContraseñaOlvidadaLink(), crearRegistrarBtn());
+        return botonesLayout;
     }
 }
