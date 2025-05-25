@@ -101,35 +101,23 @@ public class DashboardTipo extends VerticalLayout implements EstrategiaMetrica {
         // Get the total tasks
         Long totalTareas = metricasDashboard.getTotalTareas();
 
-        // Get counts for each type from datosPorMes
-        Long medicamentosCount = 0L;
-        Long ropaCount = 0L;
-        Long refugioCount = 0L;
-        Long alimentosCount = 0L;
+        // Agrupar y sumar por tipo
+        Map<String, Long> conteoPorTipo = metricasDashboard.getDatosPorMes().stream()
+                .collect(Collectors.groupingBy(
+                        TareaPorMesDTO::getNombre,
+                        Collectors.summingLong(TareaPorMesDTO::getCantidad)));
 
-        for (TareaPorMesDTO dato : metricasDashboard.getDatosPorMes()) {
-            switch (dato.getNombre()) {
-                case "Tarea para MEDICAMENTOS":
-                    medicamentosCount++;
-                    break;
-                case "Tarea para ROPA":
-                    ropaCount++;
-                    break;
-                case "Tarea para REFUGIO":
-                    refugioCount++;
-                    break;
-                case "Tarea para ALIMENTOS":
-                    alimentosCount++;
-                    break;
-            }
-        }
+        Long medicamentosCount = conteoPorTipo.getOrDefault("Tarea para MEDICAMENTOS", 0L);
+        Long ropaCount = conteoPorTipo.getOrDefault("Tarea para ROPA", 0L);
+        Long refugioCount = conteoPorTipo.getOrDefault("Tarea para REFUGIO", 0L);
+        Long alimentosCount = conteoPorTipo.getOrDefault("Tarea para ALIMENTOS", 0L);
 
         kpiLayout.add(
                 createKPICard("Total Tareas", String.valueOf(totalTareas), "#000000"),
-                createKPICard("Medicamentos", medicamentosCount.toString(0), "#109618"),
+                createKPICard("Medicamentos", medicamentosCount.toString(), "#109618"),
                 createKPICard("Ropa", ropaCount.toString(), "#FF9900"),
                 createKPICard("Refugio", refugioCount.toString(), "#3366CC"),
-                createKPICard("Alimentos", String.valueOf(alimentosCount), "#990099"));
+                createKPICard("Alimentos", alimentosCount.toString(), "#990099"));
 
         section.add(sectionTitle, kpiLayout);
         return section;
@@ -231,6 +219,22 @@ public class DashboardTipo extends VerticalLayout implements EstrategiaMetrica {
         return card;
     }
 
+    // Helper para color por tipo
+    private SolidColor getColorForTipo(String tipo) {
+        switch (tipo) {
+            case "Tarea para MEDICAMENTOS":
+                return new SolidColor("#109618"); // Verde
+            case "Tarea para REFUGIO":
+                return new SolidColor("#3366CC"); // Azul
+            case "Tarea para ROPA":
+                return new SolidColor("#FF9900"); // Naranja
+            case "Tarea para ALIMENTOS":
+                return new SolidColor("#990099"); // Morado
+            default:
+                return new SolidColor("#0099C6"); // Otro
+        }
+    }
+
     // CHART 1: Timeline trend chart
     private Chart createTaskTrendChart() {
         List<TareaPorMesDTO> metricas = metricasDashboard.getDatosPorMes();
@@ -273,15 +277,22 @@ public class DashboardTipo extends VerticalLayout implements EstrategiaMetrica {
             return null;
         }
 
+        // Agrupar y sumar por tipo
+        Map<String, Long> conteoPorTipo = metricas.stream()
+                .collect(Collectors.groupingBy(
+                        TareaPorMesDTO::getNombre,
+                        Collectors.summingLong(TareaPorMesDTO::getCantidad)));
+
         Chart chart = new Chart(ChartType.PIE);
         Configuration conf = chart.getConfiguration();
 
         DataSeries series = new DataSeries();
         series.setName("Tareas por Tipo");
 
-        // Add data points
-        for (TareaPorMesDTO tipo : metricas) {
-            series.add(new DataSeriesItem(tipo.getNombre(), tipo.getCantidad()));
+        for (Map.Entry<String, Long> entry : conteoPorTipo.entrySet()) {
+            DataSeriesItem item = new DataSeriesItem(entry.getKey(), entry.getValue());
+            item.setColor(getColorForTipo(entry.getKey()));
+            series.add(item);
         }
         conf.addSeries(series);
 
@@ -305,26 +316,28 @@ public class DashboardTipo extends VerticalLayout implements EstrategiaMetrica {
             return null;
         }
 
+        // Agrupar y sumar por tipo
+        Map<String, Long> conteoPorTipo = metricas.stream()
+                .collect(Collectors.groupingBy(
+                        TareaPorMesDTO::getNombre,
+                        Collectors.summingLong(TareaPorMesDTO::getCantidad)));
+
         Chart chart = new Chart(ChartType.COLUMN);
         Configuration conf = chart.getConfiguration();
 
         DataSeries series = new DataSeries();
         series.setName("Tareas por Tipo");
 
-        // Add data points with colors
-        for (int i = 0; i < metricas.size(); i++) {
-            TareaPorMesDTO tipo = metricas.get(i);
-            DataSeriesItem item = new DataSeriesItem(tipo.getNombre(), tipo.getCantidad());
-            item.setColor(new SolidColor(CHART_COLORS[i % CHART_COLORS.length]));
+        for (Map.Entry<String, Long> entry : conteoPorTipo.entrySet()) {
+            DataSeriesItem item = new DataSeriesItem(entry.getKey(), entry.getValue());
+            item.setColor(getColorForTipo(entry.getKey()));
             series.add(item);
         }
         conf.addSeries(series);
 
         // Configure x-axis
         XAxis xAxis = new XAxis();
-        xAxis.setCategories(metricas.stream()
-                .map(TareaPorMesDTO::getNombre)
-                .toArray(String[]::new));
+        xAxis.setCategories(conteoPorTipo.keySet().toArray(new String[0]));
         conf.addxAxis(xAxis);
 
         // Configure y-axis
@@ -343,26 +356,28 @@ public class DashboardTipo extends VerticalLayout implements EstrategiaMetrica {
             return null;
         }
 
+        // Agrupar y sumar por tipo
+        Map<String, Long> conteoPorTipo = metricas.stream()
+                .collect(Collectors.groupingBy(
+                        TareaPorMesDTO::getNombre,
+                        Collectors.summingLong(TareaPorMesDTO::getCantidad)));
+
         Chart chart = new Chart(ChartType.BAR);
         Configuration conf = chart.getConfiguration();
 
         DataSeries series = new DataSeries();
         series.setName("Tareas por Tipo");
 
-        // Add data points with colors
-        for (int i = 0; i < metricas.size(); i++) {
-            TareaPorMesDTO tipo = metricas.get(i);
-            DataSeriesItem item = new DataSeriesItem(tipo.getNombre(), tipo.getCantidad());
-            item.setColor(new SolidColor(CHART_COLORS[i % CHART_COLORS.length]));
+        for (Map.Entry<String, Long> entry : conteoPorTipo.entrySet()) {
+            DataSeriesItem item = new DataSeriesItem(entry.getKey(), entry.getValue());
+            item.setColor(getColorForTipo(entry.getKey()));
             series.add(item);
         }
         conf.addSeries(series);
 
         // Configure x-axis
         XAxis xAxis = new XAxis();
-        xAxis.setCategories(metricas.stream()
-                .map(TareaPorMesDTO::getNombre)
-                .toArray(String[]::new));
+        xAxis.setCategories(conteoPorTipo.keySet().toArray(new String[0]));
         conf.addxAxis(xAxis);
 
         // Configure y-axis
