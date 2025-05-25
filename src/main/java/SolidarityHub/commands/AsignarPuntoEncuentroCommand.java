@@ -180,6 +180,31 @@ public class AsignarPuntoEncuentroCommand implements MapCommand {
                 System.out.println("Zona de encuentro guardada con éxito. ID: " + zonaEncuentro.getId());
                 System.out.println("Coordenadas: " + coordenadasStr.toString());
                 System.out.println("Colores: " + color + ", " + colorFill);
+
+                // Asignar el ID al polígono
+                final Long zonaId = zonaEncuentro.getId();
+                final String mainViewId = com.vaadin.flow.component.UI.getCurrent().getElement().getAttribute("id");
+                com.vaadin.flow.component.UI.getCurrent().getPage().executeJs(
+                    "setTimeout(() => {" +
+                        "const leafletLayers = document.querySelectorAll('.leaflet-interactive');" +
+                        "const polygons = Array.from(leafletLayers).filter(el => el.tagName === 'path');" +
+                        "if (polygons.length > 0) {" +
+                            "const lastPolygon = polygons[polygons.length - 1];" +
+                            "lastPolygon.id = 'zona-" + zonaId + "';" +
+                            "lastPolygon.setAttribute('data-zona-id', '" + zonaId + "');" +
+                            "lastPolygon.onclick = function(event) {" +
+                                "if (event.ctrlKey || event.metaKey) {" +
+                                    "document.getElementById('" + mainViewId + "').$server.zonaClicked(" +
+                                        "this.id, event.clientX, event.clientY, true);" +
+                                "} else {" +
+                                    "document.getElementById('" + mainViewId + "').$server.zonaClicked(" +
+                                        "this.id, event.clientX, event.clientY, false);" +
+                                "}" +
+                                "event.stopPropagation();" +
+                            "};" +
+                        "}" +
+                    "}, 500);"
+                );
                 
             } catch (Exception e) {
                 System.err.println("Primer intento fallido: " + e.getMessage());

@@ -941,10 +941,8 @@ public class MainView extends VerticalLayout {
         // Inicializar comandos
         CreatePointCommand pointCommand = new CreatePointCommand(markers);
         MarkStoreCommand storeCommand = new MarkStoreCommand(stores);
-        CreateHexagonCommand hexagonCommand = new CreateHexagonCommand(circles, UPV_LAT, UPV_LNG, RADIUS_KM);
-        
-        // Inicializar el comando para áreas críticas (usando el atributo de la clase)
         CreateAreaCriticaCommand areaCriticaCommand = new CreateAreaCriticaCommand(areasCriticas);
+        
         // Botón para cancelar acción actual (nuevo)
         Button btnCancelar = new Button("Cancelar acción", new Icon(VaadinIcon.CLOSE_CIRCLE));
         btnCancelar.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_CONTRAST);
@@ -987,20 +985,6 @@ public class MainView extends VerticalLayout {
             //showNotification(storeCommand.getDescription(), NotificationVariant.LUMO_SUCCESS);
         });
 
-        // Botón de Punto de Encuentro (estilizado)
-        Button btnVol = new Button("Punto de Encuentro", new Icon(VaadinIcon.USERS));
-        btnVol.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
-        btnVol.addClickListener(e -> {
-            // Si hay un botón de finalizar, lo eliminamos
-            if (btnFinalizarZona != null) {
-                remove(btnFinalizarZona);
-                btnFinalizarZona = null;
-            }
-            // Ejecutamos directamente sin esperar clic en el mapa
-            hexagonCommand.execute(map, registry, UPV_LAT, UPV_LNG);
-            updateSidePanelStats();
-        });
-        
         // Botón de Área Crítica (estilizado)
         Button btnAreaCritica = new Button("Área Crítica", new Icon(VaadinIcon.EXCLAMATION_CIRCLE));
         btnAreaCritica.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
@@ -1041,7 +1025,7 @@ public class MainView extends VerticalLayout {
             .set("border-radius", "4px")
             .set("margin", "0");
 
-        controls.add(gestorLabel, btnCancelar, btnPoint, btnStore, btnVol, btnAreaCritica, btnAsignarPuntoEncuentro, btnVerZonas, btnClear);
+        controls.add(gestorLabel, btnCancelar, btnPoint, btnStore, btnAreaCritica, btnAsignarPuntoEncuentro, btnVerZonas, btnClear);
         mapContainer.add(controls);
     }
     
@@ -1400,46 +1384,61 @@ public class MainView extends VerticalLayout {
         if (zonaSeleccionada == null) return;
         
         Dialog detallesDialog = new Dialog();
-        detallesDialog.setWidth("400px");
+        detallesDialog.setWidth("600px"); // Aumentamos el ancho para que quepa todo
         detallesDialog.setHeaderTitle("Detalles de Zona de Encuentro");
         
         VerticalLayout content = new VerticalLayout();
         content.setPadding(true);
         content.setSpacing(true);
         
-        // Nombre de la zona
+        // Nombre de la zona con estilo mejorado
         H3 nombreZona = new H3(zonaSeleccionada.getNombre());
         nombreZona.getStyle()
             .set("margin-top", "0")
-            .set("color", "var(--lumo-primary-color)");
+            .set("color", "var(--lumo-primary-color)")
+            .set("word-wrap", "break-word")
+            .set("white-space", "normal");
         content.add(nombreZona);
         
-        // Descripción
+        // Descripción con estilo mejorado
         if (zonaSeleccionada.getDescripcion() != null && !zonaSeleccionada.getDescripcion().isEmpty()) {
             Paragraph descripcion = new Paragraph(zonaSeleccionada.getDescripcion());
-            descripcion.getStyle().set("font-style", "italic");
+            descripcion.getStyle()
+                .set("font-style", "italic")
+                .set("word-wrap", "break-word")
+                .set("white-space", "normal")
+                .set("margin-bottom", "1em");
             content.add(descripcion);
         }
         
-        // Información de la tarea asociada
+        // Información de la tarea asociada con estilo mejorado
         H4 tareaTitle = new H4("Tarea Asociada");
-        tareaTitle.getStyle().set("margin-bottom", "0.2em");
+        tareaTitle.getStyle()
+            .set("margin-bottom", "0.2em")
+            .set("color", "var(--lumo-primary-color)");
         
         Div tareaInfo = new Div();
         tareaInfo.getStyle()
-            .set("padding", "10px")
+            .set("padding", "15px")
             .set("background-color", "var(--lumo-contrast-5pct)")
-            .set("border-radius", "4px")
-            .set("margin-bottom", "15px");
+            .set("border-radius", "8px")
+            .set("margin-bottom", "15px")
+            .set("word-wrap", "break-word")
+            .set("white-space", "normal");
         
         try {
             if (zonaSeleccionada.getTarea() != null) {
                 Tarea tarea = zonaSeleccionada.getTarea();
                 Span tareaNombre = new Span(tarea.getNombre());
-                tareaNombre.getStyle().set("font-weight", "bold");
+                tareaNombre.getStyle()
+                    .set("font-weight", "bold")
+                    .set("font-size", "1.1em")
+                    .set("display", "block")
+                    .set("margin-bottom", "8px");
                 
                 HorizontalLayout tareaHeader = new HorizontalLayout(tareaNombre);
                 tareaHeader.setAlignItems(FlexComponent.Alignment.CENTER);
+                tareaHeader.setWidthFull();
                 
                 // Añadir indicador de tipo/estado si está disponible
                 try {
@@ -1448,6 +1447,7 @@ public class MainView extends VerticalLayout {
                     
                     Span tipo = new Span(tipoTexto);
                     tipo.getElement().getThemeList().add("badge success");
+                    tipo.getStyle().set("margin-right", "8px");
                     
                     Span estado = new Span(estadoTexto);
                     estado.getElement().getThemeList().add("badge contrast");
@@ -1459,13 +1459,15 @@ public class MainView extends VerticalLayout {
                 
                 tareaInfo.add(tareaHeader);
                 
-                // Descripción de la tarea
+                // Descripción de la tarea con estilo mejorado
                 try {
                     if (tarea.getDescripcion() != null && !tarea.getDescripcion().isEmpty()) {
                         Paragraph tareaDesc = new Paragraph(tarea.getDescripcion());
                         tareaDesc.getStyle()
-                            .set("margin-top", "5px")
-                            .set("margin-bottom", "0");
+                            .set("margin-top", "10px")
+                            .set("margin-bottom", "0")
+                            .set("word-wrap", "break-word")
+                            .set("white-space", "normal");
                         tareaInfo.add(tareaDesc);
                     }
                 } catch (Exception e) {
@@ -1478,6 +1480,7 @@ public class MainView extends VerticalLayout {
             tareaInfo.add(new Span("No se puede acceder a la información de la tarea"));
         }
         
+        // Información técnica de la zona con estilo mejorado
         // Información técnica de la zona
         H4 datosTitle = new H4("Datos Técnicos");
         datosTitle.getStyle().set("margin-bottom", "0.2em");
