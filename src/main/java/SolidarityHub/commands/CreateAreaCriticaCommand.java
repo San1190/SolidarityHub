@@ -1,5 +1,6 @@
 package SolidarityHub.commands;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.notification.Notification;
 import software.xdev.vaadin.maps.leaflet.basictypes.LLatLng;
 import software.xdev.vaadin.maps.leaflet.layer.vector.LPolygon;
@@ -71,6 +72,21 @@ public class CreateAreaCriticaCommand implements MapCommand {
         // Añadimos el polígono al mapa y a la lista
         polygon.addTo(map);
         areas.add(polygon);
+        
+        // Aplicar estilo rojo al polígono usando JavaScript
+        UI.getCurrent().getPage().executeJs(
+            "setTimeout(() => {" +
+                "const leafletLayers = document.querySelectorAll('.leaflet-overlay-pane .leaflet-interactive');" +
+                "const polygons = Array.from(leafletLayers).filter(el => el.tagName === 'path');" +
+                "if (polygons.length > 0) {" +
+                    "const lastPolygon = polygons[polygons.length - 1];" +
+                    "lastPolygon.setAttribute('stroke', '#e74c3c');" + // Rojo
+                    "lastPolygon.setAttribute('fill', '#e74c3c');" +  // Rojo
+                    "lastPolygon.setAttribute('fill-opacity', '0.4');" +
+                    "lastPolygon.setAttribute('stroke-width', '3');" +
+                "}" +
+            "}, 100);"
+        );
         
         // Notificamos al usuario
         Notification.show("Área crítica creada");
