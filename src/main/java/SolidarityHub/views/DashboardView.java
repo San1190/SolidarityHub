@@ -78,6 +78,9 @@ public class DashboardView extends VerticalLayout {
         header.add(headerContent, comboBox);
         add(header);
 
+        contextoMetricas.setEstrategia(new DashboardTipo(metricasDashboard));
+        add(contextoMetricas.ejecutarEstrategia(metricasDashboard));
+
         comboBox.addValueChangeListener(e -> {
             // Remove previous dashboard content
             removeAll();

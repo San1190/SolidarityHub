@@ -84,28 +84,53 @@ public class DashboardTipo extends VerticalLayout implements EstrategiaMetrica {
                 LumoUtility.Margin.Vertical.MEDIUM);
         section.setSpacing(false);
         section.setPadding(false);
-        section.getStyle().set("margin-bottom", "50px"); // Center the title text
+        section.getStyle().set("margin-bottom", "50px");
 
         H3 sectionTitle = new H3("Indicadores Clave de Rendimiento");
         sectionTitle.addClassNames(
                 LumoUtility.FontSize.LARGE,
                 LumoUtility.TextColor.SECONDARY,
                 LumoUtility.Margin.Bottom.MEDIUM);
-        sectionTitle.getStyle().set("margin-bottom", "30px"); // Center the title text
+        sectionTitle.getStyle().set("margin-bottom", "30px");
 
         HorizontalLayout kpiLayout = new HorizontalLayout();
         kpiLayout.setWidthFull();
         kpiLayout.setSpacing(true);
         kpiLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
+        // Get the total tasks
+        Long totalTareas = metricasDashboard.getTotalTareas();
+
+        // Get counts for each type from datosPorMes
+        Long medicamentosCount = 0L;
+        Long ropaCount = 0L;
+        Long refugioCount = 0L;
+        Long alimentosCount = 0L;
+
+        for (TareaPorMesDTO dato : metricasDashboard.getDatosPorMes()) {
+            switch (dato.getNombre()) {
+                case "Tarea para MEDICAMENTOS":
+                    medicamentosCount++;
+                    break;
+                case "Tarea para ROPA":
+                    ropaCount++;
+                    break;
+                case "Tarea para REFUGIO":
+                    refugioCount++;
+                    break;
+                case "Tarea para ALIMENTOS":
+                    alimentosCount++;
+                    break;
+            }
+        }
+
         kpiLayout.add(
-                createKPICard("Total Tareas", String.valueOf(metricasDashboard.getTotalTareas()),
-                        "#000000"),
-                createKPICard("Medicamentos", String.valueOf(metricasDashboard.getTipo().equals("Medicamentos") ? metricasDashboard.getCantidad() : 0), "#109618"),
-                createKPICard("Ropa", String.valueOf(metricasDashboard.getTipo().equals("Ropa") ? metricasDashboard.getCantidad() : 0), "#FF9900"),
-                createKPICard("Refugio", String.valueOf(metricasDashboard.getTipo().equals("Refugio") ? metricasDashboard.getCantidad() : 0), "#3366CC"),
-                createKPICard("Alimentos", String.valueOf(metricasDashboard.getTipo().equals("Alimentos") ? metricasDashboard.getCantidad() : 0), "#990099"));
-                
+                createKPICard("Total Tareas", String.valueOf(totalTareas), "#000000"),
+                createKPICard("Medicamentos", medicamentosCount.toString(0), "#109618"),
+                createKPICard("Ropa", ropaCount.toString(), "#FF9900"),
+                createKPICard("Refugio", refugioCount.toString(), "#3366CC"),
+                createKPICard("Alimentos", String.valueOf(alimentosCount), "#990099"));
+
         section.add(sectionTitle, kpiLayout);
         return section;
     }
@@ -286,9 +311,12 @@ public class DashboardTipo extends VerticalLayout implements EstrategiaMetrica {
         DataSeries series = new DataSeries();
         series.setName("Tareas por Tipo");
 
-        // Add data points
-        for (TareaPorMesDTO tipo : metricas) {
-            series.add(new DataSeriesItem(tipo.getNombre(), tipo.getCantidad()));
+        // Add data points with colors
+        for (int i = 0; i < metricas.size(); i++) {
+            TareaPorMesDTO tipo = metricas.get(i);
+            DataSeriesItem item = new DataSeriesItem(tipo.getNombre(), tipo.getCantidad());
+            item.setColor(new SolidColor(CHART_COLORS[i % CHART_COLORS.length]));
+            series.add(item);
         }
         conf.addSeries(series);
 
@@ -321,9 +349,12 @@ public class DashboardTipo extends VerticalLayout implements EstrategiaMetrica {
         DataSeries series = new DataSeries();
         series.setName("Tareas por Tipo");
 
-        // Add data points
-        for (TareaPorMesDTO tipo : metricas) {
-            series.add(new DataSeriesItem(tipo.getNombre(), tipo.getCantidad()));
+        // Add data points with colors
+        for (int i = 0; i < metricas.size(); i++) {
+            TareaPorMesDTO tipo = metricas.get(i);
+            DataSeriesItem item = new DataSeriesItem(tipo.getNombre(), tipo.getCantidad());
+            item.setColor(new SolidColor(CHART_COLORS[i % CHART_COLORS.length]));
+            series.add(item);
         }
         conf.addSeries(series);
 
@@ -343,7 +374,7 @@ public class DashboardTipo extends VerticalLayout implements EstrategiaMetrica {
         return chart;
     }
 
-    private void createMetricsCards() {
+    private Component createMetricsCards() {
         // Create metrics cards
         HorizontalLayout metricsLayout = new HorizontalLayout();
         metricsLayout.setWidthFull();
@@ -357,31 +388,33 @@ public class DashboardTipo extends VerticalLayout implements EstrategiaMetrica {
                 "tasks");
 
         // Completed tasks card
-        VerticalLayout completedCard = createMetricCard(
-                "Tareas Completadas",
-                String.valueOf(metricasDashboard.getTareasCompletadas()),
-                "check-circle");
+        VerticalLayout medCard = createMetricCard(
+                "Medicamentos",
+                String.valueOf(
+                        metricasDashboard.getTipo().equals("Medicamentos") ? metricasDashboard.getCantidad() : 0),
+                "medicine");
 
         // In progress tasks card
-        VerticalLayout inProgressCard = createMetricCard(
-                "Tareas en Curso",
-                String.valueOf(metricasDashboard.getTareasEnCurso()),
-                "clock");
+        VerticalLayout clothesCard = createMetricCard(
+                "Ropa",
+                String.valueOf(metricasDashboard.getTipo().equals("Ropa") ? metricasDashboard.getCantidad() : 0),
+                "clothes");
 
         // Pending tasks card
-        VerticalLayout pendingCard = createMetricCard(
-                "Tareas Pendientes",
-                String.valueOf(metricasDashboard.getTareasPendientes()),
-                "hourglass");
+        VerticalLayout shelterCard = createMetricCard(
+                "Refugio",
+                String.valueOf(metricasDashboard.getTipo().equals("Refugio") ? metricasDashboard.getCantidad() : 0),
+                "house");
 
         // Average tasks per month card
-        VerticalLayout averageCard = createMetricCard(
-                "Promedio por Mes",
-                String.format("%.1f", metricasDashboard.getPromedioPorMes()),
-                "chart-line");
+        VerticalLayout foodCard = createMetricCard(
+                "Alimentos",
+                String.valueOf(metricasDashboard.getTipo().equals("Alimentos") ? metricasDashboard.getCantidad() : 0),
+                "food");
 
-        metricsLayout.add(totalCard, completedCard, inProgressCard, pendingCard, averageCard);
+        metricsLayout.add(totalCard, medCard, clothesCard, shelterCard, foodCard);
         add(metricsLayout);
+        return metricsLayout;
     }
 
     private VerticalLayout createMetricCard(String title, String value, String icon) {

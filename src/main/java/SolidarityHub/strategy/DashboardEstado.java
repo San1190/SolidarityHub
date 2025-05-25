@@ -364,36 +364,40 @@ public class DashboardEstado extends VerticalLayout implements EstrategiaMetrica
         Configuration conf = chart.getConfiguration();
 
         DataSeries series = new DataSeries();
+        series.setName("Tareas por Estado");
 
         // Add data points with specific colors
-        DataSeriesItem completed = new DataSeriesItem("Completadas", metricasDashboard.tareasCompletadas);
-        completed.setColor(SolidColor.GREEN);
+        DataSeriesItem completed = new DataSeriesItem("Completadas", metricasDashboard.getTareasCompletadas());
+        completed.setColor(new SolidColor("#109618")); // Verde
         series.add(completed);
 
-        DataSeriesItem inProgress = new DataSeriesItem("En Curso", metricasDashboard.tareasEnCurso);
-        inProgress.setColor(SolidColor.ORANGE);
+        DataSeriesItem inProgress = new DataSeriesItem("En Curso", metricasDashboard.getTareasEnCurso());
+        inProgress.setColor(new SolidColor("#FF9900")); // Naranja
         series.add(inProgress);
 
-        DataSeriesItem pending = new DataSeriesItem("Pendientes", metricasDashboard.tareasPendientes);
-        pending.setColor(SolidColor.BLUE);
+        DataSeriesItem pending = new DataSeriesItem("Pendientes", metricasDashboard.getTareasPendientes());
+        pending.setColor(new SolidColor("#3366CC")); // Azul
         series.add(pending);
 
         conf.addSeries(series);
 
-        XAxis xAxis = conf.getxAxis();
-        xAxis.setTitle("Tipo de Tarea");
+        // Configure x-axis
+        XAxis xAxis = new XAxis();
+        xAxis.setTitle("Estado de Tarea");
+        conf.addxAxis(xAxis);
 
-        YAxis yAxis = conf.getyAxis();
+        // Configure y-axis
+        YAxis yAxis = new YAxis();
         yAxis.setTitle("Número de Tareas");
         yAxis.setMin(0);
+        conf.addyAxis(yAxis);
 
-        // Add plot options
+        // Configure plot options for better visualization
         PlotOptionsBar plotOptions = new PlotOptionsBar();
-        plotOptions.setBorderRadius(4);
-        plotOptions.setColorByPoint(true);
+        plotOptions.setDataLabels(new DataLabels(true));
         conf.setPlotOptions(plotOptions);
 
-        chart.setHeight("400px");
+        chart.setHeight("300px");
         return chart;
     }
 }
