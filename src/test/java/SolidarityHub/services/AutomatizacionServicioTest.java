@@ -46,7 +46,6 @@ class AsignacionTareaServicioTest {
 
     @Test
     void asignarVoluntariosAutomaticamente_AsignaCorrectamente() {
-        // Preparar
         Voluntario v1 = crearVoluntarioConHabilidad("Voluntario1", Habilidad.COCINA);
         Voluntario v2 = crearVoluntarioConHabilidad("Voluntario2", Habilidad.COCINA);
         List<Usuario> usuarios = List.of(v1, v2);
@@ -54,10 +53,8 @@ class AsignacionTareaServicioTest {
 
         Tarea tarea = crearTareaConTipoYNumVoluntarios(Necesidad.TipoNecesidad.ALIMENTACION, 1);
 
-        // Ejecutar
         servicio.asignarVoluntariosAutomaticamente(tarea);
 
-        // Verificar
         assertNotNull(tarea.getVoluntariosAsignados());
         assertEquals(1, tarea.getVoluntariosAsignados().size());
         assertTrue(
@@ -96,7 +93,6 @@ class AsignacionTareaServicioTest {
 
     @Test
     void asignarVoluntariosAutomaticamente_TipoNoMapeado() {
-        // Usamos un tipo que existe pero no está mapeado a ninguna habilidad
         Tarea tarea = crearTareaConTipoYNumVoluntarios(Necesidad.TipoNecesidad.MEDICAMENTOS, 1);
 
         servicio.asignarVoluntariosAutomaticamente(tarea);
