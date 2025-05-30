@@ -110,20 +110,13 @@ public class AsignacionTareaServicio {
      * @param tarea La tarea a verificar
      * @return true si el voluntario está disponible, false en caso contrario
      */
-    private boolean verificarDisponibilidadHorario(Voluntario voluntario, Tarea tarea) {
-        // Si la tarea no tiene fecha de inicio, no podemos verificar disponibilidad
+    public boolean verificarDisponibilidadHorario(Voluntario voluntario, Tarea tarea) {
         if (tarea.getFechaInicio() == null) {
             return true; // Asumimos disponibilidad por defecto
         }
-        
-        // Obtener el día de la semana de la tarea
         String diaTarea = tarea.getFechaInicio().getDayOfWeek().toString();
-        
-        // Verificar si el voluntario está disponible ese día
         boolean diaDisponible = voluntario.getDiasDisponibles() != null && 
                                voluntario.getDiasDisponibles().contains(diaTarea);
-        
-        // Si el voluntario tiene turno de disponibilidad, verificar si coincide con la hora de la tarea
         boolean turnoCompatible = true;
         if (voluntario.getTurnoDisponibilidad() != null && !voluntario.getTurnoDisponibilidad().isEmpty()) {
             int horaInicio = tarea.getFechaInicio().getHour();
@@ -142,7 +135,6 @@ public class AsignacionTareaServicio {
                     turnoCompatible = true; // Si no tiene un turno específico, asumimos disponibilidad
             }
         }
-        
         return diaDisponible && turnoCompatible;
     }
 
@@ -194,23 +186,19 @@ public class AsignacionTareaServicio {
      * @param tarea La tarea a verificar
      * @return true si el voluntario tiene las habilidades necesarias, false en caso contrario
      */
-    private boolean verificarHabilidadesCompatibles(Voluntario voluntario, Tarea tarea) {
-        // Si la tarea no requiere habilidades específicas, cualquier voluntario es compatible
+    public boolean verificarHabilidadesCompatibles(Voluntario voluntario, Tarea tarea) {
         if (tarea.getHabilidadesRequeridas() == null || tarea.getHabilidadesRequeridas().isEmpty()) {
             return true;
         }
-        
-        // Si el voluntario no tiene habilidades, no es compatible con tareas que requieren habilidades
         if (voluntario.getHabilidades() == null || voluntario.getHabilidades().isEmpty()) {
             return false;
         }
-        
-        // Verificar si el voluntario tiene al menos una de las habilidades requeridas
+
         return voluntario.getHabilidades().stream()
-                .filter(habilidadVoluntario -> habilidadVoluntario != null && habilidadVoluntario.getNombre() != null) // Filtrar habilidades nulas o sin nombre
+                .filter(habilidadVoluntario -> habilidadVoluntario != null && habilidadVoluntario.getNombre() != null)
                 .anyMatch(habilidadVoluntario -> 
                     tarea.getHabilidadesRequeridas().stream()
-                        .filter(habilidadRequerida -> habilidadRequerida != null && habilidadRequerida.getNombre() != null) // Filtrar habilidades requeridas nulas o sin nombre
+                        .filter(habilidadRequerida -> habilidadRequerida != null && habilidadRequerida.getNombre() != null)
                         .anyMatch(habilidadRequerida -> 
                             habilidadVoluntario.getNombre().equalsIgnoreCase(habilidadRequerida.getNombre())
                         )
