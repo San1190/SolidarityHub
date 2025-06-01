@@ -1,5 +1,6 @@
 package SolidarityHub.views;
 
+import SolidarityHub.models.Necesidad;
 import SolidarityHub.models.Notificacion;
 import SolidarityHub.models.Tarea;
 import SolidarityHub.models.Usuario;
@@ -31,11 +32,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Route(value = "notificaciones", layout = MainLayout.class)
 @PageTitle("Notificaciones | SolidarityHub")
@@ -56,7 +55,7 @@ public class NotificacionesView extends VerticalLayout {
         setSizeFull();
         setSpacing(true);
         setPadding(true);
-        
+        notificaciones = new ArrayList<>();
         // Añadir título a la vista
         H3 titulo = new H3("Mis Notificaciones");
         titulo.getStyle().set("margin-top", "0");
@@ -81,15 +80,11 @@ public class NotificacionesView extends VerticalLayout {
         });
         
         try {
-            // Obtener notificaciones del usuario actual usando REST API
-            ResponseEntity<List<Notificacion>> response = restTemplate.exchange(
-                apiUrl + "/notificaciones/usuario/" + usuarioActual.getId(),
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<Notificacion>>() {}
-            );
-            
-            notificaciones = response.getBody();
+            Tarea tarea = new Tarea("Tarea para PRIMEROS_AUXILIOS", "Atender necesidad: Necesidad de PRIMEROS_AUXILIOS",
+                    Necesidad.TipoNecesidad.PRIMEROS_AUXILIOS, "Calle Caballeros", 7, LocalDateTime.now().minusMinutes(1), "No definido", "No definido",
+                    Tarea.EstadoTarea.PREPARADA, usuarioActual, null, null, null,null, 0,0);
+            Notificacion noti = new Notificacion("Nueva tarea", "Hay una nueva tarea disponible: " + tarea.getNombre() + ". Eres compatible con esta tarea.", usuarioActual,tarea, Notificacion.EstadoNotificacion.PENDIENTE);
+            notificaciones.add(noti);
             
             // Contenedor para las tarjetas de notificaciones
             VerticalLayout contenedorNotificaciones = new VerticalLayout();
@@ -201,45 +196,14 @@ public class NotificacionesView extends VerticalLayout {
             aceptarBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_SMALL);
             aceptarBtn.addClickListener(e -> {
                 // Lógica para aceptar la tarea usando REST API
-                Map<String, Object> requestBody = new HashMap<>();
-                requestBody.put("tareaId", tarea.getId());
-                requestBody.put("voluntarioId", usuarioActual.getId());
-                requestBody.put("accion", "ACEPTAR");
-                
-                try {
-                    ResponseEntity<Map> response = restTemplate.postForEntity(
-                        apiUrl + "/notificaciones/responder-tarea",
-                        requestBody, 
-                        Map.class
-                    );
-                    
-                    if (response.getStatusCode().is2xxSuccessful()) {
-                        // Eliminar la notificación
-                        restTemplate.delete(apiUrl + "notificaciones/" + notificacion.getId());
-                        cargarNotificaciones();
-                        
-                        Notification notif = new Notification("Has aceptado la tarea: " + tarea.getNombre());
-                        notif.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                        notif.setPosition(Notification.Position.BOTTOM_CENTER);
-                        notif.setDuration(3000);
-                        notif.open();
-                        
-                        // Navegar a la vista de tareas
-                        UI.getCurrent().navigate(TareasView.class);
-                    } else {
-                        Notification notif = new Notification("No se pudo aceptar la tarea");
-                        notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
-                        notif.setPosition(Notification.Position.BOTTOM_CENTER);
-                        notif.setDuration(3000);
-                        notif.open();
-                    }
-                } catch (Exception ex) {
-                    Notification notif = new Notification("Error al aceptar la tarea: " + ex.getMessage());
-                    notif.addThemeVariants(NotificationVariant.LUMO_ERROR);
-                    notif.setPosition(Notification.Position.BOTTOM_CENTER);
-                    notif.setDuration(3000);
-                    notif.open();
-                }
+                Notification notif = new Notification("Has aceptado la tarea: " + tarea.getNombre());
+                notif.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                notif.setPosition(Notification.Position.BOTTOM_CENTER);
+                notif.setDuration(3000);
+                notif.open();
+
+                // Navegar a la vista de tareas
+                UI.getCurrent().navigate(TareasView.class);
             });
 
             Button rechazarBtn = new Button("Rechazar", new Icon(VaadinIcon.CLOSE_SMALL));
